@@ -87,7 +87,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)\..\..\..\GameData\TexturesUnlimited\Plugins\$(TargetFileName)"
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)\..\..\..\GameData\000_TexturesUnlimited\Plugins\$(TargetFileName)"
 
 </PostBuildEvent>
   </PropertyGroup>
