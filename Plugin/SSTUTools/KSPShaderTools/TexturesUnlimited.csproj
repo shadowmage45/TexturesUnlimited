@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>KSPShaderTools</RootNamespace>
-    <AssemblyName>KSPShaderTools</AssemblyName>
+    <AssemblyName>TexturesUnlimited</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -87,7 +87,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(SolutionDir)\..\..\GameData\KSPShaderTools\Plugins\$(TargetFileName)"
+    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)\..\..\..\GameData\TexturesUnlimited\Plugins\$(TargetFileName)"
 
 </PostBuildEvent>
   </PropertyGroup>
