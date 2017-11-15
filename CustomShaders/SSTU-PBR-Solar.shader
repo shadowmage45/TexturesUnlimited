@@ -8,6 +8,10 @@ Shader "SSTU/PBR/Solar"
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
 		_Emissive("Emission", 2D) = "black" {}
+		_BacklightBoost("Back Lighting Boost", Range(0, 5) ) = 1
+		_BasePolarization("View-Light influence", Range(0,5) ) = 1
+		_IncomingPolarization("Light-Surf influence", Range(0,5) ) = 1
+		_OutgoingPolarization("Surf-view influence", Range(0,5) ) = 1
 		_EmissiveColor("EmissionColor", Color) = (0,0,0)
 		_Opacity("Emission Opacity", Range(0,1) ) = 1
 		_RimFalloff("_RimFalloff", Range(0.01,5) ) = 0.1
@@ -46,6 +50,11 @@ Shader "SSTU/PBR/Solar"
 		float4 _RimColor;
 		float _RimFalloff;
 		
+		float _BasePolarization;
+		float _IncomingPolarization;
+		float _OutgoingPolarization;
+		float _BacklightBoost;
+		
 		struct Input
 		{
 			float2 uv_MainTex;
@@ -57,7 +66,8 @@ Shader "SSTU/PBR/Solar"
             fixed3 Albedo;		// base (diffuse or specular) color
             fixed3 Normal;		// tangent space normal, if written
             half3 Emission;
-            half3 Backlight;
+            half3 Backlight;	// backlight emissive glow color
+			half3 Polarization;	// polarization properties to use in backlight calculations
             half Metallic;		// 0=non-metal, 1=metal
             half Smoothness;	// 0=rough, 1=smooth
             half Occlusion;		// occlusion (default 1)
@@ -67,11 +77,23 @@ Shader "SSTU/PBR/Solar"
         inline half4 LightingStandard2(SurfaceOutputStandard2 s, half3 viewDir, UnityGI gi)
         {
             s.Normal = normalize(s.Normal);
+			
+			half basePol = s.Polarization.x;
+			half incPol = s.Polarization.y;
+			half outPol = s.Polarization.z;
+			
+			half viewDotLight = max(0, -dot(viewDir, gi.light.dir));//view vs light...does...stuff...
+			half viewDotNorm = max(0, -dot(s.Normal, -viewDir));//outgoing polarization
+			half lightDotNorm = max(0, -dot(s.Normal, gi.light.dir));//incoming polarization
+			
+			half cont1 = min(1, pow(viewDotLight, basePol));
+			half cont2 = min(1, pow(viewDotNorm, outPol));
+			half cont3 = min(1, pow(lightDotNorm, incPol));
+			half backLight = cont1 * cont2 * cont3;
             
-            half backLight = max(0, -dot(s.Normal, gi.light.dir));
-            backLight *= (max(0, -dot(s.Normal, -viewDir)));
+            // half backLight = max(0, -dot(s.Normal, gi.light.dir));
+            // backLight *= (max(0, -dot(s.Normal, -viewDir)));
             half3 backColor = (s.Backlight.rgb) * backLight.xxx * gi.light.color;
-            //backColor = fixed3(0,0,0);
             
             half oneMinusReflectivity;
             half3 specColor;
@@ -110,12 +132,12 @@ Shader "SSTU/PBR/Solar"
 			
 			o.Albedo = color.rgb * _Color.rgb;
 			o.Normal = normal;
-            o.Backlight = glow.rgb;
-            //o.Emission = glow.rgb;
-			//o.Emission = fixed3(1,0,0);//glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+            o.Backlight = glow.rgb * _BacklightBoost.xxx;
+			o.Emission = _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			o.Metallic = spec.r;
 			o.Smoothness = spec.a;
 			o.Occlusion = ao.r;
+			o.Polarization = fixed3(_BasePolarization, _IncomingPolarization, _OutgoingPolarization);
 			o.Alpha = _Opacity;
 		}
 		ENDCG
