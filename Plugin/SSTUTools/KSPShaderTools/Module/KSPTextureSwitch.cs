@@ -12,9 +12,6 @@ namespace KSPShaderTools
     {
 
         [KSPField]
-        public bool allowInFlightChange = false;
-
-        [KSPField]
         public string transformName = string.Empty;
 
         [KSPField]
