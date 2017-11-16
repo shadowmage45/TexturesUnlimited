@@ -82,17 +82,17 @@ Shader "SSTU/PBR/Solar"
             s.Normal = normalize(s.Normal);			            
             //SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/
             
-            half iLTPower = s.SubSurfParams.g;
-            half fLTScale = s.SubSurfParams.r;
+            half fLTScale = s.SubSurfParams.r;//main output scalar
+            half iLTPower = s.SubSurfParams.g;//exponent used in power
             half fLTDistortion = s.SubSurfParams.b;//how much the surface normal distorts the outgoing light
             half fLightAttenuation = s.SubSurfParams.a;//how much light attenuates while traveling through the surface (gets multiplied by distance)            
             half fLTAmbient = s.Backlight.a;//ambient from texture/material
             half3 fLTThickness = s.Backlight.rgb;//sampled from texture
-            
-            half3 vLTLight = gi.light.dir + s.Normal * fLTDistortion;
-            half fLTDot = pow(saturate(dot(viewDir, -vLTLight)), iLTPower) * fLTScale;
-            half3 fLT = fLightAttenuation * (fLTDot + fLTAmbient) * fLTThickness;
-            half3 backColor = fLT * gi.light.color;
+			
+			float3 H = normalize(gi.light.dir + s.Normal * fLTDistortion);
+			float vdh = pow(saturate(dot(viewDir, -H)), iLTPower) * fLTScale;
+			float3 I = fLightAttenuation * (vdh + fLTAmbient) * fLTThickness;
+            half3 backColor = I * gi.light.color;			
             
             half oneMinusReflectivity;
             half3 specColor;

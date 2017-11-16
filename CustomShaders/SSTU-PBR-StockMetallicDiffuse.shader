@@ -65,7 +65,7 @@ Shader "SSTU/PBR/StockMetallicDiffuse"
 			fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
 			
 			o.Albedo = color.rgb * _Color.rgb;
-			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, float3(0,0,1), _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			o.Metallic = spec.r;
 			o.Smoothness = color.a;
 			o.Occlusion = ao.r;
