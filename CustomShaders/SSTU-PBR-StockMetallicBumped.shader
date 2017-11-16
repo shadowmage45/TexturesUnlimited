@@ -75,7 +75,7 @@ Shader "SSTU/PBR/StockMetallicBumped"
 			o.Normal = normal;
 			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			o.Metallic = spec.r * _Metallic;
-			o.Smoothness = color.a * _Smoothness * _Color.a;
+			o.Smoothness = color.a * _Smoothness;
 			o.Occlusion = ao.r;
 			o.Alpha = _Opacity;
 		}
