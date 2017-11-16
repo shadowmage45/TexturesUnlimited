@@ -8,6 +8,7 @@ Shader "SSTU/PBR/Solar"
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
 		_Emissive("Emission", 2D) = "black" {}
+        _Thickness("Thickness (RGB)", 2D) = "black"
         _SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
         _SubSurfScale("SubSurf Scale", Range(0, 10)) = 1
         _SubSurfPower("SubSurf Falloff Power", Range(0, 10)) = 1
@@ -41,6 +42,7 @@ Shader "SSTU/PBR/Solar"
 				
 		sampler2D _MainTex;
 		sampler2D _Emissive;
+		sampler2D _Thickness;
 		sampler2D _MetallicGlossMap;
 		sampler2D _BumpMap;		
 		sampler2D _AOMap;
@@ -122,12 +124,13 @@ Shader "SSTU/PBR/Solar"
 			fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
 			fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
+            fixed4 thick = tex2D(_Thickness, (IN.uv_MainTex));
 			
 			o.Albedo = color.rgb * _Color.rgb;
 			o.Normal = normal;
-            o.Backlight.rgb = glow.rgb;
+            o.Backlight.rgb = thick.rgb;
             o.Backlight.a = _SubSurfAmbient;
-			o.Emission = _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			o.Metallic = spec.r;
 			o.Smoothness = spec.a;
 			o.Occlusion = ao.r;
