@@ -449,7 +449,7 @@ namespace KSPShaderTools
         private ReflectionProbeData createProbe()
         {
             GameObject refSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            GameObject.Destroy(refSphere.GetComponent<Collider>());
+            GameObject.DestroyImmediate(refSphere.GetComponent<Collider>());
             refSphere.transform.localScale = new Vector3(10, 10, 10);
             refSphere.layer = skyboxLayer;
             refSphere.name = "SSTUReflectionProbe";
