@@ -7,10 +7,12 @@ Shader "SSTU/PBR/Masked"
 		_SpecMap("_SpecMap (RGB)", 2D) = "white" {}
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
+		_Emissive("Emission", 2D) = "white" {}
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
 		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,1)
+		_EmissiveColor("EmissionColor", Color) = (0,0,0)
 		_Opacity("Emission Opacity", Range(0,1) ) = 1
 		_RimFalloff("_RimFalloff", Range(0.01,5) ) = 0.1
 		_RimColor("_RimColor", Color) = (0,0,0,0)
@@ -38,7 +40,9 @@ Shader "SSTU/PBR/Masked"
 		sampler2D _SpecMap;
 		sampler2D _BumpMap;		
 		sampler2D _AOMap;
+		sampler2D _Emissive;
 
+		float4 _EmissiveColor;
 		float _Opacity;
 		float4 _MaskColor1;
 		float4 _MaskColor2;
@@ -72,6 +76,7 @@ Shader "SSTU/PBR/Masked"
 			fixed4 spec = tex2D(_SpecMap, (IN.uv_MainTex));
 			fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
+            fixed3 glow = tex2D(_Emissive, (IN.uv_MainTex));
 						
 			fixed m = saturate(1 - (mask.r + mask.g + mask.b));
 			fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
@@ -92,7 +97,7 @@ Shader "SSTU/PBR/Masked"
 			o.Metallic = saturate(userMetallic + baseMetallic + detailMetallic);
 			o.Occlusion = ao.r;
 			o.Normal = normal;
-			o.Emission = stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+            o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			o.Alpha = _Opacity;
 		}
 		ENDCG
