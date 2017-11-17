@@ -79,6 +79,7 @@ namespace KSPShaderTools
             applyToModelDatabase();
             MonoBehaviour.print("KSPShaderLoader - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
+            dumpUVMaps();
         }
 
         private void onPartListLoaded()
@@ -263,6 +264,26 @@ namespace KSPShaderTools
                             }
                         }
                     }
+                }
+            }
+        }
+
+        public static void dumpUVMaps()
+        {
+            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("UV_EXPORT");
+            if (nodes.Length > 0)
+            {
+                UVMapExporter exporter = new UVMapExporter();
+                ConfigNode node = nodes[0];
+                bool export = node.GetBoolValue("exportUVs", false);
+                if (!export) { return; }
+                string path = node.GetStringValue("exportPath", "exportedUVs");
+                exporter.width = node.GetIntValue("width", 1024);
+                exporter.height = node.GetIntValue("height", 1024);
+                exporter.stroke = node.GetIntValue("thickness", 1);
+                foreach (GameObject go in GameDatabase.Instance.databaseModel)
+                {
+                    exporter.exportModel(go, path);
                 }
             }
         }
