@@ -76,7 +76,7 @@ Shader "SSTU/PBR/Masked"
 			fixed4 spec = tex2D(_SpecMap, (IN.uv_MainTex));
 			fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
-            fixed3 glow = tex2D(_Emissive, (IN.uv_MainTex));
+            fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
 						
 			fixed m = saturate(1 - (mask.r + mask.g + mask.b));
 			fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;

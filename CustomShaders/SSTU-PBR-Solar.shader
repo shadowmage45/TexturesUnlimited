@@ -8,7 +8,7 @@ Shader "SSTU/PBR/Solar"
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
 		_Emissive("Emission", 2D) = "black" {}
-        _Thickness("Thickness (RGB)", 2D) = "black"
+        _Thickness("Thickness (RGB)", 2D) = "black" {}
         _SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
         _SubSurfScale("SubSurf Scale", Range(0, 10)) = 1
         _SubSurfPower("SubSurf Falloff Power", Range(0, 10)) = 1
