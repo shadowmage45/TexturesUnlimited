@@ -73,6 +73,7 @@
     <Compile Include="Util\SMFBundleDefinitionReader.cs" />
     <Compile Include="Util\TextureSet.cs" />
     <Compile Include="Util\Utils.cs" />
+    <Compile Include="Util\UVMapExporter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
