@@ -410,6 +410,11 @@ namespace KSPShaderTools
             this.sectionName = name;
             this.colors = colors;
             this.sectionTexture = set;
+            if (colors == null)
+            {
+                //owners may return null for set and/or colors if recoloring is unsupported
+                set = sectionTexture = null;
+            }
             MonoBehaviour.print("Created section recolor data with texture set: " + set+" for section: "+name);
             if (set != null)
             {
