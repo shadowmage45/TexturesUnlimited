@@ -44,16 +44,17 @@ namespace KSPShaderTools
         private static List<Action> postLoadCallbacks = new List<Action>();
 
         private static EventVoid.OnEvent partListLoadedEvent;
+
+        public static bool logReplacements = false;
+        public static bool logErrors = false;
         
         public void Start()
         {
             INSTANCE = this;
             DontDestroyOnLoad(this);
-            MonoBehaviour.print("KSPShaderLoader Start()");
             if (partListLoadedEvent == null)
             {
                 partListLoadedEvent = new EventVoid.OnEvent(onPartListLoaded);
-                MonoBehaviour.print("evt: " + partListLoadedEvent);
                 GameEvents.OnPartLoaderLoaded.Add(partListLoadedEvent);
             }
         }
@@ -71,6 +72,9 @@ namespace KSPShaderTools
         private static void load()
         {
             MonoBehaviour.print("KSPShaderLoader - Initializing shader and texture set data.");
+            ConfigNode config = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED")[0];
+            logReplacements = config.GetBoolValue("logReplacements", logReplacements);
+            logErrors = config.GetBoolValue("logErrors", logErrors);
             Dictionary<string, Shader> dict = new Dictionary<string, Shader>();
             loadBundles(dict);
             buildShaderSets(dict);
@@ -84,7 +88,7 @@ namespace KSPShaderTools
 
         private void onPartListLoaded()
         {
-            MonoBehaviour.print("KSPShaderLoader - Updating part icon shaders.");
+            MonoBehaviour.print("KSPShaderLoader - Updating Part Icon shaders.");
             applyToPartIcons();
         }
 
@@ -107,7 +111,7 @@ namespace KSPShaderTools
             else if (Application.platform == RuntimePlatform.OSXPlayer) { assetBundleName = node.GetStringValue("osx"); }
             assetBundleName = KSPUtil.ApplicationRootPath + "GameData/" + assetBundleName;
 
-            MonoBehaviour.print("KSPShaderLoader - Loading shader bundle: " + node.GetStringValue("name") + " :: " + assetBundleName);
+            MonoBehaviour.print("KSPShaderLoader - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
 
             // KSP-PartTools built AssetBunldes are in the Web format, 
             // and must be loaded using a WWW reference; you cannot use the
@@ -123,7 +127,6 @@ namespace KSPShaderTools
             else if (www.assetBundle == null)
             {
                 MonoBehaviour.print("KSPShaderLoader - Could not load AssetBundle from WWW - " + www);
-                MonoBehaviour.print("isDone" + www.isDone);
                 return;
             }
 
@@ -137,7 +140,7 @@ namespace KSPShaderTools
                 if (assetNames[i].EndsWith(".shader"))
                 {
                     shader = bundle.LoadAsset<Shader>(assetNames[i]);
-                    MonoBehaviour.print("KSPShaderLoader - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from bundle: "+assetBundleName);
+                    MonoBehaviour.print("KSPShaderLoader - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
                     shaderDict.Add(shader.name, shader);
                     GameDatabase.Instance.databaseShaders.AddUnique(shader);
                 }
@@ -157,7 +160,7 @@ namespace KSPShaderTools
                 node = shaderNodes[i];
                 sName = node.GetStringValue("shader", "KSP/Diffuse");
                 iName = node.GetStringValue("iconShader", "KSP/ScreenSpaceMask");
-                MonoBehaviour.print("Attempting to load shader data for: " + sName + " :: " + iName);
+                MonoBehaviour.print("Attempting to load shader icon replacement data for: " + sName + " :: " + iName);
                 Shader shader = dict[sName];
                 Shader iconShader = dict[iName];
                 ShaderData data = new ShaderData(shader, iconShader);
@@ -224,7 +227,57 @@ namespace KSPShaderTools
                     model = GameDatabase.Instance.GetModelPrefab(modelNames[k]);
                     if (model != null)
                     {
+                        if (logReplacements)
+                        {
+                            MonoBehaviour.print("KSPShaderLoader -- Replacing textures on database model: " + modelNames[k]);
+                        }                        
                         set.enable(model, set.maskColors);
+                        fixEmptyTextureSlots(model);
+                    }
+                }
+            }
+        }
+
+        private static void fixEmptyTextureSlots(GameObject databaseModel)
+        {
+            Dictionary<string, Texture2D> emptyTextureReplacements = new Dictionary<string, Texture2D>();
+            int len = 64 * 64;
+            Color[] colors = new Color[len];
+
+            Texture2D defaultBump = new Texture2D(64, 64, TextureFormat.RGBA32, false);
+            Color nrm = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            for (int i = 0; i < len; i++)
+            {
+                colors[i] = nrm;
+            }
+            defaultBump.SetPixels(colors);
+            defaultBump.Apply();
+
+            emptyTextureReplacements.Add("_MainTex", Texture2D.blackTexture);
+            emptyTextureReplacements.Add("_BumpMap", defaultBump);
+            emptyTextureReplacements.Add("_Emissive", Texture2D.blackTexture);
+            Material mat;
+            Renderer[] rends = databaseModel.GetComponentsInChildren<Renderer>();
+            len = rends.Length;
+            for (int i = 0; i < len; i++)
+            {
+                if (rends[i] == null) { continue; }
+                mat = rends[i].material;
+                if(mat== null) { continue; }
+                foreach (string key in emptyTextureReplacements.Keys)
+                {
+                    if (mat.HasProperty(key))
+                    {
+                        Texture tex = mat.GetTexture(key);
+                        if (tex == null)
+                        {
+                            if (logErrors)
+                            {
+                                MonoBehaviour.print("KSPShaderLoader -- ERROR: Found empty texture reference for property: " + key + " on model: " + databaseModel + "--" + rends[i].gameObject + ".  Replacing with default placeholder texture");
+                            }                            
+                            mat.SetTexture(key, emptyTextureReplacements[key]);
+                            rends[i].material = mat;
+                        }
                     }
                 }
             }
@@ -419,7 +472,10 @@ namespace KSPShaderTools
             }
             else
             {
-                MonoBehaviour.print("Shader: " + mat.shader + " did not have property: " + name);
+                if (KSPShaderLoader.logErrors)
+                {
+                    MonoBehaviour.print("KSPShaderLoader -- Shader: " + mat.shader + " did not have property: " + name);
+                }                
             }
             return false;
         }

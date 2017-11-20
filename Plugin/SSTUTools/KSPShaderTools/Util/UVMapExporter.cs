@@ -97,7 +97,7 @@ namespace KSPShaderTools
 
             private string getVectorString(string label, Vector3 vector)
             {
-                return "x" + label + "=\"" + (vector.x*1024) + "\" y" + label + "=\"" + (vector.y*1024) + "\"";
+                return "x" + label + "=\"" + (vector.x*1024) + "\" y" + label + "=\"" + ((1-vector.y)*1024) + "\"";
             }
         }
 

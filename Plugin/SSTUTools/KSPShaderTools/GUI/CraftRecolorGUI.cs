@@ -125,6 +125,7 @@ namespace KSPShaderTools
         {
             this.sectionData = section;
             this.colorIndex = colorIndex;
+            if (section.colors == null) { return; }
             editingColor = sectionData.colors[colorIndex];
             rStr = (editingColor.color.r * 255f).ToString("F0");
             gStr = (editingColor.color.g * 255f).ToString("F0");
@@ -320,10 +321,13 @@ namespace KSPShaderTools
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
             GUI.color = old;
-            sectionData.colors[colorIndex] = editingColor;
-            if (update)
+            if (sectionData.colors != null)
             {
-                sectionData.updateColors();
+                sectionData.colors[colorIndex] = editingColor;
+                if (update)
+                {
+                    sectionData.updateColors();
+                }
             }
         }
 
