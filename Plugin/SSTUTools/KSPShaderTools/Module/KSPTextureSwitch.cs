@@ -89,7 +89,7 @@ namespace KSPShaderTools
             }
             this.updateUIChooseOptionControl(nameof(currentTextureSet), textureSets.getTextureSetNames(), textureSets.getTextureSetTitles(), true, currentTextureSet);
             textureSets.enableCurrentSet(getModelTransforms());
-            Fields[nameof(currentTextureSet)].guiName = sectionName + " Texture";
+            Fields[nameof(currentTextureSet)].guiName = sectionName;
         }
 
         private Transform[] getModelTransforms()
