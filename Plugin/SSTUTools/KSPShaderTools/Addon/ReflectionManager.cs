@@ -98,7 +98,7 @@ namespace KSPShaderTools
         private int editorTarget = 2;
         private bool export = false;
         private bool debug = false;
-
+        
         internal List<ReflectionPass> renderStack = new List<ReflectionPass>();
         
         private EventData<Vessel>.OnEvent vesselCreateEvent;
@@ -106,6 +106,8 @@ namespace KSPShaderTools
 
         private ReflectionDebugGUI gui;
         private static ApplicationLauncherButton debugAppButton;
+
+        private GameObject debugSphere;
 
         private static Shader skyboxShader;
 
@@ -180,6 +182,17 @@ namespace KSPShaderTools
         {
             if (!reflectionsEnabled) { return; }
             updateReflections();
+            if (debugSphere != null)
+            {
+                if (FlightIntegrator.ActiveVesselFI != null)
+                {
+                    debugSphere.transform.position = FlightIntegrator.ActiveVesselFI.transform.position;
+                }
+                else if (HighLogic.LoadedSceneIsEditor)
+                {
+
+                }
+            }
 
             //TODO convolution on cubemap
             //https://seblagarde.wordpress.com/2012/06/10/amd-cubemapgen-for-physically-based-rendering/
@@ -233,6 +246,11 @@ namespace KSPShaderTools
             {
                 GameObject.Destroy(gui);
                 gui = null;
+            }
+            if (debugSphere != null)
+            {
+                GameObject.Destroy(debugSphere);
+                debugSphere = null;
             }
             //TODO proper resource cleanup
             //TODO do materials and render textures need to be released?
@@ -423,6 +441,7 @@ namespace KSPShaderTools
                         if (renderAtmo)
                         {
                             //atmo
+                            renderCubeFace(envMap, faceMask, partPos, atmosphereMask, nearClip, farClip);
                             renderCubeFace(envMap, faceMask, partPos, atmosphereMask, nearClip, farClip);
                         }
                         break;
@@ -628,6 +647,57 @@ namespace KSPShaderTools
         }
 
         #endregion DEBUG RENDERING
+
+        #region DEBUG SPHERE
+
+        public void toggleDebugSphere()
+        {
+            if (debugSphere != null)
+            {
+                GameObject.Destroy(debugSphere);
+                debugSphere = null;
+            }
+            else
+            {
+                debugSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                debugSphere.name = "ReflectionDebugSphere";
+                GameObject.DestroyImmediate(debugSphere.GetComponent<Collider>());
+                debugSphere.transform.localScale = Vector3.one * 10f;
+                Shader metallic = KSPShaderLoader.getShader("SSTU/PBR/Metallic");
+                Material mat = new Material(metallic);
+                mat.SetFloat("_Metallic", 1);
+                mat.SetFloat("_Smoothness", 1);
+                debugSphere.GetComponent<MeshRenderer>().material = mat;
+            }
+        }
+
+        public void dumpWorldHierarchy()
+        {
+            GameObject[] allGos = GameObject.FindObjectsOfType<GameObject>();
+            int len = allGos.Length;
+            for (int i = 0; i < len; i++)
+            {
+                GameObject go = allGos[i];
+                if (go != null)
+                {
+                    MonoBehaviour.print("GO: " + go.name + "," + go.layer + "," + go.transform.position.x + "," + go.transform.position.y + "," + go.transform.position.z + "," + go.transform.localScale);
+                }
+            }
+        }
+
+        public void dumpCameraData()
+        {
+            Camera[] cams = GameObject.FindObjectsOfType<Camera>();
+            int len = cams.Length;
+            for (int i = 0; i < len; i++)
+            {
+                Camera cam = cams[i];
+                string output = "camera: "+cam.name+","+cam.gameObject+","+cam.gameObject.transform.parent+","+cam.cullingMask + "," + cam.nearClipPlane + "," + cam.farClipPlane + ","+cam.transform.position.x+","+cam.transform.position.y+","+cam.transform.position.z;
+                MonoBehaviour.print(output);
+            }
+        }
+
+        #endregion DEBUG SPHERE
 
         #region CONTAINER CLASSES
 

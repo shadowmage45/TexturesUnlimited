@@ -67,6 +67,10 @@ namespace KSPShaderTools
                 manager.renderStack.Insert(decIndex + 1, pass);
             }
 
+            if (GUILayout.Button("Toggle Debug Sphere"))
+            {
+                manager.toggleDebugSphere();
+            }
             if (GUILayout.Button("Force Reflection Probe Update"))
             {
                 manager.updateReflections(true);
@@ -78,6 +82,14 @@ namespace KSPShaderTools
             if (GUILayout.Button("Export Debug Cube Layer"))
             {
                 manager.renderDebugLayers();
+            }
+            if (GUILayout.Button("Dump world data"))
+            {
+                manager.dumpWorldHierarchy();
+            }
+            if (GUILayout.Button("Dump cam data"))
+            {
+                manager.dumpCameraData();
             }
             GUILayout.EndVertical();
         }
