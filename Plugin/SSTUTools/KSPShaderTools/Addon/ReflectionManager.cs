@@ -12,9 +12,9 @@ namespace KSPShaderTools
         #region CONSTANTS
 
         public const int galaxyMask = 1 << 18;
-        public const int atmosphereMask = (1 << 9) | (1 << 23);
+        public const int atmosphereMask = 1 << 9;
         public const int scaledSpaceMask = 1 << 10;
-        public const int sceneryMask = (1 << 4) | (1 << 15);
+        public const int sceneryMask = (1 << 4) | (1 << 15) | (1<<17) | (1<<23);
         public const int fullSceneMask = ~0;
 
         #endregion
@@ -133,9 +133,8 @@ namespace KSPShaderTools
             if (renderStack.Count <= 0)
             {
                 renderStack.Add(ReflectionPass.GALAXY);
-                renderStack.Add(ReflectionPass.ATMOSPHERE);
                 renderStack.Add(ReflectionPass.SCALED);
-                renderStack.Add(ReflectionPass.SCENERY);
+                renderStack.Add(ReflectionPass.LOCAL);
             }
 
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("REFLECTION_CONFIG");
@@ -187,10 +186,6 @@ namespace KSPShaderTools
                 if (FlightIntegrator.ActiveVesselFI != null)
                 {
                     debugSphere.transform.position = FlightIntegrator.ActiveVesselFI.transform.position;
-                }
-                else if (HighLogic.LoadedSceneIsEditor)
-                {
-
                 }
             }
 
@@ -398,11 +393,6 @@ namespace KSPShaderTools
 
         private void renderFace(RenderTexture envMap, int face, Vector3 partPos)
         {
-            //TODO -- scaled and atmo need to be rendered in oposite order while in orbit
-            //or something....
-
-            //TODO -- investigate splitting the near/far rendering of scenery to reduce the massively massive far-clip plane.
-
             float nearClip = 0.3f;
             float farClip = 3.0e7f;
             int faceMask = 1 << face;
@@ -418,31 +408,23 @@ namespace KSPShaderTools
                         if (renderGalaxy)
                         {
                             //galaxy
-                            renderCubeFace(envMap, faceMask, GalaxyCubeControl.Instance.transform.position, galaxyMask, nearClip, farClip);
+                            renderCubeFace(envMap, faceMask, GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
                         }
                         break;
                     case ReflectionPass.SCALED:
                         if (renderScaled)
                         {
                             //scaled space
-                            renderCubeFace(envMap, faceMask, ScaledSpace.Instance.transform.position, scaledSpaceMask, nearClip, farClip);
+                            renderCubeFace(envMap, faceMask, ScaledSpace.Instance.transform.position, scaledSpaceMask | atmosphereMask, 1, 3.0e7f);
                         }
                         break;
-                    case ReflectionPass.SCENERY:
+                    case ReflectionPass.LOCAL:
                         if (renderScenery)
                         {
                             //scene
                             eveCameraFix.overwriteAlpha = eveInstalled;
                             renderCubeFace(envMap, faceMask, partPos, sceneryMask, nearClip, farClip);
                             eveCameraFix.overwriteAlpha = false;
-                        }
-                        break;
-                    case ReflectionPass.ATMOSPHERE:
-                        if (renderAtmo)
-                        {
-                            //atmo
-                            renderCubeFace(envMap, faceMask, partPos, atmosphereMask, nearClip, farClip);
-                            renderCubeFace(envMap, faceMask, partPos, atmosphereMask, nearClip, farClip);
                         }
                         break;
                     default:
@@ -476,14 +458,14 @@ namespace KSPShaderTools
             MeshRenderer rend = refSphere.GetComponent<MeshRenderer>();
             Material mat = new Material(skyboxShader);
             rend.material = mat;//still has to be updated later
-            ReflectionProbe probe = createProbe(refSphere);
+            ReflectionProbe probe = createReflectionProbe(refSphere);
             RenderTexture tex = createTexture(envMapSize);
             ReflectionProbeData data = new ReflectionProbeData(refSphere, rend, mat, probe, tex);
             data.updateTime = mapUpdateSpacing;//force update on the first frame it is 'loaded'
             return data;
         }
 
-        private ReflectionProbe createProbe(GameObject host)
+        private ReflectionProbe createReflectionProbe(GameObject host)
         {
             ReflectionProbe pr = host.AddComponent<ReflectionProbe>();
             pr.type = UnityEngine.Rendering.ReflectionProbeType.Cube;
@@ -491,6 +473,7 @@ namespace KSPShaderTools
             pr.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             pr.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
             pr.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.IndividualFaces;
+            //pr.boxProjection = true;
             pr.hdr = false;
             pr.size = new Vector3(2000, 2000, 2000);
             pr.resolution = envMapSize;
@@ -705,8 +688,7 @@ namespace KSPShaderTools
         {
             GALAXY,
             SCALED,
-            SCENERY,
-            ATMOSPHERE,
+            LOCAL,
         }
 
         public class VesselReflectionData
