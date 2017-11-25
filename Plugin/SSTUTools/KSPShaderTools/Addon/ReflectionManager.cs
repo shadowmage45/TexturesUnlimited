@@ -343,7 +343,6 @@ namespace KSPShaderTools
                         {
                             d.probeData.reflectionSphere.SetActive(true);
                         }
-                        MonoBehaviour.print("Updating reflection probe for vessel: " + d.vessel);
                         d.probeData.reflectionSphere.transform.position = d.vessel.transform.position;
                         if (force)
                         {
