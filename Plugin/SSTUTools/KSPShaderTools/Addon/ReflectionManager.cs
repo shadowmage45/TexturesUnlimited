@@ -339,6 +339,11 @@ namespace KSPShaderTools
                 {
                     if (d.vessel.loaded)
                     {
+                        if (!d.probeData.reflectionSphere.activeSelf)
+                        {
+                            d.probeData.reflectionSphere.SetActive(true);
+                        }
+                        MonoBehaviour.print("Updating reflection probe for vessel: " + d.vessel);
                         d.probeData.reflectionSphere.transform.position = d.vessel.transform.position;
                         if (force)
                         {
@@ -365,6 +370,13 @@ namespace KSPShaderTools
                                 d.probeData.updateFace = 0;
                             }
                         }
+                    }
+                    else
+                    {
+                        if (d.probeData.reflectionSphere.activeSelf)
+                        {
+                            d.probeData.reflectionSphere.SetActive(false);
+                        }                        
                     }
                 }
             }
@@ -402,6 +414,14 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 pass = renderStack[i];
+                if (i == 0)
+                {
+                    reflectionCamera.clearFlags = CameraClearFlags.Skybox;
+                }
+                else
+                {
+                    reflectionCamera.clearFlags = CameraClearFlags.Depth;
+                }
                 switch (pass)
                 {
                     case ReflectionPass.GALAXY:
@@ -423,7 +443,7 @@ namespace KSPShaderTools
                         {
                             //scene
                             eveCameraFix.overwriteAlpha = eveInstalled;
-                            renderCubeFace(envMap, faceMask, partPos, sceneryMask, nearClip, farClip);
+                            renderCubeFace(envMap, faceMask, partPos, sceneryMask, 0.5f, 750000);
                             eveCameraFix.overwriteAlpha = false;
                         }
                         break;
