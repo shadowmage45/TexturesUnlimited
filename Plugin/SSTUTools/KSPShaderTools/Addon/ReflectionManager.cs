@@ -76,6 +76,8 @@ namespace KSPShaderTools
         public GameObject cameraObject;
         public Camera reflectionCamera;
 
+        public readonly List<Vessel> toProcess = new List<Vessel>();
+
         /// <summary>
         /// Map of vessels and their reflection probe data
         /// </summary>
@@ -295,21 +297,34 @@ namespace KSPShaderTools
 
         public void vesselCreated(Vessel vessel)
         {
-            ReflectionProbeData data = createProbe();
-            data.reflectionSphere.transform.position = vessel.transform.position;
-            VesselReflectionData d = new VesselReflectionData(vessel, data);
-            vesselReflectionProbeDict.Add(vessel, d);
-            MonoBehaviour.print("SSTUReflectionManager vesselCreated() : " + vessel+" :: "+d);
+            toProcess.AddUnique(vessel);
         }
 
         public void vesselDestroyed(Vessel v)
         {
             MonoBehaviour.print("SSTUReflectionManager vesselDestroyed() : " + v);
+            toProcess.Remove(v);
             vesselReflectionProbeDict.Remove(v);
         }
 
         public void updateReflections(bool force = false)
         {
+            if (toProcess.Count > 0)
+            {
+                int len = toProcess.Count;
+                Vessel vessel;
+                for (int i = 0; i < len; i++)
+                {
+                    vessel = toProcess[i];
+                    if (vessel == null) { continue; }
+                    ReflectionProbeData data = createProbe();
+                    data.reflectionSphere.transform.position = vessel.transform.position;
+                    VesselReflectionData d = new VesselReflectionData(vessel, data);
+                    vesselReflectionProbeDict.Add(vessel, d);
+                    MonoBehaviour.print("SSTUReflectionManager vesselCreated() : " + vessel + " :: " + d);
+                }
+                toProcess.Clear();
+            }
             reflectionCamera.enabled = true;
             reflectionCamera.clearFlags = CameraClearFlags.Depth;
             if (editorReflectionData != null)
@@ -469,7 +484,18 @@ namespace KSPShaderTools
         private ReflectionProbeData createProbe()
         {
             GameObject refSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            foreach (Collider c in refSphere.GetComponents<Collider>())
+            {
+                c.enabled = false;
+                MonoBehaviour.print("DESTROYING THE FUCKING COLLIDER: " + c);
+                DestroyImmediate(c);
+                if (c != null)
+                {
+                    Destroy(c);
+                }                
+            }
             GameObject.DestroyImmediate(refSphere.GetComponent<Collider>());
+            
             refSphere.transform.localScale = new Vector3(10, 10, 10);
             refSphere.layer = skyboxLayer;
             refSphere.name = "SSTUReflectionProbe";
@@ -481,6 +507,10 @@ namespace KSPShaderTools
             RenderTexture tex = createTexture(envMapSize);
             ReflectionProbeData data = new ReflectionProbeData(refSphere, rend, mat, probe, tex);
             data.updateTime = mapUpdateSpacing;//force update on the first frame it is 'loaded'
+
+            MonoBehaviour.print("REFSPHERE HIERARCHY");
+            Utils.recursePrintComponents(refSphere, "");
+
             return data;
         }
 
