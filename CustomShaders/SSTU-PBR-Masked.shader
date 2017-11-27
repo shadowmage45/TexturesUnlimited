@@ -31,6 +31,7 @@ Shader "SSTU/PBR/Masked"
 
 		#pragma surface surf Standard keepalpha
 		#pragma target 3.0
+        #pragma multi_compile __ TINTING_MODE
 		#include "SSTUShaders.cginc"
 		
 		//ColoredSpecular lighting model and surface data struct found in SSTUShaders.cginc
@@ -77,24 +78,32 @@ Shader "SSTU/PBR/Masked"
 			fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
             fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
+            
+            fixed m = saturate(1 - (mask.r + mask.g + mask.b));
+            fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
+            fixed3 userSpec = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
+            fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
+                
+            fixed3 diffuseColor = color.rgb * m;
+            fixed3 baseSpec = spec.rgb * m;
+            fixed baseMetallic = spec.a * m;
 						
-			fixed m = saturate(1 - (mask.r + mask.g + mask.b));
-			fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
-			fixed3 diffuseColor = color.rgb * m;
-			fixed3 detailColor = (color.rgb - 0.5) * (1 - m);			
+            #if TINTING_MODE
+                fixed3 detailColor = color.rgb * (1 - m);
+                fixed3 detailSpec = spec.rgb * (1 - m);
+                fixed detailMetallic = spec.a * (1 - m);
+                o.Albedo = saturate(userColor * detailColor + diffuseColor);
+                o.Smoothness = saturate(userSpec * detailSpec + baseSpec).r;
+                o.Metallic = saturate(userMetallic * detailMetallic + baseMetallic);
+            #else
+                fixed3 detailColor = (color.rgb - 0.5) * (1 - m);
+                fixed3 detailSpec = (spec.rgb - 0.5) * (1 - m);
+                fixed detailMetallic = (spec.a - 0.5) * (1 - m);
+                o.Albedo = saturate(userColor + diffuseColor + detailColor);
+                o.Smoothness = saturate(userSpec + baseSpec + detailSpec).r;
+                o.Metallic = saturate(userMetallic + baseMetallic + detailMetallic);
+            #endif
 			
-			fixed3 userSpec = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-			fixed3 baseSpec = spec.rgb * m;
-			fixed3 detailSpec = (spec.rgb - 0.5) * (1 - m);
-			
-			//user metallic input
-			fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
-			fixed baseMetallic = spec.a * m;
-			fixed detailMetallic = (spec.a - 0.5) * (1 - m);
-			
-			o.Albedo = saturate(userColor + diffuseColor + detailColor);			
-			o.Smoothness = saturate(userSpec + baseSpec + detailSpec).r;
-			o.Metallic = saturate(userMetallic + baseMetallic + detailMetallic);
 			o.Occlusion = ao.r;
 			o.Normal = normal;
             o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;

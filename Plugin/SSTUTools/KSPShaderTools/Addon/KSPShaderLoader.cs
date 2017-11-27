@@ -426,6 +426,10 @@ namespace KSPShaderTools
                 {
                     props.Add(new ShaderPropertyFloat(propNodes[i]));
                 }
+                else if (propNodes[i].HasValue("keyword"))
+                {
+                    props.Add(new ShaderPropertyKeyword(propNodes[i]));
+                }
             }
             //simply/lazy texture assignments
             string[] textures = node.GetStringValues("texture");
@@ -441,6 +445,13 @@ namespace KSPShaderTools
                 main = splits[0] == "_MainTex";
                 nrm = splits[0] == "_BumpMap";
                 props.Add(new ShaderPropertyTexture(name, tex, main, nrm));
+            }
+            //simple keyword assignments
+            string[] keywords = node.GetStringValues("keyword");
+            len = keywords.Length;
+            for (int i = 0; i < len; i++)
+            {
+                props.Add(new ShaderPropertyKeyword("keyword", keywords[i]));
             }
             return props.ToArray();
         }
@@ -558,6 +569,26 @@ namespace KSPShaderTools
                     mat.SetTexture(name, GameDatabase.Instance.GetTexture(textureName, normal));
                 }
             }
+        }
+    }
+
+    public class ShaderPropertyKeyword : ShaderProperty
+    {
+        public string keyword;
+
+        public ShaderPropertyKeyword(ConfigNode node) : base(node)
+        {
+            keyword = node.GetStringValue("keyword");
+        }
+
+        public ShaderPropertyKeyword(string name, string keyword) : base(name)
+        {
+            this.keyword = keyword;
+        }
+
+        protected override void applyInternal(Material mat)
+        {
+            mat.EnableKeyword(keyword);
         }
     }
     

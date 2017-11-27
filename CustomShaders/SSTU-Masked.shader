@@ -29,6 +29,7 @@ Shader "SSTU/Masked"
 
 		#pragma surface surf ColoredSpecular keepalpha
 		#pragma target 3.0
+        #pragma multi_compile __ TINTING_MODE
 		#include "SSTUShaders.cginc"
 		
 		//ColoredSpecular lighting model and surface data struct found in SSTUShaders.cginc
@@ -61,18 +62,30 @@ Shader "SSTU/Masked"
 			float4 spec = tex2D(_SpecMap, (IN.uv_MainTex));
 			float3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			float3 ao = tex2D(_AOMap, (IN.uv_MainTex));
-						
-			float m = saturate(1 - (mask.r + mask.g + mask.b));
-			half3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
-			half3 diffuseColor = color * m;
-			half3 detailColor = (color - 0.5) * (1 - m);			
 			
-			half3 userSpec = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-			half3 baseSpec = spec * m;
-			half3 detailSpec = (spec - 0.5) * (1 - m);
-			
-			o.Albedo = saturate(userColor + diffuseColor + detailColor) * ao;			
-			o.GlossColor = saturate(userSpec + baseSpec + detailSpec);
+            #if TINTING_MODE
+                float m = saturate(1 - (mask.r + mask.g + mask.b));
+                half3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
+                half3 diffuseColor = color * m;
+                half3 detailColor = color * (1 - m);
+                
+                half3 userSpec = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
+                half3 baseSpec = spec * m;
+                half3 detailSpec = spec * (1 - m);
+                o.Albedo = saturate(userColor * detailColor + diffuseColor) * ao;
+                o.GlossColor = saturate(userSpec * detailSpec + baseSpec);
+            #else
+                float m = saturate(1 - (mask.r + mask.g + mask.b));
+                half3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
+                half3 diffuseColor = color * m;
+                half3 detailColor = (color - 0.5) * (1 - m);
+                
+                half3 userSpec = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
+                half3 baseSpec = spec * m;
+                half3 detailSpec = (spec - 0.5) * (1 - m);
+                o.Albedo = saturate(userColor + diffuseColor + detailColor) * ao;
+                o.GlossColor = saturate(userSpec + baseSpec + detailSpec);
+            #endif
 			o.Specular = _Shininess;
 			o.Normal = normal;
 			o.Emission = stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
