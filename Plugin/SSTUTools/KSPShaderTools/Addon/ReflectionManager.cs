@@ -41,11 +41,6 @@ namespace KSPShaderTools
         public int mapUpdateSpacing = 60;
 
         /// <summary>
-        /// Number of faces to happen on any given update.
-        /// </summary>
-        public int numberOfFaces = 1;
-
-        /// <summary>
         /// Size of the rendered reflection map.  Higher resolutions result in higher fidelity reflections, but at a much higher run-time cost.
         /// Must be a power-of-two size; e.g. 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048.
         /// </summary>
@@ -62,9 +57,9 @@ namespace KSPShaderTools
 
         //set through the reflection debug GUI
 
-        public bool renderGalaxy = true;        
-        public bool renderScaled = true;        
-        public bool renderAtmo = true;        
+        public bool renderGalaxy = true;
+        public bool renderScaled = true;
+        public bool renderAtmo = true;
         public bool renderScenery = true;
 
         public bool reflectionsEnabled = true;
@@ -150,7 +145,6 @@ namespace KSPShaderTools
             reflectionsEnabled = node.GetBoolValue("enabled", false);
             envMapSize = node.GetIntValue("resolution", envMapSize);
             mapUpdateSpacing = node.GetIntValue("interval", mapUpdateSpacing);
-            numberOfFaces = node.GetIntValue("faces", numberOfFaces);
             eveInstalled = node.GetBoolValue("eveInstalled", false);
             debug = node.GetBoolValue("debug", false);
             export = node.GetBoolValue("exportDebugCubes", false);
@@ -372,14 +366,16 @@ namespace KSPShaderTools
                         d.probeData.updateTime++;
                         if (d.probeData.updateTime >= mapUpdateSpacing)
                         {
-                            for (int i = 0; i < numberOfFaces && d.probeData.updateFace < 6; i++)
+                            renderFace(d.probeData.renderedCube, d.probeData.updateFace, d.vessel.transform.position, d.probeData.updatePass);
+                            d.probeData.updatePass++;
+                            if (d.probeData.updatePass >= 3)
                             {
-                                renderFace(d.probeData.renderedCube, d.probeData.updateFace, d.vessel.transform.position);
                                 d.probeData.updateFace++;
                             }
-                            if (d.probeData.updateFace >= 6)
+                            if (d.probeData.updateFace >= 6 && d.probeData.updatePass >= 4)
                             {
                                 updateProbe(d.probeData);
+                                d.probeData.updatePass = 0;
                                 d.probeData.updateTime = 0;
                                 d.probeData.updateFace = 0;
                             }
@@ -413,57 +409,53 @@ namespace KSPShaderTools
         {
             for (int face = 0; face < 6; face++)
             {
-                renderFace(envMap, face, partPos);
+                for (int pass = 0; pass < 3; pass++)
+                {
+                    renderFace(envMap, face, partPos, 3);
+                }                
             }
         }
 
-        private void renderFace(RenderTexture envMap, int face, Vector3 partPos)
+        private void renderFace(RenderTexture envMap, int face, Vector3 partPos, int ipass)
         {
-            float nearClip = 0.3f;
-            float farClip = 3.0e7f;
             int faceMask = 1 << face;
-
             int len = renderStack.Count;
-            ReflectionPass pass;
-            for (int i = 0; i < len; i++)
+            ReflectionPass pass = renderStack[ipass];
+            if (pass == ReflectionPass.GALAXY)
             {
-                pass = renderStack[i];
-                if (i == 0)
-                {
-                    reflectionCamera.clearFlags = CameraClearFlags.Skybox;
-                }
-                else
-                {
-                    reflectionCamera.clearFlags = CameraClearFlags.Depth;
-                }
-                switch (pass)
-                {
-                    case ReflectionPass.GALAXY:
-                        if (renderGalaxy)
-                        {
-                            //galaxy
-                            renderCubeFace(envMap, faceMask, GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
-                        }
-                        break;
-                    case ReflectionPass.SCALED:
-                        if (renderScaled)
-                        {
-                            //scaled space
-                            renderCubeFace(envMap, faceMask, ScaledSpace.Instance.transform.position, scaledSpaceMask | atmosphereMask, 1, 3.0e7f);
-                        }
-                        break;
-                    case ReflectionPass.LOCAL:
-                        if (renderScenery)
-                        {
-                            //scene
-                            eveCameraFix.overwriteAlpha = eveInstalled;
-                            renderCubeFace(envMap, faceMask, partPos, sceneryMask, 0.5f, 750000);
-                            eveCameraFix.overwriteAlpha = false;
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                reflectionCamera.clearFlags = CameraClearFlags.Skybox;
+            }
+            else
+            {
+                reflectionCamera.clearFlags = CameraClearFlags.Depth;
+            }
+            switch (pass)
+            {
+                case ReflectionPass.GALAXY:
+                    if (renderGalaxy)
+                    {
+                        //galaxy
+                        renderCubeFace(envMap, faceMask, GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
+                    }
+                    break;
+                case ReflectionPass.SCALED:
+                    if (renderScaled)
+                    {
+                        //scaled space
+                        renderCubeFace(envMap, faceMask, ScaledSpace.Instance.transform.position, scaledSpaceMask | atmosphereMask, 1, 3.0e7f);
+                    }
+                    break;
+                case ReflectionPass.LOCAL:
+                    if (renderScenery)
+                    {
+                        //scene
+                        eveCameraFix.overwriteAlpha = eveInstalled;
+                        renderCubeFace(envMap, faceMask, partPos, sceneryMask, 0.5f, 750000);
+                        eveCameraFix.overwriteAlpha = false;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -768,6 +760,7 @@ namespace KSPShaderTools
             public readonly Material skyboxMateral;
             public readonly MeshRenderer render;
             public int updateFace = 0;
+            public int updatePass = 0;
             public int updateTime = 0;
             public ReflectionProbeData(GameObject sphere, MeshRenderer rend, Material mat, ReflectionProbe probe, RenderTexture envMap)
             {
