@@ -371,8 +371,9 @@ namespace KSPShaderTools
                             if (d.probeData.updatePass >= 3)
                             {
                                 d.probeData.updateFace++;
+                                d.probeData.updatePass = 0;
                             }
-                            if (d.probeData.updateFace >= 6 && d.probeData.updatePass >= 4)
+                            if (d.probeData.updateFace >= 6)
                             {
                                 updateProbe(d.probeData);
                                 d.probeData.updatePass = 0;
@@ -407,11 +408,12 @@ namespace KSPShaderTools
 
         private void renderFullCube(RenderTexture envMap, Vector3 partPos)
         {
+            int passCount = renderStack.Count;
             for (int face = 0; face < 6; face++)
             {
-                for (int pass = 0; pass < 3; pass++)
+                for (int pass = 0; pass < passCount; pass++)
                 {
-                    renderFace(envMap, face, partPos, 3);
+                    renderFace(envMap, face, partPos, pass);
                 }                
             }
         }
@@ -478,15 +480,8 @@ namespace KSPShaderTools
             GameObject refSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             foreach (Collider c in refSphere.GetComponents<Collider>())
             {
-                c.enabled = false;
-                MonoBehaviour.print("DESTROYING THE FUCKING COLLIDER: " + c);
                 DestroyImmediate(c);
-                if (c != null)
-                {
-                    Destroy(c);
-                }                
             }
-            GameObject.DestroyImmediate(refSphere.GetComponent<Collider>());
             
             refSphere.transform.localScale = new Vector3(10, 10, 10);
             refSphere.layer = skyboxLayer;
