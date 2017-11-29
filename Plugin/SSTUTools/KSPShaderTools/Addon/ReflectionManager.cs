@@ -494,10 +494,6 @@ namespace KSPShaderTools
             RenderTexture tex = createTexture(envMapSize);
             ReflectionProbeData data = new ReflectionProbeData(refSphere, rend, mat, probe, tex);
             data.updateTime = mapUpdateSpacing;//force update on the first frame it is 'loaded'
-
-            MonoBehaviour.print("REFSPHERE HIERARCHY");
-            Utils.recursePrintComponents(refSphere, "");
-
             return data;
         }
 
