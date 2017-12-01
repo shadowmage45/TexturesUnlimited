@@ -22,20 +22,6 @@ namespace KSPShaderTools
         #region CONFIG FIELDS
 
         /// <summary>
-        /// Should static reflection maps be used?
-        /// If true, reflection maps will only be rendered a single time on the scene initialization.
-        /// If false, reflection maps will be updated at runtime with a frequency/delay specified by further config settings
-        /// </summary>
-        public bool useStaticMaps = false;
-
-        /// <summary>
-        /// Should a reflection probe be added per-part?
-        /// If true, reflections are done on a per-part basis.
-        /// If false, reflections are done on a per-vessel basis.
-        /// </summary>
-        public bool perPartMaps = false;
-
-        /// <summary>
         /// Number of frames inbetween reflection map updates.
         /// </summary>
         public int mapUpdateSpacing = 60;
@@ -44,7 +30,7 @@ namespace KSPShaderTools
         /// Size of the rendered reflection map.  Higher resolutions result in higher fidelity reflections, but at a much higher run-time cost.
         /// Must be a power-of-two size; e.g. 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048.
         /// </summary>
-        public int envMapSize = 512;
+        public int envMapSize = 256;
 
         /// <summary>
         /// Layer to use for skybox hack
@@ -68,45 +54,27 @@ namespace KSPShaderTools
 
         #region INTERNAL FIELDS
 
+        public ReflectionProbeData probeData;
         public GameObject cameraObject;
         public Camera reflectionCamera;
-
-        public readonly List<Vessel> toProcess = new List<Vessel>();
-
-        /// <summary>
-        /// Map of vessels and their reflection probe data
-        /// </summary>
-        public readonly Dictionary<Vessel, VesselReflectionData> vesselReflectionProbeDict = new Dictionary<Vessel, VesselReflectionData>();
-        
-        /// <summary>
-        /// The reflection data for inside of the (current) editor.  Should be rebuilt whenever the editor is initialized, closed, or change
-        /// </summary>
-        public EditorReflectionData editorReflectionData;
-
-        //Mod interop stuff
-
-        public bool eveInstalled = true;//TODO -- load this value from config
-        public CameraAlphaFix eveCameraFix;
-
-        //internal data -- event handling, app-launcher button and debug-GUI handling
-
+        private static Shader skyboxShader;
         private bool renderedEditor = false;
         private int editorDelay = 0;
         private int editorTarget = 2;
+
+        //Mod interop stuff
+
+        public bool eveInstalled = true;
+        public CameraAlphaFix eveCameraFix;
+
+        //internal debug fields
         private bool export = false;
         private bool debug = false;
-        
-        internal List<ReflectionPass> renderStack = new List<ReflectionPass>();
-        
-        private EventData<Vessel>.OnEvent vesselCreateEvent;
-        private EventData<Vessel>.OnEvent vesselDestroyedEvent;
 
-        private ReflectionDebugGUI gui;
         private static ApplicationLauncherButton debugAppButton;
-
+        private ReflectionDebugGUI gui;
         private GameObject debugSphere;
 
-        private static Shader skyboxShader;
 
         private static ReflectionManager instance;
 
@@ -127,13 +95,6 @@ namespace KSPShaderTools
             MonoBehaviour.print("ReflectionManager Awake()");
             instance = this;
 
-            if (renderStack.Count <= 0)
-            {
-                renderStack.Add(ReflectionPass.GALAXY);
-                renderStack.Add(ReflectionPass.SCALED);
-                renderStack.Add(ReflectionPass.LOCAL);
-            }
-
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("REFLECTION_CONFIG");
             if (nodes == null || nodes.Length < 1)
             {
@@ -150,10 +111,6 @@ namespace KSPShaderTools
             export = node.GetBoolValue("exportDebugCubes", false);
 
             init();
-            vesselCreateEvent = new EventData<Vessel>.OnEvent(vesselCreated);
-            vesselDestroyedEvent = new EventData<Vessel>.OnEvent(vesselDestroyed);
-            GameEvents.onVesselCreate.Add(vesselCreateEvent);
-            GameEvents.onVesselDestroy.Add(vesselDestroyedEvent);
 
             Texture2D tex;
             if (debugAppButton == null && debug)//static reference; track if the button was EVER created, as KSP keeps them even if the addon is destroyed
@@ -225,14 +182,6 @@ namespace KSPShaderTools
         {
             MonoBehaviour.print("SSTUReflectionManager OnDestroy()");
             if (instance == this) { instance = null; }
-            if (vesselCreateEvent != null)
-            {
-                GameEvents.onVesselCreate.Remove(vesselCreateEvent);
-            }
-            if (vesselDestroyedEvent != null)
-            {
-                GameEvents.onVesselDestroy.Remove(vesselDestroyedEvent);
-            }
             if (gui != null)
             {
                 GameObject.Destroy(gui);
@@ -270,128 +219,79 @@ namespace KSPShaderTools
                     MonoBehaviour.print("ERROR: SSTUReflectionManager - Could not find skybox shader.");
                 }
             }
+            probeData = createProbe();
             if (HighLogic.LoadedSceneIsEditor)
             {
-                ReflectionProbeData data = createProbe();
-                data.reflectionSphere.transform.position = new Vector3(0, 10, 0);
-                editorReflectionData = new EditorReflectionData(data);
-                MonoBehaviour.print("SSTUReflectionManager created editor reflection data: " + data + " :: " +editorReflectionData);
+                probeData.reflectionSphere.transform.position = new Vector3(0, 10, 0);
             }
             else if (HighLogic.LoadedSceneIsFlight)
             {
-                //vessels are added thorugh an event as they are loaded
+                //probe position updated during Update()
             }
-
-            //TODO -- replace with custom baked skybox...
-            //use in areas where other reflection probes don't make sense (space?)
-            //RenderSettings.customReflection = customCubemap;
-
-            //TODO -- pre-bake cubemap to use as the custom skybox in the reflection probe camera; this can be higher res and updated far less often (every couple of seconds?)
         }
 
-        public void vesselCreated(Vessel vessel)
+        public void forceReflectionUpdate()
         {
-            toProcess.AddUnique(vessel);
+
         }
 
-        public void vesselDestroyed(Vessel v)
+        public void updateReflections()
         {
-            MonoBehaviour.print("SSTUReflectionManager vesselDestroyed() : " + v);
-            toProcess.Remove(v);
-            vesselReflectionProbeDict.Remove(v);
-        }
-
-        public void updateReflections(bool force = false)
-        {
-            if (toProcess.Count > 0)
+            if (HighLogic.LoadedSceneIsEditor)
             {
-                int len = toProcess.Count;
-                Vessel vessel;
-                for (int i = 0; i < len; i++)
-                {
-                    vessel = toProcess[i];
-                    if (vessel == null) { continue; }
-                    ReflectionProbeData data = createProbe();
-                    data.reflectionSphere.transform.position = vessel.transform.position;
-                    VesselReflectionData d = new VesselReflectionData(vessel, data);
-                    vesselReflectionProbeDict.Add(vessel, d);
-                    MonoBehaviour.print("SSTUReflectionManager vesselCreated() : " + vessel + " :: " + d);
-                }
-                toProcess.Clear();
-            }
-            reflectionCamera.enabled = true;
-            reflectionCamera.clearFlags = CameraClearFlags.Depth;
-            if (editorReflectionData != null)
-            {
-                if (!renderedEditor || force)
+                if (!renderedEditor)
                 {
                     if (editorDelay >= editorTarget)
                     {
                         renderedEditor = true;
                     }
                     editorDelay++;
-                    if (force || renderedEditor)
+                    if (renderedEditor)
                     {
-                        MonoBehaviour.print("updating editor reflection");
-                        renderFullCube(editorReflectionData.probeData.renderedCube, new Vector3(0, 10, 0));
-                        updateProbe(editorReflectionData.probeData);
-                    }
-                    if (force && export)
-                    {
-                        exportCubemap(editorReflectionData.probeData.renderedCube, "editorReflect");
+                        reflectionCamera.gameObject.SetActive(true);
+                        renderFullCube(probeData.renderedCube, new Vector3(0, 10, 0));
+                        updateProbe(probeData);
+                        reflectionCamera.gameObject.SetActive(false);
                     }
                 }
             }
-            else
+            else if (HighLogic.LoadedSceneIsFlight)
             {
-                foreach (VesselReflectionData d in vesselReflectionProbeDict.Values)
+                Vessel vessel = FlightIntegrator.ActiveVesselFI.Vessel;
+                if (vessel != null && vessel.loaded)
                 {
-                    if (d.vessel.loaded)
+                    //probeData.reflectionSphere.SetActive(true);
+                    probeData.reflectionSphere.transform.position = vessel.transform.position;
+                    probeData.updateTime++;
+                    if (probeData.updateTime >= mapUpdateSpacing)
                     {
-                        if (!d.probeData.reflectionSphere.activeSelf)
+                        reflectionCamera.gameObject.SetActive(true);
+                        renderFace(probeData.renderedCube, probeData.updateFace, vessel.transform.position, probeData.updatePass);
+                        reflectionCamera.gameObject.SetActive(false);
+                        probeData.updatePass++;
+                        if (probeData.updatePass >= 3)
                         {
-                            d.probeData.reflectionSphere.SetActive(true);
+                            probeData.updateFace++;
+                            probeData.updatePass = 0;
                         }
-                        d.probeData.reflectionSphere.transform.position = d.vessel.transform.position;
-                        if (force)
+                        if (probeData.updateFace >= 6)
                         {
-                            renderFullCube(d.probeData.renderedCube, d.vessel.transform.position);
-                            updateProbe(d.probeData);
-                            if (export)
-                            {
-                                exportCubemap(d.probeData.renderedCube, "vesselReflect-" + d.vessel.name);
-                            }
-                            continue;
+                            updateProbe(probeData);
+                            probeData.updatePass = 0;
+                            probeData.updateTime = 0;
+                            probeData.updateFace = 0;
                         }
-                        d.probeData.updateTime++;
-                        if (d.probeData.updateTime >= mapUpdateSpacing)
-                        {
-                            renderFace(d.probeData.renderedCube, d.probeData.updateFace, d.vessel.transform.position, d.probeData.updatePass);
-                            d.probeData.updatePass++;
-                            if (d.probeData.updatePass >= 3)
-                            {
-                                d.probeData.updateFace++;
-                                d.probeData.updatePass = 0;
-                            }
-                            if (d.probeData.updateFace >= 6)
-                            {
-                                updateProbe(d.probeData);
-                                d.probeData.updatePass = 0;
-                                d.probeData.updateTime = 0;
-                                d.probeData.updateFace = 0;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (d.probeData.reflectionSphere.activeSelf)
-                        {
-                            d.probeData.reflectionSphere.SetActive(false);
-                        }                        
                     }
                 }
+                else
+                {
+                    //TODO -- disable reflection probe if no vessel is active/loaded?
+                }
             }
-            reflectionCamera.enabled = false;
+            else //space center, main menu, others
+            {
+                //TODO -- handle reflective setups for space center, main menu, map view?
+            }
         }
 
         #endregion
@@ -408,7 +308,7 @@ namespace KSPShaderTools
 
         private void renderFullCube(RenderTexture envMap, Vector3 partPos)
         {
-            int passCount = renderStack.Count;
+            int passCount = 3;
             for (int face = 0; face < 6; face++)
             {
                 for (int pass = 0; pass < passCount; pass++)
@@ -418,12 +318,10 @@ namespace KSPShaderTools
             }
         }
 
-        private void renderFace(RenderTexture envMap, int face, Vector3 partPos, int ipass)
+        private void renderFace(RenderTexture envMap, int face, Vector3 partPos, int pass)
         {
             int faceMask = 1 << face;
-            int len = renderStack.Count;
-            ReflectionPass pass = renderStack[ipass];
-            if (pass == ReflectionPass.GALAXY)
+            if (pass == 0)
             {
                 reflectionCamera.clearFlags = CameraClearFlags.Skybox;
             }
@@ -433,21 +331,21 @@ namespace KSPShaderTools
             }
             switch (pass)
             {
-                case ReflectionPass.GALAXY:
+                case 0:
                     if (renderGalaxy)
                     {
                         //galaxy
                         renderCubeFace(envMap, faceMask, GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
                     }
                     break;
-                case ReflectionPass.SCALED:
+                case 1:
                     if (renderScaled)
                     {
                         //scaled space
                         renderCubeFace(envMap, faceMask, ScaledSpace.Instance.transform.position, scaledSpaceMask | atmosphereMask, 1, 3.0e7f);
                     }
                     break;
-                case ReflectionPass.LOCAL:
+                case 2:
                     if (renderScenery)
                     {
                         //scene
@@ -522,6 +420,7 @@ namespace KSPShaderTools
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.filterMode = FilterMode.Trilinear;
             tex.generateMips = false;
+            //TODO -- loop through texture and set to default = black
             return tex;
         }
 

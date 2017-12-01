@@ -42,38 +42,13 @@ namespace KSPShaderTools
             manager.renderScenery = addButtonRowToggle("Render Scenery", scenery);
             manager.eveInstalled = addButtonRowToggle("Eve Fix", manager.eveInstalled);
 
-            int len = manager.renderStack.Count;
-            ReflectionManager.ReflectionPass pass;
-            int incIndex = -1;
-            int decIndex = -1;
-            for (int i = 0; i < len; i++)
-            {
-                pass = manager.renderStack[i];
-                bool minus = addButtonRow(pass.ToString(), "-");
-                if (minus) { decIndex = i; }
-                bool plus = addButtonRow(pass.ToString(), "+");
-                if (plus) { incIndex = i; }
-            }
-            if (incIndex > 0)
-            {
-                pass = manager.renderStack[incIndex];
-                manager.renderStack.RemoveAt(incIndex);
-                manager.renderStack.Insert(incIndex - 1, pass);
-            }
-            if (decIndex >= 0 && decIndex < len-1)
-            {
-                pass = manager.renderStack[decIndex];
-                manager.renderStack.RemoveAt(decIndex);
-                manager.renderStack.Insert(decIndex + 1, pass);
-            }
-
             if (GUILayout.Button("Toggle Debug Sphere"))
             {
                 manager.toggleDebugSphere();
             }
             if (GUILayout.Button("Force Reflection Probe Update"))
             {
-                manager.updateReflections(true);
+                manager.forceReflectionUpdate();
             }
             if (GUILayout.Button("Export Debug Cube Maps"))
             {
