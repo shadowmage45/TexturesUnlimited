@@ -473,8 +473,6 @@ namespace KSPShaderTools
 
         protected abstract void applyInternal(Material mat);
 
-        //protected abstract string getStringValue();
-
         protected bool checkApply(Material mat)
         {
             if (mat.HasProperty(name))
@@ -560,14 +558,12 @@ namespace KSPShaderTools
         {
             if (checkApply(mat))
             {
-                if (main)
+                Texture2D texture = GameDatabase.Instance.GetTexture(textureName, normal);
+                if (texture == null && KSPShaderLoader.logErrors)
                 {
-                    mat.mainTexture = GameDatabase.Instance.GetTexture(textureName, false);
+                    MonoBehaviour.print("ERROR: KSPShaderLoader - Texture could not be located for name: " + textureName + " for texture slot: "+name+" while loading textures for material: " + mat);
                 }
-                else
-                {
-                    mat.SetTexture(name, GameDatabase.Instance.GetTexture(textureName, normal));
-                }
+                mat.SetTexture(name, texture);
             }
         }
     }

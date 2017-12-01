@@ -137,6 +137,10 @@ namespace KSPShaderTools
                 {
                     mat.shader = s;
                 }
+                else if (s == null)
+                {
+                    MonoBehaviour.print("ERROR: KSPShaderLoader - Could not locate shader: " + shader + " while updating material: " + mat);
+                }
             }
             updateMaterialProperties(mat, props);
         }
