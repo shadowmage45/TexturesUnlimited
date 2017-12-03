@@ -255,7 +255,7 @@ namespace KSPShaderTools
                     }
                 }
             }
-            else if (HighLogic.LoadedSceneIsFlight)
+            else if (HighLogic.LoadedSceneIsFlight && FlightIntegrator.ActiveVesselFI != null)
             {
                 Vessel vessel = FlightIntegrator.ActiveVesselFI.Vessel;
                 if (vessel != null && vessel.loaded)
