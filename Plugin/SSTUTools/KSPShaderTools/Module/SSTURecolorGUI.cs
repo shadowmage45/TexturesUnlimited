@@ -49,9 +49,13 @@ namespace KSPShaderTools
         //IPartTextureUpdated callback method
         public void textureUpdated(Part part)
         {
-            if (part == this.part && gui!=null)
+            if (part == this.part)
             {
-                gui.refreshGui(part);
+                updateButtonVisibility();
+                if (gui != null)
+                {
+                    gui.refreshGui(part);
+                }
             }
         }
 
@@ -74,6 +78,13 @@ namespace KSPShaderTools
         {
             base.OnStart(state);
             GameEvents.onEditorShipModified.Add(new EventData<ShipConstruct>.OnEvent(editorVesselModified));
+            updateButtonVisibility();
+        }
+
+        public void Start()
+        {
+            //called from both OnStart and Start -- as external modules might not yet be initialized during OnStart() (but also might have), need to validate after both
+            updateButtonVisibility();
         }
 
         public void OnDestroy()
@@ -83,10 +94,35 @@ namespace KSPShaderTools
 
         public void editorVesselModified(ShipConstruct ship)
         {
+            updateButtonVisibility();
             if (gui != null)
             {
                 gui.refreshGui(part);
             }
+        }
+
+        public void updateButtonVisibility()
+        {
+            IRecolorable[] ircs = part.GetComponents<IRecolorable>();
+            int len = ircs.Length;
+            IRecolorable irc;
+            TextureSet ts;
+            string[] sections;
+            bool enabled = false;
+            for (int i = 0; i < len; i++)
+            {
+                irc = ircs[i];
+                sections = irc.getSectionNames();
+                int len2 = sections.Length;
+                for (int k = 0; k < len2; k++)
+                {
+                    ts = irc.getSectionTexture(sections[k]);
+                    enabled = enabled || ts.supportsRecoloring;
+                    if (enabled) { break; }
+                }
+                if (enabled) { break; }
+            }
+            Events[nameof(recolorGUIEvent)].guiActiveEditor = enabled;
         }
     }
 }
