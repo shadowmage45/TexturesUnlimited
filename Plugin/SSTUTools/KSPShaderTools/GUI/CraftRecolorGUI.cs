@@ -42,13 +42,19 @@ namespace KSPShaderTools
                 sectionIndex = -1;
                 colorIndex = -1;
             }
-            if (moduleIndex < 0) { moduleIndex = 0; }
-            if (sectionIndex < 0) { sectionIndex = 0; }
-            if (colorIndex < 0) { colorIndex = 0; }
             ControlTypes controls = ControlTypes.ALLBUTCAMERAS;
             controls = controls & ~ControlTypes.TWEAKABLES;
             InputLockManager.SetControlLock(controls, "SSTURecolorGUILock");
             setupForPart(part);
+            if (moduleIndex < 0 || sectionIndex < 0)
+            {
+                findFirstRecolorable(out moduleIndex, out sectionIndex);
+                colorIndex = 0;
+            }
+            if (colorIndex < 0)
+            {
+                colorIndex = 0;
+            }
             setupSectionData(moduleRecolorData[moduleIndex].sectionData[sectionIndex], colorIndex);
             openPart = part;
         }
@@ -70,16 +76,28 @@ namespace KSPShaderTools
 
         internal void refreshGui(Part part)
         {
-            //MonoBehaviour.print("Refreshing Recoloring GUI: " + part + " :: " + openPart);
             if (part != openPart) { return; }
 
             moduleRecolorData.Clear();
             setupForPart(part);
 
             int len = moduleRecolorData.Count;
-            if (moduleIndex >= len) { moduleIndex = 0; sectionIndex = 0; }
+            if (moduleIndex >= len)
+            {
+                findFirstRecolorable(out moduleIndex, out sectionIndex);
+            }
             len = moduleRecolorData[moduleIndex].sectionData.Length;
-            if (sectionIndex >= len) { sectionIndex = 0; }
+            if (sectionIndex >= len)
+            {
+                findFirstRecolorable(moduleIndex, out moduleIndex, out sectionIndex);
+            }
+
+            ModuleRecolorData mrd = moduleRecolorData[moduleIndex];
+            SectionRecolorData srd = mrd.sectionData[sectionIndex];
+            if (!srd.recoloringSupported())
+            {
+                findFirstRecolorable(out moduleIndex, out sectionIndex);
+            }
 
             setupSectionData(moduleRecolorData[moduleIndex].sectionData[sectionIndex], colorIndex);
         }
@@ -92,6 +110,54 @@ namespace KSPShaderTools
                 ModuleRecolorData data = new ModuleRecolorData((PartModule)mod, mod);
                 moduleRecolorData.Add(data);
             }
+        }
+
+        private void findFirstRecolorable(out int module, out int section)
+        {
+            int len = moduleRecolorData.Count;
+            ModuleRecolorData mrd;
+            for (int i = 0; i < len; i++)
+            {
+                mrd = moduleRecolorData[i];
+                int len2 = mrd.sectionData.Length;
+                SectionRecolorData srd;
+                for (int k = 0; k < len2; k++)
+                {
+                    srd = mrd.sectionData[k];
+                    if (srd.recoloringSupported())
+                    {
+                        module = i;
+                        section = k;
+                        return;
+                    }
+                }
+            }
+            MonoBehaviour.print("ERROR: Could not locate recolorable section for part: " + openPart);
+            module = 0;
+            section = 0;
+        }
+
+        private void findFirstRecolorable(int moduleStart, out int module, out int section)
+        {
+            module = moduleStart;
+            if (moduleStart < moduleRecolorData.Count)
+            {
+                ModuleRecolorData mrd = moduleRecolorData[moduleStart];
+                int len = mrd.sectionData.Length;
+                SectionRecolorData srd;
+                for (int i = 0; i < len; i++)
+                {
+                    srd = mrd.sectionData[i];
+                    if (srd.recoloringSupported())
+                    {
+                        //found section in current module that supports recoloring, return it
+                        section = i;
+                        return;
+                    }
+                }
+            }
+            //if recolorable could not be found in current module selection, default to searching entire part
+            findFirstRecolorable(out module, out section);
         }
 
         public void OnGUI()
