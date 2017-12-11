@@ -94,7 +94,7 @@ namespace KSPShaderTools
 
         private Transform[] getModelTransforms()
         {
-            return string.IsNullOrEmpty(transformName) ? part.transform.FindChildren("model") : part.transform.FindChildren(transformName);
+            return string.IsNullOrEmpty(transformName) ? part.transform.FindChildren("model") : part.transform.FindRecursive("model").FindChildren(transformName);
         }
 
         public string[] getSectionNames()
