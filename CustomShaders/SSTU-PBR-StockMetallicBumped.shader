@@ -29,6 +29,7 @@ Shader "SSTU/PBR/StockMetallicBumped"
 
 		#pragma surface surf Standard keepalpha
 		#pragma target 3.0
+        #pragma multi_compile __ ALBEDOALPHA_INVERT
 		#include "SSTUShaders.cginc"
 				
 		sampler2D _MainTex;
@@ -70,6 +71,9 @@ Shader "SSTU/PBR/StockMetallicBumped"
 			fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
 			fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
+            #if ALBEDOALPHA_INVERT
+                color.a = 1 - color.a;
+            #endif
 			
 			o.Albedo = color.rgb * _Color.rgb;
 			o.Normal = normal;
