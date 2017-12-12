@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections;
 using UnityEngine;
 
 namespace KSPShaderTools
@@ -11,6 +12,9 @@ namespace KSPShaderTools
 
         private static GameObject guiObject;
         private static CraftRecolorGUI gui;
+
+        private WaitForSeconds coroutineYield;//don't create a new one every frame..
+        private bool coroutineRunning = false;//just tracks if co-routing was created
 
         [KSPEvent(guiName ="Open Recoloring GUI", guiActive = false, guiActiveEditor = true)]
         public void recolorGUIEvent()
@@ -101,26 +105,46 @@ namespace KSPShaderTools
             }
         }
 
-        public void updateButtonVisibility()
+        private void updateButtonVisibility()
         {
+            if (!coroutineRunning)
+            {
+                coroutineRunning = true;
+                if (coroutineYield == null)
+                {
+                    coroutineYield = new WaitForSeconds(0);
+                }
+                StartCoroutine(updateButtonVisibility2());
+            }
+        }
+
+        private IEnumerator updateButtonVisibility2()
+        {
+            yield return coroutineYield;
+            coroutineRunning = false;
             IRecolorable[] ircs = part.GetComponents<IRecolorable>();
             int len = ircs.Length;
             IRecolorable irc;
             TextureSet ts;
             string[] sections;
             bool enabled = false;
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < len && !enabled; i++)
             {
                 irc = ircs[i];
                 sections = irc.getSectionNames();
                 int len2 = sections.Length;
-                for (int k = 0; k < len2; k++)
+                for (int k = 0; k < len2 && !enabled; k++)
                 {
                     ts = irc.getSectionTexture(sections[k]);
-                    enabled = enabled || ts.supportsRecoloring;
-                    if (enabled) { break; }
+                    if (ts == null)
+                    {
+                        //apparently null texture sets aren't really an error in some of the SSTU modules (TODO -- fix SSTU modules to at least return a default - empty texture set (no textures/meshes))
+                        //MonoBehaviour.print("ERROR: Texture set was null for recolorable section: " + sections[k] + " in module: " + irc.GetType() + " in part:" + part);
+                    }
+                    if (ts == null) { continue; }
+                    //both for-loops will break the first time enabled==true
+                    enabled = ts.supportsRecoloring;
                 }
-                if (enabled) { break; }
             }
             Events[nameof(recolorGUIEvent)].guiActiveEditor = enabled;
         }

@@ -55,6 +55,7 @@ namespace KSPShaderTools
                 {
                     m.currentTextureSet = currentTextureSet;
                     m.textureSets.enableCurrentSet(getModelTransforms());
+                    TextureCallbacks.onTextureSetChanged(part);
                 });
             };
             BaseField field = Fields[nameof(currentTextureSet)];

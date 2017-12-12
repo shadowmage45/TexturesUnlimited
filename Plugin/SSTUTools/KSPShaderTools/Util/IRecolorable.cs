@@ -21,6 +21,29 @@ namespace KSPShaderTools
         void geometryUpdated(Part part);
     }
 
+    public static class TextureCallbacks
+    {
+        public static void onTextureSetChanged(Part part)
+        {
+            IPartTextureUpdated[] iptu = part.GetComponents<IPartTextureUpdated>();
+            int len = iptu.Length;
+            for (int i = 0; i < len; i++)
+            {
+                iptu[i].textureUpdated(part);
+            }
+        }
+
+        public static void onPartModelChanged(Part part)
+        {
+            IPartGeometryUpdated[] ipgu = part.GetComponents<IPartGeometryUpdated>();
+            int len = ipgu.Length;
+            for (int i = 0; i < len; i++)
+            {
+                ipgu[i].geometryUpdated(part);
+            }
+        }
+    }
+
     public struct RecoloringData
     {
 
