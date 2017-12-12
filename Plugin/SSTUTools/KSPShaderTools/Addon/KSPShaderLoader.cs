@@ -41,12 +41,18 @@ namespace KSPShaderTools
         /// </summary>
         public static Dictionary<string, TextureSet> loadedTextureSets = new Dictionary<string, TextureSet>();
 
+        public static Dictionary<string, Texture2D> textureColors = new Dictionary<string, Texture2D>();
+
         private static List<Action> postLoadCallbacks = new List<Action>();
 
         private static EventVoid.OnEvent partListLoadedEvent;
 
         public static bool logReplacements = false;
         public static bool logErrors = false;
+
+        public static int recolorGUIWidth = 400;
+        public static int recolorGUISectionHeight = 540;
+        public static int recolorGUITotalHeight = 100;
         
         public void Start()
         {
@@ -75,6 +81,9 @@ namespace KSPShaderTools
             ConfigNode config = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED")[0];
             logReplacements = config.GetBoolValue("logReplacements", logReplacements);
             logErrors = config.GetBoolValue("logErrors", logErrors);
+            recolorGUIWidth = config.GetIntValue("recolorGUIWidth");
+            recolorGUITotalHeight = config.GetIntValue("recolorGUITotalHeight");
+            recolorGUISectionHeight = config.GetIntValue("recolorGUISectionHeight");
             Dictionary<string, Shader> dict = new Dictionary<string, Shader>();
             loadBundles(dict);
             buildShaderSets(dict);
@@ -387,6 +396,38 @@ namespace KSPShaderTools
             postLoadCallbacks.Remove(func);
         }
 
+        /// <summary>
+        /// Input should be a string with R,G,B,A values specified in comma-separated byte notation
+        /// </summary>
+        /// <param name="stringColor"></param>
+        /// <returns></returns>
+        public static Texture2D getTextureColor(string stringColor)
+        {
+            string rgbaString;
+            Color c = Utils.parseColorFromBytes(stringColor);
+            //just smash the entire thing together to create a unique key for the color
+            rgbaString = "" + c.r +":"+ c.g + ":" + c.b + ":" + c.a;
+            Texture2D tex = null;
+            if (textureColors.TryGetValue(rgbaString, out tex))
+            {
+                return tex;
+            }
+            else
+            {
+                int len = 64 * 64;
+                Color[] pixelData = new Color[len];
+                for (int i = 0; i < len; i++)
+                {
+                    pixelData[i] = c;
+                }
+                tex = new Texture2D(64, 64, TextureFormat.ARGB32, false);
+                tex.SetPixels(pixelData);
+                tex.Apply(false, true);
+                textureColors.Add(rgbaString, tex);
+                return tex;
+            }
+        }
+
     }
 
     public class ShaderData
@@ -412,6 +453,7 @@ namespace KSPShaderTools
             //direct property nodes
             ConfigNode[] propNodes = node.GetNodes("PROPERTY");
             int len = propNodes.Length;
+            //this method of property lookup is a bit dirty... but functional
             for (int i = 0; i < len; i++)
             {
                 if (propNodes[i].HasValue("texture"))
@@ -429,6 +471,10 @@ namespace KSPShaderTools
                 else if (propNodes[i].HasValue("keyword"))
                 {
                     props.Add(new ShaderPropertyKeyword(propNodes[i]));
+                }
+                else if (propNodes[i].HasValue("textureColor"))
+                {
+                    props.Add(new ShaderPropertyTextureColor(propNodes[i]));
                 }
             }
             //simply/lazy texture assignments
@@ -585,6 +631,29 @@ namespace KSPShaderTools
         protected override void applyInternal(Material mat)
         {
             mat.EnableKeyword(keyword);
+        }
+    }
+
+    public class ShaderPropertyTextureColor : ShaderProperty
+    {
+        public string colorString;
+
+        public ShaderPropertyTextureColor(ConfigNode node) : base(node)
+        {
+            colorString = node.GetStringValue("textureColor");
+        }
+
+        protected override void applyInternal(Material mat)
+        {
+            if (checkApply(mat))
+            {
+                Texture2D texture = KSPShaderLoader.getTextureColor(colorString);
+                if (texture == null && KSPShaderLoader.logErrors)
+                {
+                    MonoBehaviour.print("ERROR: KSPShaderLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
+                }
+                mat.SetTexture(name, texture);
+            }
         }
     }
     

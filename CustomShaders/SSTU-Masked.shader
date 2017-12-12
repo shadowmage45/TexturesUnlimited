@@ -7,6 +7,7 @@ Shader "SSTU/Masked"
 		_SpecMap("_SpecMap (RGB)", 2D) = "white" {}
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
+		_Emissive("Emission", 2D) = "black" {}
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
@@ -39,7 +40,9 @@ Shader "SSTU/Masked"
 		sampler2D _SpecMap;
 		sampler2D _BumpMap;		
 		sampler2D _AOMap;
+		sampler2D _Emissive;
 
+		float4 _EmissiveColor;
 		half _Shininess;
 		float _Opacity;
 		float4 _MaskColor1;
@@ -62,6 +65,7 @@ Shader "SSTU/Masked"
 			float4 spec = tex2D(_SpecMap, (IN.uv_MainTex));
 			float3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 			float3 ao = tex2D(_AOMap, (IN.uv_MainTex));
+            fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
 			
             #if TINTING_MODE
                 float m = saturate(1 - (mask.r + mask.g + mask.b));
@@ -88,7 +92,7 @@ Shader "SSTU/Masked"
             #endif
 			o.Specular = _Shininess;
 			o.Normal = normal;
-			o.Emission = stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			o.Alpha = _Opacity;
 		}
 		ENDCG

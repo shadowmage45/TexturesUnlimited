@@ -8,6 +8,7 @@ namespace KSPShaderTools
     {
         private static int graphWidth = 400;
         private static int graphHeight = 540;
+        private static int sectionHeight = 100;
         private static int id;
         private static Rect windowRect = new Rect(Screen.width - 500, 40, graphWidth, graphHeight);
         private static Vector2 scrollPos;
@@ -32,6 +33,9 @@ namespace KSPShaderTools
         public void Awake()
         {
             id = GetInstanceID();
+            graphWidth = KSPShaderLoader.recolorGUIWidth;
+            graphHeight = KSPShaderLoader.recolorGUITotalHeight;
+            sectionHeight = KSPShaderLoader.recolorGUISectionHeight;
         }
 
         internal void openGUIPart(Part part)
@@ -225,7 +229,7 @@ namespace KSPShaderTools
             GUI.color = old;
             GUILayout.EndHorizontal();
             Color guiColor = old;
-            scrollPos = GUILayout.BeginScrollView(scrollPos, false, true, GUILayout.Height(100));
+            scrollPos = GUILayout.BeginScrollView(scrollPos, false, true, GUILayout.Height(sectionHeight));
             int len = moduleRecolorData.Count;
             for (int i = 0; i < len; i++)
             {
