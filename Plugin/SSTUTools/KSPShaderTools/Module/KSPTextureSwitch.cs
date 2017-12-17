@@ -110,8 +110,11 @@ namespace KSPShaderTools
 
         public void setSectionColors(string name, RecoloringData[] colors)
         {
-            textureSets.setCustomColors(colors);
-            textureSets.enableCurrentSet(getModelTransforms());
+            this.actionWithSymmetry(m => 
+            {
+                m.textureSets.setCustomColors(colors);
+                m.textureSets.enableCurrentSet(m.getModelTransforms());
+            });
         }
 
         public TextureSet getSectionTexture(string section)
