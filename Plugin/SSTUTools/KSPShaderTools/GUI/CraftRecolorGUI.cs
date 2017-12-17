@@ -489,10 +489,10 @@ namespace KSPShaderTools
                 //owners may return null for set and/or colors if recoloring is unsupported
                 set = sectionTexture = null;
             }
-            MonoBehaviour.print("Created section recolor data with texture set: " + set+" for section: "+name);
+            //MonoBehaviour.print("Created section recolor data with texture set: " + set+" for section: "+name);
             if (set != null)
             {
-                MonoBehaviour.print("Set name: " + set.name + " :: " + set.title + " recolorable: " + set.supportsRecoloring);
+                //MonoBehaviour.print("Set name: " + set.name + " :: " + set.title + " recolorable: " + set.supportsRecoloring);
             }
             else
             {
