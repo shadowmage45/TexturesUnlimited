@@ -8,7 +8,7 @@ Shader "SSTU/PBR/MetallicTransparent"
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
 		_Emissive("Emission", 2D) = "white" {}
-        _Metallic("_Metallic", Range(0,1)) = 1
+        _Metal("_Metal", Range(0,1)) = 1
         _Smoothness("_Smoothness", Range(0,1)) = 1
 		_EmissiveColor("EmissionColor", Color) = (0,0,0)
 		_Opacity("Emission Opacity", Range(0,1) ) = 1
@@ -37,7 +37,7 @@ Shader "SSTU/PBR/MetallicTransparent"
 		sampler2D _BumpMap;		
 		sampler2D _AOMap;
 
-        float _Metallic;
+        float _Metal;
         float _Smoothness;
 		float _Opacity;
 		float4 _Color;
@@ -74,7 +74,7 @@ Shader "SSTU/PBR/MetallicTransparent"
 			o.Albedo = color.rgb * _Color.rgb * _Color.a;
 			o.Normal = normal;
 			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
-			o.Metallic = spec.r * _Metallic;
+			o.Metallic = spec.r * _Metal;
 			o.Smoothness = spec.a * _Smoothness;
 			o.Occlusion = ao.r;
 			o.Alpha = _Opacity * color.a * _Color.a;
