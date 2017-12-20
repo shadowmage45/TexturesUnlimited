@@ -36,10 +36,13 @@ namespace KSPShaderTools
             graphWidth = KSPShaderLoader.recolorGUIWidth;
             graphHeight = KSPShaderLoader.recolorGUITotalHeight;
             sectionHeight = KSPShaderLoader.recolorGUISectionHeight;
+            windowRect.x = Screen.width - (graphWidth + 100);
         }
 
         internal void openGUIPart(Part part)
         {
+            windowRect.width = graphWidth;
+            windowRect.height = graphHeight;
             if (part != openPart)
             {
                 moduleIndex = -1;
