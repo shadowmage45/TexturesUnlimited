@@ -82,11 +82,11 @@ namespace KSPShaderTools
                 return;
             }
             ConfigNode node = Utils.parseConfigNode(configNodeData);
-            ConfigNode[] setNodes = node.GetNodes("TEXTURESET");
-            textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNodes);
+            string[] setNames = node.GetStringValues("textureSet");
+            textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNames);
             if (string.IsNullOrEmpty(currentTextureSet))
             {
-                currentTextureSet = setNodes[0].GetValue("name");
+                currentTextureSet = setNames[0];
             }
             this.updateUIChooseOptionControl(nameof(currentTextureSet), textureSets.getTextureSetNames(), textureSets.getTextureSetTitles(), true, currentTextureSet);
             textureSets.enableCurrentSet(getModelTransforms());
@@ -149,13 +149,13 @@ namespace KSPShaderTools
             set { persistentDataField.SetValue(value, pm); }
         }
 
-        public TextureSetContainer(PartModule pm, BaseField textureSetField, BaseField persistentDataField, ConfigNode[] textureSetNodes)
+        public TextureSetContainer(PartModule pm, BaseField textureSetField, BaseField persistentDataField, string[] textureSetNames)
         {
             this.pm = pm;
             this.textureSetField = textureSetField;
             this.persistentDataField = persistentDataField;
             loadPersistentData(persistentData);
-            this.textureSets = KSPShaderLoader.getTextureSets(textureSetNodes);
+            this.textureSets = KSPShaderLoader.getTextureSets(textureSetNames);
         }
 
         public void enableCurrentSet(Transform[] roots)

@@ -386,6 +386,17 @@ namespace KSPShaderTools
             return sets;
         }
 
+        public static TextureSet[] getTextureSets(string[] setNames)
+        {
+            int len = setNames.Length;
+            TextureSet[] sets = new TextureSet[len];
+            for (int i = 0; i < len; i++)
+            {
+                sets[i] = getTextureSet(setNames[i]);
+            }
+            return sets;
+        }
+
         public static void addPostLoadCallback(Action func)
         {
             postLoadCallbacks.AddUnique(func);
