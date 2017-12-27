@@ -219,7 +219,7 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 textureNode = modelShaderNodes[i];
-                if (textureNode.HasNode("TEXTURE"))
+                if (textureNode.HasNode("MATERIAL"))
                 {
                     set = new TextureSet(textureNode);
                     setName = set.name;

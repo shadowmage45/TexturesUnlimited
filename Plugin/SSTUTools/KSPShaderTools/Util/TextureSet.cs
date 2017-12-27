@@ -24,7 +24,7 @@ namespace KSPShaderTools
         {
             name = node.GetStringValue("name");
             title = node.GetStringValue("title", name);
-            ConfigNode[] texNodes = node.GetNodes("TEXTURE");
+            ConfigNode[] texNodes = node.GetNodes("MATERIAL");
             int len = texNodes.Length;
             textureData = new TextureSetMaterialData[len];
             for (int i = 0; i < len; i++)
