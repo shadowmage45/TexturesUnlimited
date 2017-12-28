@@ -54,8 +54,8 @@ namespace KSPShaderTools
                 this.actionWithSymmetry(m =>
                 {
                     m.currentTextureSet = currentTextureSet;
-                    m.textureSets.enableCurrentSet(getModelTransforms());
-                    TextureCallbacks.onTextureSetChanged(part);
+                    m.textureSets.enableCurrentSet(m.getModelTransforms());
+                    TextureCallbacks.onTextureSetChanged(m.part);
                 });
             };
             BaseField field = Fields[nameof(currentTextureSet)];
