@@ -86,7 +86,7 @@ namespace KSPShaderTools
 
         private static void load()
         {
-            MonoBehaviour.print("TexturesUnlimitedLoader - Initializing shader and texture set data.");
+            MonoBehaviour.print("TexturesUnlimited - Initializing shader and texture set data.");
             ConfigNode config = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED")[0];
             logReplacements = config.GetBoolValue("logReplacements", logReplacements);
             logErrors = config.GetBoolValue("logErrors", logErrors);
@@ -99,14 +99,14 @@ namespace KSPShaderTools
             PresetColor.loadColors();
             loadTextureSets();
             applyToModelDatabase();
-            MonoBehaviour.print("TexturesUnlimitedLoader - Calling PostLoad handlers");
+            MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
         }
 
         private void onPartListLoaded()
         {
-            MonoBehaviour.print("TexturesUnlimitedLoader - Updating Part Icon shaders.");
+            MonoBehaviour.print("TexturesUnlimited - Updating Part Icon shaders.");
             applyToPartIcons();
         }
 
@@ -129,7 +129,7 @@ namespace KSPShaderTools
             else if (Application.platform == RuntimePlatform.OSXPlayer) { assetBundleName = node.GetStringValue("osx"); }
             assetBundleName = KSPUtil.ApplicationRootPath + "GameData/" + assetBundleName;
 
-            MonoBehaviour.print("TexturesUnlimitedLoader - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
+            MonoBehaviour.print("TexturesUnlimited - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
 
             // KSP-PartTools built AssetBunldes are in the Web format, 
             // and must be loaded using a WWW reference; you cannot use the
@@ -139,12 +139,12 @@ namespace KSPShaderTools
 
             if (!string.IsNullOrEmpty(www.error))
             {
-                MonoBehaviour.print("TexturesUnlimitedLoader - Error while loading shader AssetBundle: " + www.error);
+                MonoBehaviour.print("TexturesUnlimited - Error while loading shader AssetBundle: " + www.error);
                 return;
             }
             else if (www.assetBundle == null)
             {
-                MonoBehaviour.print("TexturesUnlimitedLoader - Could not load AssetBundle from WWW - " + www);
+                MonoBehaviour.print("TexturesUnlimited - Could not load AssetBundle from WWW - " + www);
                 return;
             }
 
@@ -158,13 +158,23 @@ namespace KSPShaderTools
                 if (assetNames[i].EndsWith(".shader"))
                 {
                     shader = bundle.LoadAsset<Shader>(assetNames[i]);
-                    MonoBehaviour.print("TexturesUnlimitedLoader - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
+                    MonoBehaviour.print("TexturesUnlimited - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
                     shaderDict.Add(shader.name, shader);
                     GameDatabase.Instance.databaseShaders.AddUnique(shader);
                 }
             }
             //this unloads the compressed assets inside the bundle, but leaves any instantiated shaders in-place
             bundle.Unload(false);
+        }
+
+        public static void addPostLoadCallback(Action func)
+        {
+            postLoadCallbacks.AddUnique(func);
+        }
+
+        public static void removePostLoadCallback(Action func)
+        {
+            postLoadCallbacks.Remove(func);
         }
 
         private static void buildShaderSets(Dictionary<string, Shader> dict)
@@ -187,7 +197,7 @@ namespace KSPShaderTools
         }
 
         /// <summary>
-        /// Creates a WWW URL reference for the input file-path
+        /// Asset bundle loader helper method.  Creates a Unity WWW URL reference for the input file-path
         /// </summary>
         /// <param name="bundlePath"></param>
         /// <returns></returns>
@@ -250,64 +260,17 @@ namespace KSPShaderTools
                     {
                         if (logReplacements)
                         {
-                            MonoBehaviour.print("TexturesUnlimitedLoader -- Replacing textures on database model: " + modelNames[k]);
+                            MonoBehaviour.print("TexturesUnlimited -- Replacing textures on database model: " + modelNames[k]);
                         }                        
                         set.enable(model.transform, set.maskColors);
-                        fixEmptyTextureSlots(model);
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Fixes any empty texture slots in a material
+        /// Update the part-icons for any parts using shaders found in the part-icon-updating shader map.  Adjusts models specifically based on what shader they are currently using.
         /// </summary>
-        /// <param name="databaseModel"></param>
-        private static void fixEmptyTextureSlots(GameObject databaseModel)
-        {
-            Dictionary<string, Texture2D> emptyTextureReplacements = new Dictionary<string, Texture2D>();
-            int len = 64 * 64;
-            Color[] colors = new Color[len];
-
-            Texture2D defaultBump = new Texture2D(64, 64, TextureFormat.RGBA32, false);
-            Color nrm = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            for (int i = 0; i < len; i++)
-            {
-                colors[i] = nrm;
-            }
-            defaultBump.SetPixels(colors);
-            defaultBump.Apply();
-
-            emptyTextureReplacements.Add("_MainTex", Texture2D.blackTexture);
-            emptyTextureReplacements.Add("_BumpMap", defaultBump);
-            emptyTextureReplacements.Add("_Emissive", Texture2D.blackTexture);
-            Material mat;
-            Renderer[] rends = databaseModel.GetComponentsInChildren<Renderer>();
-            len = rends.Length;
-            for (int i = 0; i < len; i++)
-            {
-                if (rends[i] == null) { continue; }
-                mat = rends[i].material;
-                if(mat== null) { continue; }
-                foreach (string key in emptyTextureReplacements.Keys)
-                {
-                    if (mat.HasProperty(key))
-                    {
-                        Texture tex = mat.GetTexture(key);
-                        if (tex == null)
-                        {
-                            if (logErrors)
-                            {
-                                MonoBehaviour.print("TexturesUnlimitedLoader -- ERROR: Found empty texture reference for property: " + key + " on model: " + databaseModel + "--" + rends[i].gameObject + ".  Replacing with default placeholder texture");
-                            }                            
-                            mat.SetTexture(key, emptyTextureReplacements[key]);
-                            rends[i].material = mat;
-                        }
-                    }
-                }
-            }
-        }
-
         private static void applyToPartIcons()
         {
             //brute-force method for fixing part icon shaders
@@ -346,6 +309,10 @@ namespace KSPShaderTools
             }
         }
 
+        /// <summary>
+        /// Utility method to dump UV maps from every model currently in the model database.
+        /// TODO -- has issues/errors on some models/meshes/renderers (might be a skinned-mesh-renderer problem...)
+        /// </summary>
         public static void dumpUVMaps()
         {
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("UV_EXPORT");
@@ -366,6 +333,11 @@ namespace KSPShaderTools
             }
         }
 
+        /// <summary>
+        /// Return a shader by name.  First checks the TU shader dictionary, then checks the GameDatabase.databaseShaders list, and finally falls-back to standard Unity Shader.Find() method.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static Shader getShader(string name)
         {
             if (loadedShaders.ContainsKey(name))
@@ -380,6 +352,11 @@ namespace KSPShaderTools
             return Shader.Find(name);
         }
 
+        /// <summary>
+        /// Find a global texture set from database with a name that matches the input name.  Returns null if not found.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static TextureSet getTextureSet(string name)
         {
             TextureSet s = null;
@@ -391,6 +368,11 @@ namespace KSPShaderTools
             return null;
         }
 
+        /// <summary>
+        /// Return an array of texture sets for the 'name' values from within the input config node array.  Returns an empty array if none are found.
+        /// </summary>
+        /// <param name="setNodes"></param>
+        /// <returns></returns>
         public static TextureSet[] getTextureSets(ConfigNode[] setNodes)
         {
             int len = setNodes.Length;
@@ -402,6 +384,11 @@ namespace KSPShaderTools
             return sets;
         }
 
+        /// <summary>
+        /// Return an array of texture sets for the values from within the input string array.  Returns an empty array if none are found.
+        /// </summary>
+        /// <param name="setNodes"></param>
+        /// <returns></returns>
         public static TextureSet[] getTextureSets(string[] setNames)
         {
             int len = setNames.Length;
@@ -411,16 +398,6 @@ namespace KSPShaderTools
                 sets[i] = getTextureSet(setNames[i]);
             }
             return sets;
-        }
-
-        public static void addPostLoadCallback(Action func)
-        {
-            postLoadCallbacks.AddUnique(func);
-        }
-
-        public static void removePostLoadCallback(Action func)
-        {
-            postLoadCallbacks.Remove(func);
         }
 
         /// <summary>
@@ -469,6 +446,10 @@ namespace KSPShaderTools
 
     }
 
+    /// <summary>
+    /// Shader to IconShader map <para/>
+    /// Used to fix incorrect icon shaders when recoloring shaders are used.
+    /// </summary>
     public class ShaderData
     {
         public readonly Shader shader;
@@ -480,10 +461,15 @@ namespace KSPShaderTools
             this.iconShader = iconShader;
         }
     }
-
-    //abstract class defining a shader property that can be loaded from a config-node
+    
+    /// <summary>
+    /// abstract class defining a shader property that can be loaded from a config-node
+    /// </summary>
     public abstract class ShaderProperty
     {
+        /// <summary>
+        /// The name of the shader property that this data class will update.
+        /// </summary>
         public readonly string name;
 
         public static ShaderProperty[] parse(ConfigNode node)
@@ -516,28 +502,14 @@ namespace KSPShaderTools
                     props.Add(new ShaderPropertyTextureColor(propNodes[i]));
                 }
             }
-            //simply/lazy texture assignments
-            string[] textures = node.GetStringValues("texture");
-            len = textures.Length;
-            string[] splits;
-            string name, tex;
-            bool main, nrm;
-            for (int i = 0; i < len; i++)
-            {
-                splits = textures[i].Split(',');
-                name = splits[0].Trim();
-                tex = splits[1].Trim();
-                main = splits[0] == "_MainTex";
-                nrm = splits[0] == "_BumpMap";
-                props.Add(new ShaderPropertyTexture(name, tex, main, nrm));
-            }
-            //simple keyword assignments
-            string[] keywords = node.GetStringValues("keyword");
-            len = keywords.Length;
-            for (int i = 0; i < len; i++)
-            {
-                props.Add(new ShaderPropertyKeyword("keyword", keywords[i]));
-            }
+
+            //shorthand property definition loading
+            props.AddRange(parseKeywordProperties(node));
+            props.AddRange(parseTextureProperties(node));
+            props.AddRange(parseColorProperties(node));
+            props.AddRange(parseFloatProperties(node));
+            props.AddRange(parseTextureColorProperties(node));
+
             return props.ToArray();
         }
 
@@ -546,9 +518,9 @@ namespace KSPShaderTools
             this.name = node.GetStringValue("name");
         }
 
-        protected ShaderProperty(string name)
+        protected ShaderProperty(string singleLinePropertyDef)
         {
-            this.name = name;
+            this.name = singleLinePropertyDef.Split(',')[0].Trim();
         }
 
         public void apply(Material mat)
@@ -574,8 +546,71 @@ namespace KSPShaderTools
             return false;
         }
 
+        private static ShaderPropertyFloat[] parseFloatProperties(ConfigNode node)
+        {
+            string[] floatProps = node.GetStringValues("float");
+            int len = floatProps.Length;
+            ShaderPropertyFloat[] props = new ShaderPropertyFloat[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyFloat(floatProps[i]);
+            }
+            return props;
+        }
+                
+        private static ShaderPropertyKeyword[] parseKeywordProperties(ConfigNode node)
+        {
+            string[] keywordProps = node.GetStringValues("keyword");
+            int len = keywordProps.Length;
+            ShaderPropertyKeyword[] props = new ShaderPropertyKeyword[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyKeyword(keywordProps[i]);
+            }
+            return props;
+        }
+
+        private static ShaderPropertyColor[] parseColorProperties(ConfigNode node)
+        {
+            string[] colorProps = node.GetStringValues("color");
+            int len = colorProps.Length;
+            ShaderPropertyColor[] props = new ShaderPropertyColor[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyColor(colorProps[i]);
+            }
+            return props;
+        }
+
+        private static ShaderPropertyTexture[] parseTextureProperties(ConfigNode node)
+        {
+            string[] textureProps = node.GetStringValues("texture");
+            int len = textureProps.Length;
+            ShaderPropertyTexture[] props = new ShaderPropertyTexture[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyTexture(textureProps[i]);
+            }
+            return props;
+        }
+
+        private static ShaderPropertyTextureColor[] parseTextureColorProperties(ConfigNode node)
+        {
+            string[] textureColorProps = node.GetStringValues("textureColor");
+            int len = textureColorProps.Length;
+            ShaderPropertyTextureColor[] props = new ShaderPropertyTextureColor[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyTextureColor(textureColorProps[i]);
+            }
+            return props;
+        }
+
     }
 
+    /// <summary>
+    /// Non-abstract wrapper of a single shader 'Color' property
+    /// </summary>
     public class ShaderPropertyColor : ShaderProperty
     {
         public readonly Color color;
@@ -583,6 +618,17 @@ namespace KSPShaderTools
         public ShaderPropertyColor(ConfigNode node) : base(node)
         {
             color = node.GetColorFromFloatCSV("color");
+        }
+
+        public ShaderPropertyColor(string line) : base(line)
+        {
+            string[] vals = line.Split(',');
+            float r, g, b, a;
+            r = Utils.safeParseFloat(vals[1]);
+            g = Utils.safeParseFloat(vals[2]);
+            b = Utils.safeParseFloat(vals[3]);
+            a = vals.Length>=5 ? Utils.safeParseFloat(vals[4]) : 1f;
+            this.color = new Color(r, g, b, a);
         }
 
         public ShaderPropertyColor(string name, Color color) : base(name)
@@ -596,6 +642,9 @@ namespace KSPShaderTools
         }
     }
 
+    /// <summary>
+    /// Non-abstract wrapper of a single shader 'Float' property
+    /// </summary>
     public class ShaderPropertyFloat : ShaderProperty
     {
         public readonly float val;
@@ -605,9 +654,10 @@ namespace KSPShaderTools
             val = node.GetFloatValue("float");
         }
 
-        public ShaderPropertyFloat(string name, float val) : base(name)
+        public ShaderPropertyFloat(string line) : base(line)
         {
-            this.val = val;
+            string[] vals = line.Split(',');
+            val = Utils.safeParseFloat(vals[1].Trim());
         }
 
         protected override void applyInternal(Material mat)
@@ -619,24 +669,25 @@ namespace KSPShaderTools
         }
     }
 
+    /// <summary>
+    /// Non-abstract wrapper of a single shader 'Texture' property
+    /// </summary>
     public class ShaderPropertyTexture : ShaderProperty
     {
         public readonly string textureName;
-        public readonly bool main;
         public readonly bool normal;
 
         public ShaderPropertyTexture(ConfigNode node) : base(node)
         {
             textureName = node.GetStringValue("texture");
-            main = node.GetBoolValue("main");
             normal = node.GetBoolValue("normal");
         }
 
-        public ShaderPropertyTexture(string name, string texture, bool main, bool normal) : base(name)
+        public ShaderPropertyTexture(string line) : base(line)
         {
-            this.textureName = texture;
-            this.main = main;
-            this.normal = normal;
+            string[] vals = line.Split(',');
+            this.textureName = vals[1];
+            this.normal = textureName=="_BumpMap";
         }
 
         protected override void applyInternal(Material mat)
@@ -653,26 +704,43 @@ namespace KSPShaderTools
         }
     }
 
+    /// <summary>
+    /// Non-abstract wrapper of a single shader 'Keyword' property
+    /// </summary>
     public class ShaderPropertyKeyword : ShaderProperty
     {
         public string keyword;
+        public bool enable;
 
         public ShaderPropertyKeyword(ConfigNode node) : base(node)
         {
             keyword = node.GetStringValue("keyword");
+            enable = node.GetBoolValue("enable", true);
         }
 
-        public ShaderPropertyKeyword(string name, string keyword) : base(name)
+        public ShaderPropertyKeyword(string line) : base(line)
         {
-            this.keyword = keyword;
+            string[] vals = line.Split(',');
+            this.keyword = vals[1].Trim();
+            this.enable = Utils.safeParseBool(vals[2].Trim());
         }
 
         protected override void applyInternal(Material mat)
         {
-            mat.EnableKeyword(keyword);
+            if (enable)
+            {
+                mat.EnableKeyword(keyword);
+            }
+            else
+            {
+                mat.DisableKeyword(keyword);
+            }
         }
     }
 
+    /// <summary>
+    /// Non-abstract wrapper of a single shader 'TextureColor' property
+    /// </summary>
     public class ShaderPropertyTextureColor : ShaderProperty
     {
         public string colorString;
@@ -680,6 +748,12 @@ namespace KSPShaderTools
         public ShaderPropertyTextureColor(ConfigNode node) : base(node)
         {
             colorString = node.GetStringValue("textureColor");
+        }
+
+        public ShaderPropertyTextureColor(string line) : base(line)
+        {
+            string[] vals = line.Split(',');
+            colorString = vals[1];
         }
 
         protected override void applyInternal(Material mat)

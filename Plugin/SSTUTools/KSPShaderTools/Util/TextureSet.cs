@@ -94,7 +94,7 @@ namespace KSPShaderTools
         }
 
         /// <summary>
-        /// Enable this texture set.  Creates a new material for every TextureSetMaterialData, initializes with the config specified properties,
+        /// Enable this texture set.  Creates a new material for every TextureSetMaterialData, initializes with the config specified properties, including the input custom color data.
         /// </summary>
         /// <param name="root"></param>
         /// <param name="userColors"></param>
