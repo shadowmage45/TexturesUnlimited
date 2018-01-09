@@ -6,10 +6,10 @@ namespace KSPShaderTools
 {
 
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
-    public class KSPShaderLoader : MonoBehaviour
+    public class TexturesUnlimitedLoader : MonoBehaviour
     {
-        /*  
-         *  Custom Shader Loading for KSP
+
+        /*  Custom Shader Loading for KSP
          *  Includes loading of platform-specific bundles, or 'universal' bundles.  
          *  Bundles to be loaded are determined by config files (KSP_SHADER_BUNDLE)
          *  Each bundle can have multiple shaders in it.
@@ -25,11 +25,9 @@ namespace KSPShaderTools
          *  
          *  //eve shader loading data -- need to examine what graphics APIs the SSTU shaders are set to build for -- should be able to build 'universal' bundles
          *  https://github.com/WazWaz/EnvironmentalVisualEnhancements/blob/master/Assets/Editor/BuildABs.cs
-         *  
-         *
          */
 
-        public static KSPShaderLoader INSTANCE;
+        #region REGION - Maps of shaders, texture sets, procedural textures
 
         /// <summary>
         /// List of loaded shaders and corresponding icon shader.  Loaded from KSP_SHADER_DATA config nodes.
@@ -41,11 +39,14 @@ namespace KSPShaderTools
         /// </summary>
         public static Dictionary<string, TextureSet> loadedTextureSets = new Dictionary<string, TextureSet>();
 
+        /// <summary>
+        /// List of procedurally created 'solid color' textures to use for filling in empty texture slots in materials.
+        /// </summary>
         public static Dictionary<string, Texture2D> textureColors = new Dictionary<string, Texture2D>();
 
-        private static List<Action> postLoadCallbacks = new List<Action>();
+        #endregion ENDREGION - Maps of shaders, texture sets, procedural textures
 
-        private static EventVoid.OnEvent partListLoadedEvent;
+        #region REGION - Config Values loaded from disk
 
         public static bool logReplacements = false;
         public static bool logErrors = false;
@@ -53,7 +54,15 @@ namespace KSPShaderTools
         public static int recolorGUIWidth = 400;
         public static int recolorGUISectionHeight = 540;
         public static int recolorGUITotalHeight = 100;
-        
+
+        #endregion ENDREGION - Config Values loaded from disk
+
+        public static TexturesUnlimitedLoader INSTANCE;
+
+        private static List<Action> postLoadCallbacks = new List<Action>();
+
+        private static EventVoid.OnEvent partListLoadedEvent;
+
         public void Start()
         {
             INSTANCE = this;
@@ -77,7 +86,7 @@ namespace KSPShaderTools
 
         private static void load()
         {
-            MonoBehaviour.print("KSPShaderLoader - Initializing shader and texture set data.");
+            MonoBehaviour.print("TexturesUnlimitedLoader - Initializing shader and texture set data.");
             ConfigNode config = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED")[0];
             logReplacements = config.GetBoolValue("logReplacements", logReplacements);
             logErrors = config.GetBoolValue("logErrors", logErrors);
@@ -90,14 +99,14 @@ namespace KSPShaderTools
             PresetColor.loadColors();
             loadTextureSets();
             applyToModelDatabase();
-            MonoBehaviour.print("KSPShaderLoader - Calling PostLoad handlers");
+            MonoBehaviour.print("TexturesUnlimitedLoader - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
         }
 
         private void onPartListLoaded()
         {
-            MonoBehaviour.print("KSPShaderLoader - Updating Part Icon shaders.");
+            MonoBehaviour.print("TexturesUnlimitedLoader - Updating Part Icon shaders.");
             applyToPartIcons();
         }
 
@@ -120,7 +129,7 @@ namespace KSPShaderTools
             else if (Application.platform == RuntimePlatform.OSXPlayer) { assetBundleName = node.GetStringValue("osx"); }
             assetBundleName = KSPUtil.ApplicationRootPath + "GameData/" + assetBundleName;
 
-            MonoBehaviour.print("KSPShaderLoader - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
+            MonoBehaviour.print("TexturesUnlimitedLoader - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
 
             // KSP-PartTools built AssetBunldes are in the Web format, 
             // and must be loaded using a WWW reference; you cannot use the
@@ -130,12 +139,12 @@ namespace KSPShaderTools
 
             if (!string.IsNullOrEmpty(www.error))
             {
-                MonoBehaviour.print("KSPShaderLoader - Error while loading shader AssetBundle: " + www.error);
+                MonoBehaviour.print("TexturesUnlimitedLoader - Error while loading shader AssetBundle: " + www.error);
                 return;
             }
             else if (www.assetBundle == null)
             {
-                MonoBehaviour.print("KSPShaderLoader - Could not load AssetBundle from WWW - " + www);
+                MonoBehaviour.print("TexturesUnlimitedLoader - Could not load AssetBundle from WWW - " + www);
                 return;
             }
 
@@ -149,7 +158,7 @@ namespace KSPShaderTools
                 if (assetNames[i].EndsWith(".shader"))
                 {
                     shader = bundle.LoadAsset<Shader>(assetNames[i]);
-                    MonoBehaviour.print("KSPShaderLoader - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
+                    MonoBehaviour.print("TexturesUnlimitedLoader - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
                     shaderDict.Add(shader.name, shader);
                     GameDatabase.Instance.databaseShaders.AddUnique(shader);
                 }
@@ -207,6 +216,9 @@ namespace KSPShaderTools
             }
         }
 
+        /// <summary>
+        /// Applies any 'KSP_MODEL_SHADER' definitions to models in the GameDatabase.loadedModels list.
+        /// </summary>
         private static void applyToModelDatabase()
         {
             ConfigNode[] modelShaderNodes = GameDatabase.Instance.GetConfigNodes("KSP_MODEL_SHADER");
@@ -238,15 +250,19 @@ namespace KSPShaderTools
                     {
                         if (logReplacements)
                         {
-                            MonoBehaviour.print("KSPShaderLoader -- Replacing textures on database model: " + modelNames[k]);
+                            MonoBehaviour.print("TexturesUnlimitedLoader -- Replacing textures on database model: " + modelNames[k]);
                         }                        
-                        set.enable(model, set.maskColors);
+                        set.enable(model.transform, set.maskColors);
                         fixEmptyTextureSlots(model);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Fixes any empty texture slots in a material
+        /// </summary>
+        /// <param name="databaseModel"></param>
         private static void fixEmptyTextureSlots(GameObject databaseModel)
         {
             Dictionary<string, Texture2D> emptyTextureReplacements = new Dictionary<string, Texture2D>();
@@ -282,7 +298,7 @@ namespace KSPShaderTools
                         {
                             if (logErrors)
                             {
-                                MonoBehaviour.print("KSPShaderLoader -- ERROR: Found empty texture reference for property: " + key + " on model: " + databaseModel + "--" + rends[i].gameObject + ".  Replacing with default placeholder texture");
+                                MonoBehaviour.print("TexturesUnlimitedLoader -- ERROR: Found empty texture reference for property: " + key + " on model: " + databaseModel + "--" + rends[i].gameObject + ".  Replacing with default placeholder texture");
                             }                            
                             mat.SetTexture(key, emptyTextureReplacements[key]);
                             rends[i].material = mat;
@@ -439,6 +455,18 @@ namespace KSPShaderTools
             }
         }
 
+        /// <summary>
+        /// Return true/false if the input material uses a shader that supports transparency
+        /// AND transparency is currently enabled on the material from keywords (if applicable).
+        /// </summary>
+        /// <param name="mat"></param>
+        /// <returns></returns>
+        public static bool isTransparentMaterial(Material mat)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+
     }
 
     public class ShaderData
@@ -538,7 +566,7 @@ namespace KSPShaderTools
             }
             else
             {
-                if (KSPShaderLoader.logErrors)
+                if (TexturesUnlimitedLoader.logErrors)
                 {
                     MonoBehaviour.print("KSPShaderLoader -- Shader: " + mat.shader + " did not have property: " + name);
                 }                
@@ -616,7 +644,7 @@ namespace KSPShaderTools
             if (checkApply(mat))
             {
                 Texture2D texture = GameDatabase.Instance.GetTexture(textureName, normal);
-                if (texture == null && KSPShaderLoader.logErrors)
+                if (texture == null && TexturesUnlimitedLoader.logErrors)
                 {
                     MonoBehaviour.print("ERROR: KSPShaderLoader - Texture could not be located for name: " + textureName + " for texture slot: "+name+" while loading textures for material: " + mat);
                 }
@@ -658,8 +686,8 @@ namespace KSPShaderTools
         {
             if (checkApply(mat))
             {
-                Texture2D texture = KSPShaderLoader.getTextureColor(colorString);
-                if (texture == null && KSPShaderLoader.logErrors)
+                Texture2D texture = TexturesUnlimitedLoader.getTextureColor(colorString);
+                if (texture == null && TexturesUnlimitedLoader.logErrors)
                 {
                     MonoBehaviour.print("ERROR: KSPShaderLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }

@@ -5,20 +5,60 @@ using UnityEngine;
 
 namespace KSPShaderTools
 {
+
+    /// <summary>
+    /// Container class for all data that defines a single 'texture set'.
+    /// A texture set is a collection of material definitions and the meshes of a model that they are applied to.
+    /// Can include multiple materials, multiple target meshes, and can specify the texture for every slot for the chosen shader.
+    /// </summary>
     public class TextureSet
     {
-        //the registered name of this texture set -- MUST be unique (for global sets), or name collisions will occur.
+        
+        /// <summary>
+        /// the registered name of this texture set -- MUST be unique (for global sets), or name collisions will occur.
+        /// </summary>
         public readonly String name;
-        //the display-title of this texture set, can be non-unique (but for UI purposes should be unique within a given part)
+
+        /// <summary>
+        /// the display-title of this texture set, can be non-unique (but for UI purposes should be unique within a given part)
+        /// </summary>
         public readonly string title;
-        //the list of mesh->material assignments; each material data contains a list of meshes/excluded-meshes, along with the shaders and textures to apply to each mesh
+                
+        /// <summary>
+        /// the list of mesh->material assignments; each material data contains a list of meshes/excluded-meshes, along with the shaders and textures to apply to each mesh
+        /// </summary>
         public readonly TextureSetMaterialData[] textureData;
-        //default mask colors for this texture set
+
+        /// <summary>
+        /// default mask colors for this texture set
+        /// </summary>
         public readonly RecoloringData[] maskColors;
 
-        public readonly bool supportsRecoloring;
-        public readonly int recolorableChannelMask;//1 = main, 2 = secondary, 4 = detail
-        public readonly int featureMask;//1 = color, 2 = specular, 4 = metallic, 8 = hardness
+        /// <summary>
+        /// Does this texture set support recoloring?
+        /// </summary>
+        public readonly bool supportsRecoloring = false;
+
+        /// <summary>
+        /// What recoloring channels are available for this set? Bitmask.
+        /// 1 = main, 2 = secondary, 4 = detail
+        /// 3 = main, secondary
+        /// 5 = main, detail
+        /// 6 = secondary, detail
+        /// 7 = main, secondary, detail
+        /// </summary>
+        public readonly int recolorableChannelMask = 7;
+
+        /// <summary>
+        /// What recoloring features are available for this texture set?  Bitmask
+        /// 1 = color, 2 = specular, 4 = metallic, 8 = hardness
+        /// </summary>
+        public readonly int featureMask = 7;
+
+        /// <summary>
+        /// What preset color definition type does this texture set use?
+        /// </summary>
+        public readonly string colorType = "Default";
 
         public TextureSet(ConfigNode node)
         {
@@ -34,6 +74,7 @@ namespace KSPShaderTools
             supportsRecoloring = node.GetBoolValue("recolorable", false);
             recolorableChannelMask = node.GetIntValue("channelMask", 1 | 2 | 4);
             featureMask = node.GetIntValue("featureMask", 1 | 2 | 4);
+            colorType = node.GetStringValue("colorType", colorType);
             if (node.HasNode("COLORS"))
             {
                 ConfigNode colorsNode = node.GetNode("COLORS");
@@ -52,37 +93,59 @@ namespace KSPShaderTools
             }
         }
 
-        public void enable(GameObject root, RecoloringData[] userColors)
+        /// <summary>
+        /// Enable this texture set.  Creates a new material for every TextureSetMaterialData, initializes with the config specified properties,
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="userColors"></param>
+        public void enable(Transform root, RecoloringData[] userColors)
         {
-            foreach (TextureSetMaterialData mtd in textureData)
-            {
-                mtd.enable(root, userColors);
-            }
-        }
-
-        public static TextureSet[] parse(ConfigNode[] nodes)
-        {
-            int len = nodes.Length;
-            TextureSet[] sets = new TextureSet[len];
+            TextureSetMaterialData mtd;
+            int len = textureData.Length;
             for (int i = 0; i < len; i++)
             {
-                sets[i] = new TextureSet(nodes[i]);
+                mtd = textureData[i];
+                mtd.enable(root);
+                mtd.applyRecoloring(root, userColors);
             }
-            return sets;
         }
 
-        public static void updateModelMaterial(Transform root, string[] excludeMeshes, string[] meshes, string shader, ShaderProperty[] props)
+        /// <summary>
+        /// Apply the shader properties for the input recoloring data.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="userColors"></param>
+        public void applyRecoloring(Transform root, RecoloringData[] userColors)
         {
+            TextureSetMaterialData mtd;
+            int len = textureData.Length;
+            for (int i = 0; i < len; i++)
+            {
+                mtd = textureData[i];
+                mtd.applyRecoloring(root, userColors);
+            }
+        }
+        
+        /// <summary>
+        /// Public utility method to retrive all of the transforms that a TextureMaterialData would update.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="meshes"></param>
+        /// <param name="excludeMeshes"></param>
+        /// <returns></returns>
+        public static Transform[] findApplicableTransforms(Transform root, string[] meshes, string[] excludeMeshes)
+        {
+            List<Transform> transforms = new List<Transform>();
             //black-list, do everything not specified in excludeMeshes array
             if (excludeMeshes != null && excludeMeshes.Length > 0)
             {
-                Renderer[] allRends = root.GetComponentsInChildren<Renderer>();
-                int len = allRends.Length;
+                Renderer[] rends = root.GetComponentsInChildren<Renderer>();
+                int len = rends.Length;
                 for (int i = 0; i < len; i++)
                 {
-                    if (!excludeMeshes.Contains(allRends[i].name))
+                    if (!excludeMeshes.Contains(rends[i].name))
                     {
-                        updateRenderer(allRends[i], shader, props);
+                        transforms.AddUnique(rends[i].transform);
                     }
                 }
             }
@@ -92,7 +155,7 @@ namespace KSPShaderTools
                 int len = rends.Length;
                 for (int i = 0; i < len; i++)
                 {
-                    updateRenderer(rends[i], shader, props);
+                    transforms.AddUnique(rends[i].transform);
                 }
             }
             else//white-list, only do what is specified by meshes array
@@ -117,44 +180,34 @@ namespace KSPShaderTools
                         {
                             continue;
                         }
-                        updateRenderer(r, shader, props);
+                        transforms.AddUnique(tr);
                     }
                 }
             }
+            return transforms.ToArray();
         }
 
-        public static void updateRenderer(Renderer rend, string shader, ShaderProperty[] props)
+        /// <summary>
+        /// Public utility method to parse texture set instances from config nodes.
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <returns></returns>
+        public static TextureSet[] parse(ConfigNode[] nodes)
         {
-            updateMaterial(rend.material, shader, props);
-        }
-
-        public static void updateMaterial(Material mat, string shader, ShaderProperty[] props)
-        {
-            if (!String.IsNullOrEmpty(shader))
-            {
-                Shader s = KSPShaderLoader.getShader(shader);
-                if (s != null && s != mat.shader)
-                {
-                    mat.shader = s;
-                }
-                else if (s == null)
-                {
-                    MonoBehaviour.print("ERROR: KSPShaderLoader - Could not locate shader: " + shader + " while updating material: " + mat);
-                }
-            }
-            updateMaterialProperties(mat, props);
-        }
-
-        public static void updateMaterialProperties(Material m, ShaderProperty[] props)
-        {
-            if (m == null || props == null || props.Length == 0) { return; }
-            int len = props.Length;
+            int len = nodes.Length;
+            TextureSet[] sets = new TextureSet[len];
             for (int i = 0; i < len; i++)
             {
-                props[i].apply(m);
+                sets[i] = new TextureSet(nodes[i]);
             }
+            return sets;
         }
-        
+
+        /// <summary>
+        /// Public utility method to retrieve the registered names for the textures sets from the input collection of nodes.
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <returns></returns>
         public static string[] getTextureSetNames(ConfigNode[] nodes)
         {
             List<string> names = new List<string>();
@@ -164,12 +217,17 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 name = nodes[i].GetStringValue("name");
-                set = KSPShaderLoader.getTextureSet(name);
+                set = TexturesUnlimitedLoader.getTextureSet(name);
                 if (set != null) { names.Add(set.name); }
             }
             return names.ToArray();
         }
 
+        /// <summary>
+        /// Public utility method to retrieve just the display titles of the texture sets from the input collection of nodes.
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <returns></returns>
         public static string[] getTextureSetTitles(ConfigNode[] nodes)
         {
             List<string> names = new List<string>();
@@ -179,10 +237,48 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 name = nodes[i].GetStringValue("name");
-                set = KSPShaderLoader.getTextureSet(name);
+                set = TexturesUnlimitedLoader.getTextureSet(name);
                 if (set != null) { names.Add(set.title); }
             }
             return names.ToArray();
+        }
+
+        /// <summary>
+        /// Applies the input properties to all transforms for a single TextureSetMaterialData.
+        /// The input properties can include textures, standard properties, and/or recoloring data.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="meshes"></param>
+        /// <param name="excludeMeshes"></param>
+        /// <param name="props"></param>
+        internal static void updateMaterialProperties(Transform root, string[] meshes, string[] excludeMeshes, ShaderProperty[] props)
+        {
+            Transform[] trs = findApplicableTransforms(root, meshes, excludeMeshes);
+            int len = trs.Length;
+            Renderer render;
+            for (int i = 0; i < len; i++)
+            {
+                render = trs[i].GetComponent<Renderer>();
+                if (render != null)
+                {
+                    updateMaterialProperties(render.sharedMaterial, props);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Apply the input properties to the single input material.
+        /// </summary>
+        /// <param name="m"></param>
+        /// <param name="props"></param>
+        internal static void updateMaterialProperties(Material m, ShaderProperty[] props)
+        {
+            if (m == null || props == null || props.Length == 0) { return; }
+            int len = props.Length;
+            for (int i = 0; i < len; i++)
+            {
+                props[i].apply(m);
+            }
         }
 
     }
@@ -194,43 +290,79 @@ namespace KSPShaderTools
     /// </summary>
     public class TextureSetMaterialData
     {
+
         public readonly String shader;
         public readonly String[] meshNames;
         public readonly String[] excludedMeshes;
-        public readonly ShaderProperty[] props;
+        public readonly ShaderProperty[] shaderProperties;
 
         public TextureSetMaterialData(ConfigNode node)
         {
             shader = node.GetStringValue("shader");
             meshNames = node.GetStringValues("mesh");
             excludedMeshes = node.GetStringValues("excludeMesh");
-            props = ShaderProperty.parse(node);
+            shaderProperties = ShaderProperty.parse(node);
         }
 
-        public void enable(GameObject root, RecoloringData[] userColors)
+        /// <summary>
+        /// Applies this texture set to the input root transform, using the specified inclusions/exclusions from config.
+        /// Does not update any recoloring data.  Must also call 'applyRecoloring' in order to update recoloring properties.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="userColors"></param>
+        public void enable(Transform root)
         {
-            TextureSet.updateModelMaterial(root.transform, excludedMeshes, meshNames, shader, getProperties(userColors));
+            Transform[] trs = TextureSet.findApplicableTransforms(root, meshNames, excludedMeshes);
+            Material mat = createMaterial();
+            Renderer render;
+            int len = trs.Length;
+            for (int i = 0; i < len; i++)
+            {
+                render = trs[i].GetComponent<Renderer>();
+                if (render != null)
+                {
+                    render.sharedMaterial = mat;                    
+                }
+            }
         }
 
-        public void enable(Material mat, RecoloringData[] userColors)
+        /// <summary>
+        /// Update the current recoloring data for this texture set.  Does not adjust any other material properties.
+        /// </summary>
+        /// <param name="mat"></param>
+        /// <param name="userColors"></param>
+        public void applyRecoloring(Transform root, RecoloringData[] userColors)
         {
-            TextureSet.updateMaterial(mat, shader, getProperties(userColors));
+            TextureSet.updateMaterialProperties(root, meshNames, excludedMeshes, getRecolorProperties(userColors));
         }
 
-        public Material createMaterial(string name)
+        /// <summary>
+        /// Return a new material instances instatiated with the shader and properties for this material data.
+        /// Does not include applying any recoloring data -- that needs to be handled externally.
+        /// </summary>
+        /// <returns></returns>
+        public Material createMaterial()
         {
-            string shdName = string.IsNullOrEmpty(this.shader) ? "KSP/Diffuse" : this.shader;
-            Shader shd = KSPShaderLoader.getShader(shdName);
-            Material mat = new Material(shd);
-            mat.name = name;
-            TextureSet.updateMaterialProperties(mat, props);
-            return mat;
+            if (string.IsNullOrEmpty(this.shader))
+            {
+                //TODO -- include texture set name somehow...
+                throw new NullReferenceException("ERROR: No shader specified for texture set.");
+            }
+            Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
+            Material material = new Material(shader);
+            TextureSet.updateMaterialProperties(material, shaderProperties);
+            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
+            return material;
         }
-
-        private ShaderProperty[] getProperties(RecoloringData[] userColors)
+        
+        /// <summary>
+        /// Return an array containing the properties for only the recoloring data for this texture set.
+        /// </summary>
+        /// <param name="userColors"></param>
+        /// <returns></returns>
+        private ShaderProperty[] getRecolorProperties(RecoloringData[] userColors)
         {
             List<ShaderProperty> ps = new List<ShaderProperty>();
-            ps.AddRange(props);
             if (userColors != null)
             {
                 int len = userColors.Length;
@@ -246,6 +378,7 @@ namespace KSPShaderTools
             }
             return ps.ToArray();
         }
+
     }
 
 }

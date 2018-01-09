@@ -92,7 +92,7 @@ namespace SSTUTools
 
         private static void replaceShader(Material m, string name)
         {
-            m.shader = KSPShaderTools.KSPShaderLoader.getShader(name);
+            m.shader = KSPShaderTools.TexturesUnlimitedLoader.getShader(name);
         }
 
         private static void replaceTexture(Material m, string name, bool nrm = false)
