@@ -32,7 +32,7 @@ namespace KSPShaderTools
         /// <summary>
         /// List of loaded shaders and corresponding icon shader.  Loaded from KSP_SHADER_DATA config nodes.
         /// </summary>
-        public static Dictionary<string, ShaderData> loadedShaders = new Dictionary<string, ShaderData>();
+        public static Dictionary<string, IconShaderData> loadedShaders = new Dictionary<string, IconShaderData>();
 
         /// <summary>
         /// List of loaded global texture sets.  Loaded from KSP_TEXTURE_SET config nodes.
@@ -43,6 +43,11 @@ namespace KSPShaderTools
         /// List of procedurally created 'solid color' textures to use for filling in empty texture slots in materials.
         /// </summary>
         public static Dictionary<string, Texture2D> textureColors = new Dictionary<string, Texture2D>();
+
+        /// <summary>
+        /// List of shaders with transparency, and the keywords that enable it.  Used to properly set the render-queue for materials.
+        /// </summary>
+        public static Dictionary<string, TransparentShaderData> transparentShaderData = new Dictionary<string, TransparentShaderData>();
 
         #endregion ENDREGION - Maps of shaders, texture sets, procedural textures
 
@@ -191,9 +196,14 @@ namespace KSPShaderTools
                 MonoBehaviour.print("Attempting to load shader icon replacement data for: " + sName + " :: " + iName);
                 Shader shader = dict[sName];
                 Shader iconShader = dict[iName];
-                ShaderData data = new ShaderData(shader, iconShader);
+                IconShaderData data = new IconShaderData(shader, iconShader);
                 loadedShaders.Add(shader.name, data);
             }
+        }
+
+        private static void loadTransparencyData()
+        {
+
         }
 
         /// <summary>
@@ -440,22 +450,58 @@ namespace KSPShaderTools
         /// <returns></returns>
         public static bool isTransparentMaterial(Material mat)
         {
-            //TODO
-            throw new NotImplementedException();
+            TransparentShaderData tsd = null;
+            if (transparentShaderData.TryGetValue(mat.shader.name, out tsd))
+            {
+                return tsd.isTransparencyEnabled(mat);
+            }
+            else
+            {
+                return false;
+            }
         }
 
+    }
+
+    public class TransparentShaderData
+    {
+        public readonly Shader shader;
+        public bool alwaysTransparent = false;
+        public string[] transparentKeywords;
+        public TransparentShaderData(ConfigNode node)
+        {
+            string shaderName = node.GetStringValue("shader");
+            shader = TexturesUnlimitedLoader.getShader(shaderName);
+            alwaysTransparent = node.GetBoolValue("alwaysTransparent", false);
+            transparentKeywords = node.GetStringValues("keyword");
+        }
+
+        public bool isTransparencyEnabled(Material mat)
+        {
+            if (mat.shader != this.shader) { throw new ArgumentOutOfRangeException("Improper shader.  Expecting: " + shader.name + " was passed: " + mat.shader.name); }
+            if (alwaysTransparent) { return true; }
+            int len = transparentKeywords.Length;
+            for (int i = 0; i < len; i++)
+            {
+                if (mat.IsKeywordEnabled(transparentKeywords[i]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /// <summary>
     /// Shader to IconShader map <para/>
     /// Used to fix incorrect icon shaders when recoloring shaders are used.
     /// </summary>
-    public class ShaderData
+    public class IconShaderData
     {
         public readonly Shader shader;
         public readonly Shader iconShader;
 
-        public ShaderData(Shader shader, Shader iconShader)
+        public IconShaderData(Shader shader, Shader iconShader)
         {
             this.shader = shader;
             this.iconShader = iconShader;

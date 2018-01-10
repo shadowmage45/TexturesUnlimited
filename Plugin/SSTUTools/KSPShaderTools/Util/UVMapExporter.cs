@@ -35,6 +35,7 @@ namespace KSPShaderTools
 
         public UVLine[] getMeshUVs(Mesh mesh)
         {
+            if (mesh == null) { return new UVLine[0]; }
             List<UVLine> lines = new List<UVLine>();
 
             int[] triangles = mesh.triangles;
@@ -59,6 +60,7 @@ namespace KSPShaderTools
 
         public void writeSVG(string fileName, UVLine[] lines)
         {
+            if (lines == null || lines.Length <= 0) { return; }
             List<string> output = new List<string>();
             string header = "<?xml version = \"1.0\" standalone = \"no\"?>";
             string docTag = "<!DOCTYPE svg PUBLIC \" -//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">";
