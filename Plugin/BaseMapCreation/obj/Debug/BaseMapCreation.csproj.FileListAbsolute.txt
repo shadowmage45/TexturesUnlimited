@@ -1,0 +1,14 @@
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.exe.config
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.exe
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.pdb
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\Assembly-CSharp-firstpass.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\Assembly-CSharp.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\Assembly-UnityScript-firstpass.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\Assembly-UnityScript.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\KSPAssets.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\UnityEngine.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\UnityEngine.UI.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\UnityScript.Lang.dll
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.csprojResolveAssemblyReference.cache
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.exe
+C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.pdb
