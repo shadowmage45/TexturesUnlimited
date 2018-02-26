@@ -732,7 +732,7 @@ namespace KSPShaderTools
         public ShaderPropertyTexture(string line) : base(line)
         {
             string[] vals = line.Split(',');
-            this.textureName = vals[1];
+            this.textureName = vals[1].Trim();
             this.normal = textureName=="_BumpMap";
         }
 
