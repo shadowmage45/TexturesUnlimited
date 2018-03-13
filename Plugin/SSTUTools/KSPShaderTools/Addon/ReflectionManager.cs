@@ -398,7 +398,6 @@ namespace KSPShaderTools
         private ReflectionProbe createReflectionProbe(GameObject host)
         {
             ReflectionProbe pr = host.AddComponent<ReflectionProbe>();
-            pr.type = UnityEngine.Rendering.ReflectionProbeType.Cube;
             pr.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
             pr.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             pr.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
@@ -419,7 +418,7 @@ namespace KSPShaderTools
             tex.format = RenderTextureFormat.ARGB32;
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.filterMode = FilterMode.Trilinear;
-            tex.generateMips = false;
+            tex.autoGenerateMips = false;
             //TODO -- loop through texture and set to default = black
             return tex;
         }
