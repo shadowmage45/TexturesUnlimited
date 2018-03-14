@@ -164,7 +164,19 @@ namespace KSPShaderTools
                 {
                     shader = bundle.LoadAsset<Shader>(assetNames[i]);
                     MonoBehaviour.print("TexturesUnlimited - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
-                    shaderDict.Add(shader.name, shader);
+                    if (shader == null || string.IsNullOrEmpty(shader.name))
+                    {
+                        MonoBehaviour.print("ERROR: Shader did not load properly for asset name: " + assetNames[i]);
+                    }
+                    else if (shaderDict.ContainsKey(shader.name))
+                    {
+                        MonoBehaviour.print("ERROR: Duplicate shader detected: " + shader.name);
+                    }
+                    else
+                    {
+                        MonoBehaviour.print("Adding shader to shader map: " + shader.name);
+                        shaderDict.Add(shader.name, shader);
+                    }
                     GameDatabase.Instance.databaseShaders.AddUnique(shader);
                 }
             }

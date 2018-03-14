@@ -286,7 +286,7 @@ namespace KSPShaderTools
     /// <summary>
     /// Encapsulates the run-time data for a texture set that is applicable to a single material -- single or multiple meshes that share the same shader, textures, and shader properties.<para/>
     /// A texture set may have multiples of these, and must contain at least one.<para/>
-    /// They are created through TEXTURE config nodes in any place the TextureSet definitions are supported.  Each TEXTURE node creates one TextureSetMaterialData.
+    /// They are created through MATERIAL config nodes in any place the TextureSet definitions are supported.  Each MATERIAL node creates one TextureSetMaterialData.
     /// </summary>
     public class TextureSetMaterialData
     {
@@ -295,6 +295,9 @@ namespace KSPShaderTools
         public readonly String[] meshNames;
         public readonly String[] excludedMeshes;
         public readonly ShaderProperty[] shaderProperties;
+        public readonly String[] inheritedTex;
+        public readonly String[] inheritedFloat;
+        public readonly String[] inheritedColor;
 
         public TextureSetMaterialData(ConfigNode node)
         {
@@ -302,6 +305,9 @@ namespace KSPShaderTools
             meshNames = node.GetStringValues("mesh");
             excludedMeshes = node.GetStringValues("excludeMesh");
             shaderProperties = ShaderProperty.parse(node);
+            inheritedTex = node.GetStringValues("inheritTexture");
+            inheritedFloat = node.GetStringValues("inheritFloat");
+            inheritedColor = node.GetStringValues("inheritColor");
         }
 
         /// <summary>
@@ -313,7 +319,8 @@ namespace KSPShaderTools
         public void enable(Transform root)
         {
             Transform[] trs = TextureSet.findApplicableTransforms(root, meshNames, excludedMeshes);
-            Material mat = createMaterial();
+            Material newMaterial = createMaterial();//create a new material for this TSMD
+            Material origMaterial = null;
             Renderer render;
             int len = trs.Length;
             for (int i = 0; i < len; i++)
@@ -321,7 +328,13 @@ namespace KSPShaderTools
                 render = trs[i].GetComponent<Renderer>();
                 if (render != null)
                 {
-                    render.sharedMaterial = mat;                    
+                    //only inherit properties a single time, from the first render/transform/material found
+                    if (origMaterial == null)
+                    {
+                        origMaterial = render.sharedMaterial;
+                        inheritProperties(newMaterial, origMaterial);
+                    }
+                    render.sharedMaterial = newMaterial;                    
                 }
             }
         }
@@ -353,6 +366,35 @@ namespace KSPShaderTools
             TextureSet.updateMaterialProperties(material, shaderProperties);
             material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
             return material;
+        }
+
+        private void inheritProperties(Material newMat, Material origMat)
+        {
+            int len = inheritedTex.Length;
+            string propName;
+            for (int i = 0; i < len; i++)
+            {
+                propName = inheritedTex[i];
+                Texture tex = origMat.GetTexture(propName);
+                if (tex != null)
+                {
+                    newMat.SetTexture(propName, tex);
+                }
+                else
+                {
+                    MonoBehaviour.print("ERROR: Could not inherit texture: " + propName + " from material.  Texture was not found");
+                }
+            }
+            len = inheritedFloat.Length;
+            for (int i = 0; i < len; i++)
+            {
+
+            }
+            len = inheritedColor.Length;
+            for (int i = 0; i < len; i++)
+            {
+
+            }
         }
         
         /// <summary>
