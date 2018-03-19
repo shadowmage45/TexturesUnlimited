@@ -370,6 +370,16 @@ namespace KSPShaderTools
 
         private void inheritProperties(Material newMat, Material origMat)
         {
+            if (newMat == null)
+            {
+                MonoBehaviour.print("ERROR: New material was null when trying to inherit properties.");
+                return;
+            }
+            if (origMat == null)
+            {
+                MonoBehaviour.print("ERROR: Original material was null when trying to inherit properties.");
+                return;
+            }
             int len = inheritedTex.Length;
             string propName;
             for (int i = 0; i < len; i++)
@@ -388,12 +398,16 @@ namespace KSPShaderTools
             len = inheritedFloat.Length;
             for (int i = 0; i < len; i++)
             {
-
+                propName = inheritedFloat[i];
+                float val = origMat.GetFloat(propName);
+                newMat.SetFloat(propName, val);
             }
             len = inheritedColor.Length;
             for (int i = 0; i < len; i++)
             {
-
+                propName = inheritedColor[i];
+                Color c = origMat.GetColor(propName);
+                newMat.SetColor(propName, c);
             }
         }
         
