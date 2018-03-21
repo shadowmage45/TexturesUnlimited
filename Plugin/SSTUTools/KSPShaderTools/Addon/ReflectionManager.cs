@@ -213,7 +213,7 @@ namespace KSPShaderTools
             }
             if (skyboxShader == null)
             {
-                skyboxShader = KSPShaderTools.KSPShaderLoader.getShader("SSTU/Skybox/Cubemap");
+                skyboxShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("SSTU/Skybox/Cubemap");
                 if (skyboxShader == null)
                 {
                     MonoBehaviour.print("ERROR: SSTUReflectionManager - Could not find skybox shader.");
@@ -398,7 +398,6 @@ namespace KSPShaderTools
         private ReflectionProbe createReflectionProbe(GameObject host)
         {
             ReflectionProbe pr = host.AddComponent<ReflectionProbe>();
-            pr.type = UnityEngine.Rendering.ReflectionProbeType.Cube;
             pr.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
             pr.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.ViaScripting;
             pr.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
@@ -419,7 +418,7 @@ namespace KSPShaderTools
             tex.format = RenderTextureFormat.ARGB32;
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.filterMode = FilterMode.Trilinear;
-            tex.generateMips = false;
+            tex.autoGenerateMips = false;
             //TODO -- loop through texture and set to default = black
             return tex;
         }
@@ -577,7 +576,7 @@ namespace KSPShaderTools
                 debugSphere.name = "ReflectionDebugSphere";
                 GameObject.DestroyImmediate(debugSphere.GetComponent<Collider>());
                 debugSphere.transform.localScale = Vector3.one * 10f;
-                Shader metallic = KSPShaderLoader.getShader("SSTU/PBR/Metallic");
+                Shader metallic = TexturesUnlimitedLoader.getShader("SSTU/PBR/Metallic");
                 Material mat = new Material(metallic);
                 mat.SetFloat("_Metallic", 1);
                 mat.SetFloat("_Smoothness", 1);
@@ -674,7 +673,7 @@ namespace KSPShaderTools
      
             public void Start()
             {
-                Shader setAlpha = KSPShaderTools.KSPShaderLoader.getShader("SSTU/SetAlpha");
+                Shader setAlpha = KSPShaderTools.TexturesUnlimitedLoader.getShader("SSTU/SetAlpha");
                 mat = new Material(setAlpha);
             }
 

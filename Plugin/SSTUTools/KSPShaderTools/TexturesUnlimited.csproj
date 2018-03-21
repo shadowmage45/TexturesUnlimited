@@ -66,7 +66,7 @@
     <Compile Include="GUI\CraftRecolorGUI.cs" />
     <Compile Include="Module\KSPFairingTextureSwitch.cs" />
     <Compile Include="Util\IRecolorable.cs" />
-    <Compile Include="Addon\KSPShaderLoader.cs" />
+    <Compile Include="Addon\TexturesUnlimitedLoader.cs" />
     <Compile Include="Module\KSPTextureSwitch.cs" />
     <Compile Include="GUI\ReflectionDebugGUI.cs" />
     <Compile Include="Addon\ReflectionManager.cs" />

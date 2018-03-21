@@ -33,9 +33,9 @@ namespace KSPShaderTools
         public void Awake()
         {
             id = GetInstanceID();
-            graphWidth = KSPShaderLoader.recolorGUIWidth;
-            graphHeight = KSPShaderLoader.recolorGUITotalHeight;
-            sectionHeight = KSPShaderLoader.recolorGUISectionHeight;
+            graphWidth = TexturesUnlimitedLoader.recolorGUIWidth;
+            graphHeight = TexturesUnlimitedLoader.recolorGUITotalHeight;
+            sectionHeight = TexturesUnlimitedLoader.recolorGUISectionHeight;
             windowRect.x = Screen.width - (graphWidth + 100);
         }
 
