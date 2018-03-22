@@ -66,6 +66,12 @@ namespace KSPShaderTools
             title = node.GetStringValue("title", name);
             ConfigNode[] texNodes = node.GetNodes("MATERIAL");
             int len = texNodes.Length;
+            if (len == 0)
+            {
+                MonoBehaviour.print("Did not find any MATERIAL nodes in texture set:"+name+", searching for legacy styled TEXTURE nodes.");
+                texNodes = node.GetNodes("TEXTURE");
+                len = texNodes.Length;
+            }
             textureData = new TextureSetMaterialData[len];
             for (int i = 0; i < len; i++)
             {
@@ -298,6 +304,7 @@ namespace KSPShaderTools
         public readonly String[] inheritedTex;
         public readonly String[] inheritedFloat;
         public readonly String[] inheritedColor;
+        public readonly string mode;//ghetto enum - 'update' or 'create' are the only valid values
 
         public TextureSetMaterialData(ConfigNode node)
         {
@@ -308,6 +315,7 @@ namespace KSPShaderTools
             inheritedTex = node.GetStringValues("inheritTexture");
             inheritedFloat = node.GetStringValues("inheritFloat");
             inheritedColor = node.GetStringValues("inheritColor");
+            mode = node.GetStringValue("mode", "update");
         }
 
         /// <summary>
@@ -318,23 +326,42 @@ namespace KSPShaderTools
         /// <param name="userColors"></param>
         public void enable(Transform root)
         {
+            bool updateMode = string.Equals(mode, "update", StringComparison.CurrentCultureIgnoreCase);
             Transform[] trs = TextureSet.findApplicableTransforms(root, meshNames, excludedMeshes);
-            Material newMaterial = createMaterial();//create a new material for this TSMD
-            Material origMaterial = null;
-            Renderer render;
             int len = trs.Length;
-            for (int i = 0; i < len; i++)
+            Renderer render;
+            if (updateMode)
             {
-                render = trs[i].GetComponent<Renderer>();
-                if (render != null)
+                Material material;
+                for (int i = 0; i < len; i++)
                 {
-                    //only inherit properties a single time, from the first render/transform/material found
-                    if (origMaterial == null)
+                    render = trs[i].GetComponent<Renderer>();
+                    if (render != null)
                     {
-                        origMaterial = render.sharedMaterial;
-                        inheritProperties(newMaterial, origMaterial);
+                        material = render.material;
+                        TextureSet.updateMaterialProperties(material, shaderProperties);
+                        material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
+                        render.material = material;
                     }
-                    render.sharedMaterial = newMaterial;                    
+                }
+            }
+            else//create mode - creates new materials for renders to use, applying only those properties specified in the texture set, with optional inheritance of properties from the old material
+            {
+                Material newMaterial = createMaterial();//create a new material for this TSMD
+                Material origMaterial = null;
+                for (int i = 0; i < len; i++)
+                {
+                    render = trs[i].GetComponent<Renderer>();
+                    if (render != null)
+                    {
+                        //only inherit properties a single time, from the first render/transform/material found
+                        if (origMaterial == null)
+                        {
+                            origMaterial = render.sharedMaterial;
+                            inheritProperties(newMaterial, origMaterial);
+                        }
+                        render.sharedMaterial = newMaterial;
+                    }
                 }
             }
         }

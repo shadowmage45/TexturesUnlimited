@@ -418,7 +418,7 @@ namespace KSPShaderTools
             tex.format = RenderTextureFormat.ARGB32;
             tex.wrapMode = TextureWrapMode.Clamp;
             tex.filterMode = FilterMode.Trilinear;
-            tex.autoGenerateMips = false;
+            tex.generateMips = false;
             //TODO -- loop through texture and set to default = black
             return tex;
         }
