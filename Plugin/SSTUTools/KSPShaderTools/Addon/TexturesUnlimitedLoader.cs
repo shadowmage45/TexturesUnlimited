@@ -268,6 +268,11 @@ namespace KSPShaderTools
                     set = new TextureSet(textureNode);
                     setName = set.name;
                 }
+                else if (textureNode.HasNode("TEXTURE"))//legacy style definitions
+                {
+                    set = new TextureSet(textureNode);
+                    setName = set.name;
+                }
                 else if (textureNode.HasValue("textureSet"))
                 {
                     setName = textureNode.GetStringValue("textureSet");

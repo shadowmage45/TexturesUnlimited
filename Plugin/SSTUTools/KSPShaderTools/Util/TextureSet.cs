@@ -333,12 +333,14 @@ namespace KSPShaderTools
             if (updateMode)
             {
                 Material material;
+                Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
                 for (int i = 0; i < len; i++)
                 {
                     render = trs[i].GetComponent<Renderer>();
                     if (render != null)
                     {
                         material = render.material;
+                        material.shader = shader;
                         TextureSet.updateMaterialProperties(material, shaderProperties);
                         material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
                         render.material = material;
