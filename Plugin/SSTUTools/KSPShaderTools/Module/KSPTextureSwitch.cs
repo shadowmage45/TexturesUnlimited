@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace KSPShaderTools
 {
+
     // Resonsible for tracking list of texture switch options, 
     // managing of actual switching of textures,
     // and restoring persistent option on reload.
@@ -11,12 +11,23 @@ namespace KSPShaderTools
     public class KSPTextureSwitch : PartModule, IRecolorable
     {
 
+        /// <summary>
+        /// The root transform name that this texture-switch module should operate on.  Omit/leave blank to use the root 'model' transform from the part.
+        /// This is generally only needed if the texture sets themselves do not define include/exclusion specifications.
+        /// </summary>
         [KSPField]
         public string transformName = string.Empty;
 
+        /// <summary>
+        /// The section label to display in the Recoloring GUI.  Only used if the part is recolorable.
+        /// </summary>
         [KSPField]
         public string sectionName = "Recolorable";
 
+        /// <summary>
+        /// True/false if this module can be adjusted while in-flight.
+        /// This enables the texture-set selection buttons while in flight mode, but does not enable recoloring GUI (that is a separate part-module).
+        /// </summary>
         [KSPField]
         public bool canChangeInFlight = false;
 
@@ -68,13 +79,10 @@ namespace KSPShaderTools
             }
         }
 
-        //restores texture set data and either loads default texture set or saved texture set (if any)
+        /// <summary>
+        /// Restores texture set data and either loads default texture set or saved texture set (if any)
+        /// </summary>
         private void initialize()
-        {
-            loadConfigData();
-        }
-
-        private void loadConfigData()
         {
             if (textureSets != null)
             {
@@ -82,45 +90,73 @@ namespace KSPShaderTools
                 return;
             }
             ConfigNode node = Utils.parseConfigNode(configNodeData);
-            ConfigNode[] setNodes = node.GetNodes("TEXTURESET");
-            textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNodes);
+            string[] setNames = node.GetStringValues("textureSet");
+            textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNames);
             if (string.IsNullOrEmpty(currentTextureSet))
             {
-                currentTextureSet = setNodes[0].GetValue("name");
+                currentTextureSet = setNames[0];
             }
             this.updateUIChooseOptionControl(nameof(currentTextureSet), textureSets.getTextureSetNames(), textureSets.getTextureSetTitles(), true, currentTextureSet);
             textureSets.enableCurrentSet(getModelTransforms());
             Fields[nameof(currentTextureSet)].guiName = sectionName;
         }
 
+        /// <summary>
+        /// Helper method to return either the specified named transforms from the model, or the model root transform if no trf name is specified in part config.
+        /// </summary>
+        /// <returns></returns>
         private Transform[] getModelTransforms()
         {
             return string.IsNullOrEmpty(transformName) ? new Transform[] { part.transform.FindRecursive("model") } : part.transform.FindRecursive("model").FindChildren(transformName);
         }
 
+        /// <summary>
+        /// IRecolorable override.  Returns a string array containing the section name(s) for this texture-switch module.
+        /// As a texture-switch only uses a single section, it returns only the 'section name' specified in the part config.
+        /// </summary>
+        /// <returns></returns>
         public string[] getSectionNames()
         {
             return new string[] { sectionName };
         }
 
+        /// <summary>
+        /// Return the user-specified recoloring values for the input section name.
+        /// In this implementation the input name is ignored, and it returns the current user colors of this texture-switch module.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public RecoloringData[] getSectionColors(string name)
         {
             return textureSets.customColors;
         }
-
+        
+        /// <summary>
+        /// Set the input recoloring colors to the texture set and update persistent data. 
+        /// Input section name is ignored as texture switch module only has a single section.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="colors"></param>
         public void setSectionColors(string name, RecoloringData[] colors)
         {
             this.actionWithSymmetry(m => 
             {
                 m.textureSets.setCustomColors(colors);
-                m.textureSets.enableCurrentSet(m.getModelTransforms());
+                m.textureSets.applyRecoloring(getModelTransforms(), colors);
             });
         }
 
+        /// <summary>
+        /// Return the current texture set assigned to the input section. 
+        /// As the texture-switch module only has a single section, it always returns the currently active texture set.
+        /// </summary>
+        /// <param name="section"></param>
+        /// <returns></returns>
         public TextureSet getSectionTexture(string section)
         {
-            return textureSets.getCurrentTextureSet();
+            return textureSets.currentTextureSet;
         }
+
     }
 
     /// <summary>
@@ -138,9 +174,14 @@ namespace KSPShaderTools
 
         internal RecoloringData[] customColors;
 
-        private string currentTextureSet
+        private string currentTextureSetName
         {
             get { return (string)textureSetField.GetValue(pm); }
+        }
+        
+        public TextureSet currentTextureSet
+        {
+            get { return Array.Find(textureSets, m => m.name == currentTextureSetName); }
         }
 
         private string persistentData
@@ -149,21 +190,35 @@ namespace KSPShaderTools
             set { persistentDataField.SetValue(value, pm); }
         }
 
-        public TextureSetContainer(PartModule pm, BaseField textureSetField, BaseField persistentDataField, ConfigNode[] textureSetNodes)
+        public TextureSetContainer(PartModule pm, BaseField textureSetField, BaseField persistentDataField, string[] textureSetNames)
         {
             this.pm = pm;
             this.textureSetField = textureSetField;
             this.persistentDataField = persistentDataField;
             loadPersistentData(persistentData);
-            this.textureSets = KSPShaderLoader.getTextureSets(textureSetNodes);
+            this.textureSets = TexturesUnlimitedLoader.getTextureSets(textureSetNames);
         }
 
+        /// <summary>
+        /// Updates the internal stored values and persistent values for recoloring data.  Does NOT apply the new colors.
+        /// </summary>
+        /// <param name="colors"></param>
+        public void setCustomColors(RecoloringData[] colors)
+        {
+            customColors = colors;
+            saveColors(customColors);
+        }
+
+        /// <summary>
+        /// Apply the current texture to the input transforms.  The texture sets include/exclude settings will be used to determine what children of the input transforms should be adjusted.
+        /// </summary>
+        /// <param name="roots"></param>
         public void enableCurrentSet(Transform[] roots)
         {
-            TextureSet set = Array.Find(textureSets, m => m.name == currentTextureSet);
+            TextureSet set = currentTextureSet;
             if (set == null)
             {
-                MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSet);
+                MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName);
             }
             if (customColors == null || customColors.Length == 0)
             {
@@ -175,17 +230,21 @@ namespace KSPShaderTools
             int len = roots.Length;
             for (int i = 0; i < len; i++)
             {
-                set.enable(roots[i].gameObject, customColors);
+                set.enable(roots[i], customColors);
             }
             saveColors(customColors);
         }
 
+        /// <summary>
+        /// Apply the current texture to the input transform.  The texture sets include/exclude settings will be used to determine what children of the input transforms should be adjusted.
+        /// </summary>
+        /// <param name="root"></param>
         public void enableCurrentSet(Transform root)
         {
-            TextureSet set = Array.Find(textureSets, m => m.name == currentTextureSet);
+            TextureSet set = currentTextureSet;
             if (set == null)
             {
-                MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSet);
+                MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName);
             }
             if (customColors == null || customColors.Length == 0)
             {
@@ -194,19 +253,33 @@ namespace KSPShaderTools
                 customColors[1] = set.maskColors[1];
                 customColors[2] = set.maskColors[2];
             }
-            set.enable(root.gameObject, customColors);
+            set.enable(root, customColors);
             saveColors(customColors);
         }
 
-        public void setCustomColors(RecoloringData[] colors)
+        /// <summary>
+        /// Apply the current recoloring selections to the input transform.  Does not recreate material, but simply applies the properties to the current material.
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="userColors"></param>
+        public void applyRecoloring(Transform root, RecoloringData[] userColors)
         {
-            customColors = colors;
-            saveColors(customColors);
+            TextureSet set = currentTextureSet;
+            set.applyRecoloring(root, userColors);
         }
 
-        public TextureSet getCurrentTextureSet()
+        /// <summary>
+        /// Apply the current recoloring selections to the input transforms.  Does not recreate material, but simply applies the properties to the current material.
+        /// </summary>
+        /// <param name="roots"></param>
+        /// <param name="userColors"></param>
+        public void applyRecoloring(Transform[] roots, RecoloringData[] userColors)
         {
-            return Array.Find(textureSets, m => m.name == currentTextureSet);
+            int len = roots.Length;
+            for (int i = 0; i < len; i++)
+            {
+                applyRecoloring(roots[i], userColors);
+            }
         }
 
         public string[] getTextureSetNames()

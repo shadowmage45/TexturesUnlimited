@@ -1,0 +1,2 @@
+BaseMap creation - running with paths - input/output: C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\GameData\..\input -> C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\GameData\..\output
+ERROR: Could not locate input file directory at: C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\GameData\..\input  There must be a directory there that contains the textures and configs.

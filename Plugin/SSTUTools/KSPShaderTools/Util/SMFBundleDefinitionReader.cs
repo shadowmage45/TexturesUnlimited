@@ -17,13 +17,15 @@ namespace SSTUTools
             // and must be loaded using a WWW reference; you cannot use the 
             // AssetBundle.CreateFromFile/LoadFromFile methods unless you 
             // manually compiled your bundles for stand-alone use
-            WWW www = CreateWWW(urlFile.fullPath);
+            string path = urlFile.fullPath.Replace('\\', '/');
+            WWW www = CreateWWW(path);
+
             //not sure why the yield statement here, have not investigated removing it.
             yield return www;
 
             if (!string.IsNullOrEmpty(www.error))
             {
-                MonoBehaviour.print("Error while loading AssetBundle model: " + www.error+" for url: "+urlFile.url+" :: "+urlFile.fullPath);
+                MonoBehaviour.print("Error while loading AssetBundle model: " + www.error+" for url: "+urlFile.url+" :: "+path);
                 yield break;
             }
             else if (www.assetBundle == null)
@@ -92,7 +94,7 @@ namespace SSTUTools
 
         private static void replaceShader(Material m, string name)
         {
-            m.shader = KSPShaderTools.KSPShaderLoader.getShader(name);
+            m.shader = KSPShaderTools.TexturesUnlimitedLoader.getShader(name);
         }
 
         private static void replaceTexture(Material m, string name, bool nrm = false)
