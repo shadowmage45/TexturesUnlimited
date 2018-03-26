@@ -342,7 +342,8 @@ namespace KSPShaderTools
                         material = render.material;
                         material.shader = shader;
                         TextureSet.updateMaterialProperties(material, shaderProperties);
-                        material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
+                        //material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
+                        material.renderQueue = -1;
                         render.material = material;
                     }
                 }
