@@ -68,6 +68,8 @@ namespace KSPShaderTools
 
         private static EventVoid.OnEvent partListLoadedEvent;
 
+        private static GraphicsAPIGUI apiCheckGUI;
+
         public void Start()
         {
             INSTANCE = this;
@@ -76,6 +78,20 @@ namespace KSPShaderTools
             {
                 partListLoadedEvent = new EventVoid.OnEvent(onPartListLoaded);
                 GameEvents.OnPartLoaderLoaded.Add(partListLoadedEvent);
+            }
+            //
+            bool showAPICheckGUI = false;
+            UnityEngine.Rendering.GraphicsDeviceType graphicsAPI = SystemInfo.graphicsDeviceType;
+            if (graphicsAPI != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
+            {
+                showAPICheckGUI = true;
+            }
+            if (showAPICheckGUI)
+            {
+                if (apiCheckGUI == null)
+                {
+                    apiCheckGUI = this.gameObject.AddComponent<GraphicsAPIGUI>();
+                }
             }
         }
 
@@ -87,6 +103,14 @@ namespace KSPShaderTools
         public void ModuleManagerPostLoad()
         {
             load();
+        }
+
+        internal void removeAPICheckGUI()
+        {
+            if (apiCheckGUI != null)
+            {
+                Component.Destroy(apiCheckGUI);
+            }
         }
 
         private static void load()
