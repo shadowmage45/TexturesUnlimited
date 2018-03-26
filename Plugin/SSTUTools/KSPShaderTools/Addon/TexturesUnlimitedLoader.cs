@@ -72,6 +72,7 @@ namespace KSPShaderTools
 
         public void Start()
         {
+            MonoBehaviour.print("TULoader - Start()");
             INSTANCE = this;
             DontDestroyOnLoad(this);
             if (partListLoadedEvent == null)
@@ -79,18 +80,15 @@ namespace KSPShaderTools
                 partListLoadedEvent = new EventVoid.OnEvent(onPartListLoaded);
                 GameEvents.OnPartLoaderLoaded.Add(partListLoadedEvent);
             }
-            //
-            bool showAPICheckGUI = false;
+
+            //check the graphics API, popup warning if using unsupported gfx (dx9/11/12/legacy-openGL)
             UnityEngine.Rendering.GraphicsDeviceType graphicsAPI = SystemInfo.graphicsDeviceType;
             if (graphicsAPI != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
-            {
-                showAPICheckGUI = true;
-            }
-            if (showAPICheckGUI)
             {
                 if (apiCheckGUI == null)
                 {
                     apiCheckGUI = this.gameObject.AddComponent<GraphicsAPIGUI>();
+                    apiCheckGUI.openGUI();
                 }
             }
         }

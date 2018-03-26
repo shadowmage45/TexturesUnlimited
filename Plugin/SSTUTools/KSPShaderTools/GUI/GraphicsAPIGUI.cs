@@ -9,7 +9,7 @@ namespace KSPShaderTools
     public class GraphicsAPIGUI : MonoBehaviour
     {
 
-        private Rect windowRect = new Rect(Screen.width - 500, 40, 480, 320);
+        private Rect windowRect = new Rect(Screen.width/2 - 240, Screen.height/2 - 160, 480, 320);
         private int instanceID;
 
         private bool open = false;
@@ -38,9 +38,10 @@ namespace KSPShaderTools
         private void drawWindow(int id)
         {
             GUILayout.BeginVertical();
-            GUILayout.Label("Graphics API Detected: "+ SystemInfo.graphicsDeviceType);
-            GUILayout.Label("is unsupported by Textures Unlimited, and may not render correctly.");
+            GUILayout.Label("The Graphics API Detected: "+ SystemInfo.graphicsDeviceType);
+            GUILayout.Label("Is unsupported by Textures Unlimited, and some graphics may not render correctly.");
             GUILayout.Label("For best results, use the -force-glcore command line option to start KSP using the OpenGL Core graphics API");
+            GUILayout.FlexibleSpace();//push button to bottom of window
             if (GUILayout.Button("Acknowledge & Close"))
             {
                 closeGUI();
