@@ -49,6 +49,10 @@ namespace KSPShaderTools
         /// </summary>
         public static Dictionary<string, TransparentShaderData> transparentShaderData = new Dictionary<string, TransparentShaderData>();
 
+        public static int diffuseTextureRenderQueue = 2000;
+
+        public static int transparentTextureRenderQueue = 3000;
+
         #endregion ENDREGION - Maps of shaders, texture sets, procedural textures
 
         #region REGION - Config Values loaded from disk
@@ -237,7 +241,14 @@ namespace KSPShaderTools
 
         private static void loadTransparencyData()
         {
-
+            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("TRANSPARENT_SHADER");
+            TransparentShaderData tsd;
+            int len = nodes.Length;
+            for (int i = 0; i < len; i++)
+            {
+                tsd = new TransparentShaderData(nodes[i]);
+                transparentShaderData.Add(tsd.shader.name, tsd);
+            }
         }
 
         /// <summary>
@@ -505,13 +516,13 @@ namespace KSPShaderTools
     public class TransparentShaderData
     {
         public readonly Shader shader;
-        public bool alwaysTransparent = false;
+        public bool alwaysTransparent = true;
         public string[] transparentKeywords;
         public TransparentShaderData(ConfigNode node)
         {
-            string shaderName = node.GetStringValue("shader");
+            string shaderName = node.GetStringValue("name");
             shader = TexturesUnlimitedLoader.getShader(shaderName);
-            alwaysTransparent = node.GetBoolValue("alwaysTransparent", false);
+            alwaysTransparent = node.GetBoolValue("alwaysTransparent", true);
             transparentKeywords = node.GetStringValues("keyword");
         }
 

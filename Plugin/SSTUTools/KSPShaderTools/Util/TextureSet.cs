@@ -55,11 +55,6 @@ namespace KSPShaderTools
         /// </summary>
         public readonly int featureMask = 7;
 
-        /// <summary>
-        /// What preset color definition type does this texture set use?
-        /// </summary>
-        public readonly string colorType = "Default";
-
         public TextureSet(ConfigNode node)
         {
             name = node.GetStringValue("name");
@@ -80,7 +75,6 @@ namespace KSPShaderTools
             supportsRecoloring = node.GetBoolValue("recolorable", false);
             recolorableChannelMask = node.GetIntValue("channelMask", 1 | 2 | 4);
             featureMask = node.GetIntValue("featureMask", 1 | 2 | 4);
-            colorType = node.GetStringValue("colorType", colorType);
             if (node.HasNode("COLORS"))
             {
                 ConfigNode colorsNode = node.GetNode("COLORS");
@@ -342,8 +336,7 @@ namespace KSPShaderTools
                         material = render.material;
                         material.shader = shader;
                         TextureSet.updateMaterialProperties(material, shaderProperties);
-                        //material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
-                        material.renderQueue = -1;
+                        material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.diffuseTextureRenderQueue : TexturesUnlimitedLoader.transparentTextureRenderQueue;
                         render.material = material;
                     }
                 }
@@ -394,7 +387,7 @@ namespace KSPShaderTools
             Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
             Material material = new Material(shader);
             TextureSet.updateMaterialProperties(material, shaderProperties);
-            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? 2000 : 3000;
+            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.diffuseTextureRenderQueue : TexturesUnlimitedLoader.transparentTextureRenderQueue;
             return material;
         }
 
