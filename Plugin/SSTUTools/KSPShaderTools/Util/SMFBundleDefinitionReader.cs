@@ -46,6 +46,7 @@ namespace SSTUTools
                 yield break;
             }
             GameObject model = GameObject.Instantiate((GameObject)abr.asset);//make a copy of the asset
+            //modelDebugOutput(model);
             setupModelTextures(urlFile.root, model);
             this.obj = model;
             this.successful = true;
@@ -89,6 +90,47 @@ namespace SSTUTools
                 replaceTexture(m, "_BumpMap", true);
                 replaceTexture(m, "_Emissive", false);
                 replaceTexture(m, "_AOMap", false);
+            }
+        }
+
+        private static void modelDebugOutput(GameObject model)
+        {
+            MonoBehaviour.print("List of tags in KSP: ");
+
+            MonoBehaviour.print("Debug Output for Model: " + model.name);
+            Transform[] trs = GetAllChildren(model.transform);
+            transformDebugOutput(model.transform);
+            int len = trs.Length;
+            for (int i = 0; i < len; i++)
+            {
+                transformDebugOutput(trs[i]);
+            }
+        }
+
+        private static void transformDebugOutput(Transform transform)
+        {
+            MonoBehaviour.print("Transform: " + transform.name + " Tag: " + transform.tag + " Layer: " + transform.gameObject.layer);
+        }
+
+        /// <summary>
+        /// Returns -ALL- children/grand-children/etc transforms of the input; everything in the heirarchy.
+        /// </summary>
+        /// <param name="transform"></param>
+        /// <returns></returns>
+        private static Transform[] GetAllChildren(Transform transform)
+        {
+            List<Transform> trs = new List<Transform>();
+            recurseAddChildren(transform, trs);
+            return trs.ToArray();
+        }
+
+        private static void recurseAddChildren(Transform transform, List<Transform> trs)
+        {
+            int len = transform.childCount;
+            foreach (Transform child in transform)
+            {
+                trs.Add(child);
+                recurseAddChildren(child, trs);
             }
         }
 
