@@ -51,7 +51,7 @@ namespace KSPShaderTools
 
         public static int diffuseTextureRenderQueue = 2000;
 
-        public static int transparentTextureRenderQueue = 3000;
+        public static int transparentTextureRenderQueue = 6000;
 
         #endregion ENDREGION - Maps of shaders, texture sets, procedural textures
 

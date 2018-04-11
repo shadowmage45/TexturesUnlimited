@@ -336,7 +336,7 @@ namespace KSPShaderTools
                         material = render.material;
                         material.shader = shader;
                         TextureSet.updateMaterialProperties(material, shaderProperties);
-                        material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.diffuseTextureRenderQueue : TexturesUnlimitedLoader.transparentTextureRenderQueue;
+                        material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
                         render.material = material;
                     }
                 }
@@ -387,7 +387,7 @@ namespace KSPShaderTools
             Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
             Material material = new Material(shader);
             TextureSet.updateMaterialProperties(material, shaderProperties);
-            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.diffuseTextureRenderQueue : TexturesUnlimitedLoader.transparentTextureRenderQueue;
+            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
             return material;
         }
 
