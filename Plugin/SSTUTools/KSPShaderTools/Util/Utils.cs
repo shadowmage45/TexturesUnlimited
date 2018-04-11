@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Text;
 using UnityEngine;
 
 namespace KSPShaderTools
@@ -388,6 +389,60 @@ namespace KSPShaderTools
         public static Color GetColorFromByteCSV(this ConfigNode node, String name)
         {
             return parseColorFromBytes(node.GetStringValue(name));
+        }
+
+        public static string ToStringFixedOrder(this ConfigNode node)
+        {
+            return ToStringRecurse(node, 0, new StringBuilder()).ToString();
+        }
+
+        /// <summary>
+        /// Returns the builder instance for....reasons....
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="indent"></param>
+        /// <param name="builder"></param>
+        /// <returns></returns>
+        private static StringBuilder ToStringRecurse(this ConfigNode node, int indent, StringBuilder builder)
+        {
+            if (builder == null)
+            {
+                builder = new StringBuilder();
+            }
+            //node title
+            builder.Append(' ', indent);
+            builder.Append(node.id);
+            builder.Append('\n');
+
+            //open brace for this node
+            builder.Append(' ', indent);
+            builder.Append('{');
+            builder.Append('\n');
+
+            //add values
+            int len = node.CountValues;
+            for (int i = 0; i < len; i++)
+            {
+
+                builder.Append(node.values[i].name);
+                builder.Append('=');
+                builder.Append(node.values[i].value);
+                builder.Append('\n');
+            }
+
+            //add sub-nodes, increasing the indent count, and adding a newline after every one
+            len = node.CountNodes;
+            for (int i = 0; i < len; i++)
+            {
+                ConfigNode node1 = node.nodes[i];
+                ToStringRecurse(node1, indent + 2, builder);
+                builder.Append('\n');
+            }
+
+            //closing brace for this node
+            builder.Append(' ', indent);
+            builder.Append('}');
+            return builder;
         }
 
         #endregion
