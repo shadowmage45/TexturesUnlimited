@@ -341,13 +341,31 @@ namespace KSPShaderTools
             Shader iconShader;
             foreach (AvailablePart p in PartLoader.LoadedPartsList)
             {
+                if (p.iconPrefab == null)//should never happen
+                {
+                    MonoBehaviour.print("ERROR: Part: " + p.name + " had a null icon!");
+                    continue;
+                }
+                if (p.partPrefab == null)
+                {
+                    MonoBehaviour.print("ERROR: Part: " + p.name + " had a null prefab!");
+                    continue;
+                }
                 bool outputName = false;//only log the adjustment a single time
                 Transform pt = p.partPrefab.gameObject.transform;
                 Renderer[] ptrs = pt.GetComponentsInChildren<Renderer>();
                 foreach (Renderer ptr in ptrs)
                 {
-                    string ptsn = ptr.sharedMaterial.shader.name;
-                    if (loadedShaders.ContainsKey(ptsn))//is a shader that we care about
+                    Material m = ptr.sharedMaterial;
+                    if (m == null || ptr.sharedMaterial.shader == null)
+                    {
+                        if (m == null) { MonoBehaviour.print("ERROR: Null material found on renderer: " + ptr.gameObject.name); }
+                        else if (m.shader == null) { MonoBehaviour.print("ERROR: Null shader found on renderer: " + ptr.gameObject.name); }
+                        continue;
+                    }
+                    //part transform shader name
+                    string ptsn = m.shader.name;
+                    if (!string.IsNullOrEmpty(ptsn) && loadedShaders.ContainsKey(ptsn))//is a shader that we care about
                     {
                         iconShader = loadedShaders[ptsn].iconShader;
                         if (!outputName)
@@ -359,10 +377,10 @@ namespace KSPShaderTools
                         foreach (Transform ictr in ictrs)
                         {
                             Renderer itr = ictr.GetComponent<Renderer>();
-                            if (itr != null)
-                            {
-                                itr.sharedMaterial.shader = iconShader;
-                            }
+                            if (itr == null) { continue; }
+                            m = itr.sharedMaterial;
+                            if (m == null) { continue; }
+                            m.shader = iconShader;
                         }
                     }
                 }
