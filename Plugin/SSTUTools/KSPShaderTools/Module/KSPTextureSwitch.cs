@@ -47,7 +47,7 @@ namespace KSPShaderTools
         [Persistent]
         public string configNodeData = string.Empty;
 
-        private TextureSetContainer textureSets;
+        protected TextureSetContainer textureSets;
 
         public override void OnLoad(ConfigNode node)
         {
@@ -105,7 +105,7 @@ namespace KSPShaderTools
         /// Helper method to return either the specified named transforms from the model, or the model root transform if no trf name is specified in part config.
         /// </summary>
         /// <returns></returns>
-        private Transform[] getModelTransforms()
+        protected Transform[] getModelTransforms()
         {
             return string.IsNullOrEmpty(transformName) ? new Transform[] { part.transform.FindRecursive("model") } : part.transform.FindRecursive("model").FindChildren(transformName);
         }
