@@ -337,6 +337,31 @@ namespace KSPShaderTools
             return new Vector3((float)Utils.safeParseDouble(vals[0]), (float)Utils.safeParseDouble(vals[1]), (float)Utils.safeParseDouble(vals[2]));
         }
 
+        public static Vector2 GetVector2(this ConfigNode node, string name, Vector2 defaultValue)
+        {
+            string value = node.GetValue(name);
+            if (string.IsNullOrEmpty (value))
+            {
+                MonoBehaviour.print("ERROR parsing values for Vector2 from input: " + value + ". found less than 2 values, cannot create Vector2");
+                return defaultValue;
+            }
+            string[] vals = value.Split(',');
+            if (vals.Length < 2)
+            {
+                MonoBehaviour.print("ERROR parsing values for Vector2 from input: " + value + ". found less than 2 values, cannot create Vector2");
+                return defaultValue;
+            }
+            float a, b;
+            a = safeParseFloat(vals[0]);
+            b = safeParseFloat(vals[1]);
+            return new Vector2(a, b);
+        }
+
+        public static Vector2 GetVector2(this ConfigNode node, string name)
+        {
+            return node.GetVector2(name, Vector2.zero);
+        }
+
         public static FloatCurve GetFloatCurve(this ConfigNode node, String name, FloatCurve defaultValue = null)
         {
             FloatCurve curve = new FloatCurve();

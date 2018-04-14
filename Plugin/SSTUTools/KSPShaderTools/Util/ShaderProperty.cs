@@ -45,14 +45,24 @@ namespace KSPShaderTools
                 {
                     props.Add(new ShaderPropertyTextureColor(propNodes[i]));
                 }
+                else if (propNodes[i].HasValue("scale"))
+                {
+                    props.Add(new ShaderPropertyTextureScale(propNodes[i]));
+                }
+                else if (propNodes[i].HasValue("offset"))
+                {
+                    props.Add(new ShaderPropertyTextureOffset(propNodes[i]));
+                }
             }
 
-            //shorthand property definition loading
+            //shorthand single-line property definition loading
             props.AddRange(parseKeywordProperties(node));
             props.AddRange(parseTextureProperties(node));
             props.AddRange(parseColorProperties(node));
             props.AddRange(parseFloatProperties(node));
             props.AddRange(parseTextureColorProperties(node));
+            props.AddRange(parseTextureScaleProperties(node));
+            props.AddRange(parseTextureOffsetProperties(node));
 
             return props.ToArray();
         }
@@ -146,6 +156,30 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 props[i] = new ShaderPropertyTextureColor(textureColorProps[i]);
+            }
+            return props;
+        }
+
+        private static ShaderPropertyTextureScale[] parseTextureScaleProperties(ConfigNode node)
+        {
+            string[] textureScaleProps = node.GetStringValues("textureScale");
+            int len = textureScaleProps.Length;
+            ShaderPropertyTextureScale[] props = new ShaderPropertyTextureScale[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyTextureScale(textureScaleProps[i]);
+            }
+            return props;
+        }
+
+        private static ShaderPropertyTextureOffset[] parseTextureOffsetProperties(ConfigNode node)
+        {
+            string[] textureOffsetProps = node.GetStringValues("textureOffset");
+            int len = textureOffsetProps.Length;
+            ShaderPropertyTextureOffset[] props = new ShaderPropertyTextureOffset[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyTextureOffset(textureOffsetProps[i]);
             }
             return props;
         }
@@ -310,6 +344,74 @@ namespace KSPShaderTools
                     MonoBehaviour.print("ERROR: KSPShaderLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }
                 mat.SetTexture(name, texture);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Non-abstract wrapper class around a texture-scale shader property.
+    /// </summary>
+    public class ShaderPropertyTextureScale : ShaderProperty
+    {
+        private Vector2 scale;
+
+        public ShaderPropertyTextureScale(ConfigNode node) : base(node)
+        {
+            scale = node.GetVector2("scale");
+        }
+
+        public ShaderPropertyTextureScale(string line) : base(line)
+        {
+            string[] splits = line.Split(',');
+            float a = 1;
+            float b = 1;
+            if (splits.Length >= 3)//name, x, y
+            {
+                a = Utils.safeParseFloat(splits[1]);
+                b = Utils.safeParseFloat(splits[2]);
+            }
+            scale = new Vector2(a, b);
+        }
+
+        protected override void applyInternal(Material mat)
+        {
+            if (checkApply(mat))
+            {
+                mat.SetTextureScale(name, scale);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Non-abstract wrapper class around a texture-offset shader property.
+    /// </summary>
+    public class ShaderPropertyTextureOffset : ShaderProperty
+    {
+        private Vector2 offset;
+
+        public ShaderPropertyTextureOffset(ConfigNode node) : base(node)
+        {
+            offset = node.GetVector2("offset");
+        }
+
+        public ShaderPropertyTextureOffset(string line) : base(line)
+        {
+            string[] splits = line.Split(',');
+            float a = 1;
+            float b = 1;
+            if (splits.Length >= 3)//name, x, y
+            {
+                a = Utils.safeParseFloat(splits[1]);
+                b = Utils.safeParseFloat(splits[2]);
+            }
+            offset = new Vector2(a, b);
+        }
+
+        protected override void applyInternal(Material mat)
+        {
+            if (checkApply(mat))
+            {
+                mat.SetTextureOffset(name, offset);
             }
         }
     }
