@@ -64,6 +64,7 @@ namespace KSPShaderTools
             if (len == 0)
             {
                 MonoBehaviour.print("Did not find any MATERIAL nodes in texture set:"+name+", searching for legacy styled TEXTURE nodes.");
+                MonoBehaviour.print("Please update the config for the texture-set to fix this error.");
                 texNodes = node.GetNodes("TEXTURE");
                 len = texNodes.Length;
             }
@@ -281,6 +282,22 @@ namespace KSPShaderTools
             }
         }
 
+        internal static void fillEmptyStockTextureSlots(Material material)
+        {
+            fillEmptyTextureSlot(material, "_MainTex", "0,0,0,255");
+            fillEmptyTextureSlot(material, "_BumpMap", "127, 127, 127, 127");
+            fillEmptyTextureSlot(material, "_Emissive", "0,0,0,0");
+        }
+
+        internal static void fillEmptyTextureSlot(Material mat, string slot, string textureColor)
+        {
+            if (mat.HasProperty(slot) && mat.GetTexture(slot) == null)
+            {
+                MonoBehaviour.print("Replacing empty textureslot: "+slot+" with color: "+textureColor);
+                mat.SetTexture(slot, TexturesUnlimitedLoader.getTextureColor(textureColor));
+            }
+        }
+
     }
 
     /// <summary>
@@ -336,6 +353,7 @@ namespace KSPShaderTools
                         material = render.material;
                         material.shader = shader;
                         TextureSet.updateMaterialProperties(material, shaderProperties);
+                        TextureSet.fillEmptyStockTextureSlots(material);
                         material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
                         render.material = material;
                     }
