@@ -8,28 +8,60 @@ namespace KSPShaderTools
 {
     public class KSPFairingShader : PartModule
     {
-        public string shader = "SSTU/PBR/Metallic";
+
+        //[KSPField]
+        //public string shader = "SSTU/PBR/Metallic";
+
+        [KSPField]
+        public string textureSet;
+
+        [KSPField]
+        public int materialIndex = 0;
                 
         //really, could probably just move this back to the base class, possibly with a config bool for toggling enable of the secondary updates
         public void Start()
         {
             ModuleProceduralFairing mpf = part.GetComponent<ModuleProceduralFairing>();
-            Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
-            if (mpf != null && shader != null && mpf.FairingMaterial != null)
+            TextureSet ts = TexturesUnlimitedLoader.getTextureSet(textureSet);
+            if (ts != null)
             {
-                mpf.FairingMaterial.shader = shader;
-                if (mpf.FairingConeMaterial != null) { mpf.FairingConeMaterial.shader = shader; }
-                MonoBehaviour.print("Adjusted MPF materials!");
-                if (mpf.Panels != null && mpf.Panels.Count > 0)//cones are included in regular panels
+                ts.enable(part.transform.FindRecursive("model"), ts.maskColors);
+                TextureSetMaterialData tsmd = ts.textureData[materialIndex];
+                if (mpf != null)
                 {
-                    int len = mpf.Panels.Count;
-                    for (int i = 0; i < len; i++)
+                    if (mpf.FairingMaterial != null && mpf.FairingConeMaterial != null)
                     {
-                        mpf.Panels[i].mat.shader = shader;
-                        mpf.Panels[i].go.GetComponent<Renderer>().material.shader = shader;
+                        tsmd.apply(mpf.FairingMaterial);
+                        tsmd.apply(mpf.FairingConeMaterial);
+                    }
+                    if (mpf.Panels != null && mpf.Panels.Count > 0)//cones are included in regular panels
+                    {
+                        int len = mpf.Panels.Count;
+                        for (int i = 0; i < len; i++)
+                        {
+                            tsmd.apply(mpf.Panels[i].mat);
+                            tsmd.apply(mpf.Panels[i].go.GetComponent<Renderer>().material);
+                        }
                     }
                 }
             }
+            //prev shader-only code...
+            //Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
+            //if (mpf != null && shader != null && mpf.FairingMaterial != null)
+            //{
+            //    mpf.FairingMaterial.shader = shader;
+            //    if (mpf.FairingConeMaterial != null) { mpf.FairingConeMaterial.shader = shader; }
+            //    MonoBehaviour.print("Adjusted MPF materials!");
+            //    if (mpf.Panels != null && mpf.Panels.Count > 0)//cones are included in regular panels
+            //    {
+            //        int len = mpf.Panels.Count;
+            //        for (int i = 0; i < len; i++)
+            //        {
+            //            mpf.Panels[i].mat.shader = shader;
+            //            mpf.Panels[i].go.GetComponent<Renderer>().material.shader = shader;
+            //        }
+            //    }
+            //}
         }
     }
 

@@ -344,17 +344,13 @@ namespace KSPShaderTools
             if (updateMode)
             {
                 Material material;
-                Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
                 for (int i = 0; i < len; i++)
                 {
                     render = trs[i].GetComponent<Renderer>();
                     if (render != null)
                     {
                         material = render.material;
-                        material.shader = shader;
-                        TextureSet.updateMaterialProperties(material, shaderProperties);
-                        TextureSet.fillEmptyStockTextureSlots(material);
-                        material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
+                        apply(material);
                         render.material = material;
                     }
                 }
@@ -378,6 +374,18 @@ namespace KSPShaderTools
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Sets the shader and properties to the input material
+        /// </summary>
+        /// <param name="material"></param>
+        public void apply(Material material)
+        {
+            material.shader = TexturesUnlimitedLoader.getShader(shader);
+            TextureSet.updateMaterialProperties(material, shaderProperties);
+            TextureSet.fillEmptyStockTextureSlots(material);
+            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
         }
 
         /// <summary>
