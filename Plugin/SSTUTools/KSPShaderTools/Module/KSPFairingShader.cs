@@ -21,12 +21,14 @@ namespace KSPShaderTools
         //really, could probably just move this back to the base class, possibly with a config bool for toggling enable of the secondary updates
         public void Start()
         {
-            ModuleProceduralFairing mpf = part.GetComponent<ModuleProceduralFairing>();
             TextureSet ts = TexturesUnlimitedLoader.getTextureSet(textureSet);
             if (ts != null)
             {
+                //apply the textur set to the base model, use set-specified mask colors (does not support user recoloring)
                 ts.enable(part.transform.FindRecursive("model"), ts.maskColors);
                 TextureSetMaterialData tsmd = ts.textureData[materialIndex];
+                //adjust the already existing fairing materials and fairing panels
+                ModuleProceduralFairing mpf = part.GetComponent<ModuleProceduralFairing>();
                 if (mpf != null)
                 {
                     if (mpf.FairingMaterial != null && mpf.FairingConeMaterial != null)
