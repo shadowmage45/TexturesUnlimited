@@ -90,7 +90,7 @@ namespace KSPShaderTools
                 return;
             }
             ConfigNode node = Utils.parseConfigNode(configNodeData);
-            string[] setNames = node.GetStringValues("textureSet");
+            string[] setNames = node.GetStringValues("textureSet", true);
             textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNames);
             if (string.IsNullOrEmpty(currentTextureSet))
             {
