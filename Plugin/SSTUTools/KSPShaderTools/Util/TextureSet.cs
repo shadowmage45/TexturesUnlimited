@@ -293,7 +293,10 @@ namespace KSPShaderTools
         {
             if (mat.HasProperty(slot) && mat.GetTexture(slot) == null)
             {
-                MonoBehaviour.print("Replacing empty textureslot: "+slot+" with color: "+textureColor);
+                if (TexturesUnlimitedLoader.logReplacements)
+                {
+                    MonoBehaviour.print("Replacing empty textureslot: " + slot + " with color: " + textureColor);
+                }
                 mat.SetTexture(slot, TexturesUnlimitedLoader.getTextureColor(textureColor));
             }
         }
