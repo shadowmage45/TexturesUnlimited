@@ -282,6 +282,30 @@ namespace KSPShaderTools
             }
         }
 
+        /// <summary>
+        /// Return an array containing the properties for only the recoloring data for this texture set.
+        /// </summary>
+        /// <param name="userColors"></param>
+        /// <returns></returns>
+        internal static ShaderProperty[] getRecolorProperties(RecoloringData[] userColors)
+        {
+            List<ShaderProperty> ps = new List<ShaderProperty>();
+            if (userColors != null)
+            {
+                int len = userColors.Length;
+                for (int i = 0; i < len; i++)
+                {
+                    ps.Add(new ShaderPropertyColor("_MaskColor" + (i + 1), userColors[i].getShaderColor()));
+                }
+                Color metallicInput = new Color();
+                if (len > 0) { metallicInput.r = userColors[0].metallic; }
+                if (len > 1) { metallicInput.g = userColors[1].metallic; }
+                if (len > 2) { metallicInput.b = userColors[2].metallic; }
+                ps.Add(new ShaderPropertyColor("_MaskMetallic", metallicInput));
+            }
+            return ps.ToArray();
+        }
+
         internal static void fillEmptyStockTextureSlots(Material material)
         {
             fillEmptyTextureSlot(material, "_MainTex", "0,0,0,255");
@@ -398,7 +422,12 @@ namespace KSPShaderTools
         /// <param name="userColors"></param>
         public void applyRecoloring(Transform root, RecoloringData[] userColors)
         {
-            TextureSet.updateMaterialProperties(root, meshNames, excludedMeshes, getRecolorProperties(userColors));
+            TextureSet.updateMaterialProperties(root, meshNames, excludedMeshes, TextureSet.getRecolorProperties(userColors));
+        }
+
+        public void applyRecoloring(Material mat, RecoloringData[] userColors)
+        {
+            TextureSet.updateMaterialProperties(mat, TextureSet.getRecolorProperties(userColors));
         }
 
         /// <summary>
@@ -461,30 +490,6 @@ namespace KSPShaderTools
                 Color c = origMat.GetColor(propName);
                 newMat.SetColor(propName, c);
             }
-        }
-        
-        /// <summary>
-        /// Return an array containing the properties for only the recoloring data for this texture set.
-        /// </summary>
-        /// <param name="userColors"></param>
-        /// <returns></returns>
-        private ShaderProperty[] getRecolorProperties(RecoloringData[] userColors)
-        {
-            List<ShaderProperty> ps = new List<ShaderProperty>();
-            if (userColors != null)
-            {
-                int len = userColors.Length;
-                for (int i = 0; i < len; i++)
-                {
-                    ps.Add(new ShaderPropertyColor("_MaskColor" + (i + 1), userColors[i].getShaderColor()));
-                }
-                Color metallicInput = new Color();
-                if (len > 0) { metallicInput.r = userColors[0].metallic; }
-                if (len > 1) { metallicInput.g = userColors[1].metallic; }
-                if (len > 2) { metallicInput.b = userColors[2].metallic; }
-                ps.Add(new ShaderPropertyColor("_MaskMetallic", metallicInput));
-            }
-            return ps.ToArray();
         }
 
     }
