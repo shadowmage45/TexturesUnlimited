@@ -66,6 +66,10 @@ namespace KSPShaderTools
             {
                 manager.dumpCameraData();
             }
+            if (GUILayout.Button("Dump model UV Maps"))
+            {
+                TexturesUnlimitedLoader.dumpUVMaps(true);
+            }
             GUILayout.EndVertical();
         }
 

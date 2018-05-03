@@ -391,7 +391,7 @@ namespace KSPShaderTools
         /// Utility method to dump UV maps from every model currently in the model database.
         /// TODO -- has issues/errors on some models/meshes/renderers (might be a skinned-mesh-renderer problem...)
         /// </summary>
-        public static void dumpUVMaps()
+        public static void dumpUVMaps(bool force = false)
         {
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("UV_EXPORT");
             if (nodes.Length > 0)
@@ -399,7 +399,7 @@ namespace KSPShaderTools
                 UVMapExporter exporter = new UVMapExporter();
                 ConfigNode node = nodes[0];
                 bool export = node.GetBoolValue("exportUVs", false);
-                if (!export) { return; }
+                if (!export && !force) { return; }
                 string path = node.GetStringValue("exportPath", "exportedUVs");
                 exporter.width = node.GetIntValue("width", 1024);
                 exporter.height = node.GetIntValue("height", 1024);

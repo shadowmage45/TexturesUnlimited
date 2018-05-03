@@ -28,8 +28,17 @@ namespace KSPShaderTools
             int len = filters.Length;
             for (int i = 0; i < len; i++)
             {
-                string uvMapName = modelFolderPath + filters[i].gameObject.name+".svg";
-                writeSVG(uvMapName, getMeshUVs(filters[i].mesh));
+                if (filters[i].mesh == null) { continue; }
+                string uvMapName = modelFolderPath + filters[i].gameObject.name + ".svg";
+                try
+                {
+                    writeSVG(uvMapName, getMeshUVs(filters[i].mesh));
+                }
+                catch (Exception e)//bad code is bad...
+                {
+                    MonoBehaviour.print("ERROR On mesh filter: " + filters[i].gameObject);
+                    MonoBehaviour.print(e);
+                }
             }
         }
 
