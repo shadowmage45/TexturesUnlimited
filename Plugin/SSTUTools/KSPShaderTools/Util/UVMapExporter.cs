@@ -40,6 +40,23 @@ namespace KSPShaderTools
                     MonoBehaviour.print(e);
                 }
             }
+            SkinnedMeshRenderer[] smrs = model.GetComponentsInChildren<SkinnedMeshRenderer>();
+            len = smrs.Length;
+            for (int i = 0; i < len; i++)
+            {
+                Mesh mesh = smrs[i].sharedMesh;
+                if (mesh == null) { continue; }
+                string uvMapName = modelFolderPath + smrs[i].gameObject.name + ".svg";
+                try
+                {
+                    writeSVG(uvMapName, getMeshUVs(mesh));
+                }
+                catch (Exception e)//bad code is bad...
+                {
+                    MonoBehaviour.print("ERROR On skinned mesh: " + smrs[i].gameObject);
+                    MonoBehaviour.print(e);
+                }
+            }
         }
 
         public UVLine[] getMeshUVs(Mesh mesh)
