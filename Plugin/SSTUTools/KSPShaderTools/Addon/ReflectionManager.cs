@@ -37,6 +37,8 @@ namespace KSPShaderTools
         /// </summary>
         public int skyboxLayer = 26;
 
+        public int sphereLayer = 27;
+
         #endregion
 
         #region DEBUG FIELDS
@@ -47,6 +49,7 @@ namespace KSPShaderTools
         public bool renderScaled = true;
         public bool renderAtmo = true;
         public bool renderScenery = true;
+        public bool alternateRender = false;
 
         public bool reflectionsEnabled = true;
 
@@ -75,6 +78,11 @@ namespace KSPShaderTools
         private ReflectionDebugGUI gui;
         private GameObject debugSphere;
 
+        //debug/prototype stuff
+
+        private RenderTexture galaxyTex;
+        private GameObject galaxySphere;
+        private Material galaxyMat;
 
         private static ReflectionManager instance;
 
@@ -104,6 +112,7 @@ namespace KSPShaderTools
             ConfigNode node = nodes[0];
             MonoBehaviour.print("SSTUReflectionManager - Loading reflection configuration: \n" + node.ToString());
             reflectionsEnabled = node.GetBoolValue("enabled", false);
+            alternateRender = node.GetBoolValue("directXFix", false);
             envMapSize = node.GetIntValue("resolution", envMapSize);
             mapUpdateSpacing = node.GetIntValue("interval", mapUpdateSpacing);
             eveInstalled = node.GetBoolValue("eveInstalled", false);
@@ -219,6 +228,27 @@ namespace KSPShaderTools
                     MonoBehaviour.print("ERROR: SSTUReflectionManager - Could not find skybox shader.");
                 }
             }
+            if (galaxySphere == null)
+            {
+                galaxySphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                GameObject.DestroyImmediate(galaxySphere.GetComponent<Collider>());
+                galaxySphere.layer = sphereLayer;
+                galaxySphere.transform.localScale = new Vector3(10, 10, 10);
+                galaxyMat = new Material(skyboxShader);
+                galaxyMat.renderQueue = 1;
+                MeshRenderer r = galaxySphere.GetComponent<MeshRenderer>();
+                r.material = galaxyMat;
+                galaxySphere.SetActive(false);
+            }
+            if (galaxyTex == null)
+            {
+                galaxyTex = new RenderTexture(envMapSize, envMapSize, 24);
+                galaxyTex.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+                galaxyTex.format = RenderTextureFormat.ARGB32;
+                galaxyTex.wrapMode = TextureWrapMode.Clamp;
+                galaxyTex.filterMode = FilterMode.Trilinear;
+                galaxyTex.autoGenerateMips = false;
+            }
             probeData = createProbe();
             if (HighLogic.LoadedSceneIsEditor)
             {
@@ -266,7 +296,14 @@ namespace KSPShaderTools
                     if (probeData.updateTime >= mapUpdateSpacing)
                     {
                         reflectionCamera.gameObject.SetActive(true);
-                        renderFace(probeData.renderedCube, probeData.updateFace, vessel.transform.position, probeData.updatePass);
+                        if (alternateRender)
+                        {
+                            renderFaceAlt(probeData.renderedCube, probeData.updateFace, vessel.transform.position, probeData.updatePass);
+                        }
+                        else
+                        {
+                            renderFace(probeData.renderedCube, probeData.updateFace, vessel.transform.position, probeData.updatePass);
+                        }
                         reflectionCamera.gameObject.SetActive(false);
                         probeData.updatePass++;
                         if (probeData.updatePass >= 3)
@@ -315,6 +352,47 @@ namespace KSPShaderTools
                 {
                     renderFace(envMap, face, partPos, pass);
                 }                
+            }
+        }
+
+        private void renderFaceAlt(RenderTexture envMap, int face, Vector3 partPos, int pass)
+        {
+            int faceMask = 1 << face;
+            if (renderGalaxy && pass==0)
+            {
+                //render galaxy to galaxy sphere texture, the galaxy
+                reflectionCamera.clearFlags = CameraClearFlags.Color;
+                reflectionCamera.backgroundColor = new Color(0, 0, 0, 1);
+                reflectionCamera.cullingMask = galaxyMask;
+                reflectionCamera.nearClipPlane = 0.1f;
+                reflectionCamera.farClipPlane = 20f;
+                reflectionCamera.transform.position = GalaxyCubeControl.Instance.transform.position;
+                reflectionCamera.RenderToCubemap(galaxyTex, faceMask);
+            }
+            if (renderScaled && pass==0)
+            {
+                //render to galaxy sphere texture, the atmosphere
+                //clear flags handle bug in unity where re-uses the same buffer before x-fer to the target face
+                reflectionCamera.clearFlags = renderGalaxy ? CameraClearFlags.Depth : CameraClearFlags.Color;
+                reflectionCamera.backgroundColor = new Color(0, 0, 0, 1);
+                reflectionCamera.cullingMask = scaledSpaceMask | atmosphereMask;
+                reflectionCamera.nearClipPlane = 1f;
+                reflectionCamera.farClipPlane = 3.0e7f;
+                reflectionCamera.transform.position = ScaledSpace.Instance.transform.position;
+                reflectionCamera.RenderToCubemap(galaxyTex, faceMask);
+            }
+            if (pass == 2)
+            {
+                galaxySphere.SetActive(true);
+                galaxyMat.SetTexture("_Tex", galaxyTex);
+                eveCameraFix.overwriteAlpha = eveInstalled;
+                reflectionCamera.cullingMask = renderScenery ? (sceneryMask | (1 << sphereLayer)) : (1 << sphereLayer);
+                reflectionCamera.nearClipPlane = 0.5f;
+                reflectionCamera.farClipPlane = 750000f;
+                reflectionCamera.transform.position = partPos;
+                reflectionCamera.RenderToCubemap(probeData.renderedCube, faceMask);
+                eveCameraFix.overwriteAlpha = false;
+                galaxySphere.SetActive(false);
             }
         }
 
