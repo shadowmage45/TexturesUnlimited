@@ -58,6 +58,7 @@ namespace KSPShaderTools
         #region INTERNAL FIELDS
 
         public ReflectionProbeData probeData;
+        public ReflectionSkyboxProxy proxyData;
         public GameObject cameraObject;
         public Camera reflectionCamera;
         private static Shader skyboxShader;
@@ -79,10 +80,6 @@ namespace KSPShaderTools
         private GameObject debugSphere;
 
         //debug/prototype stuff
-
-        private RenderTexture galaxyTex;
-        private GameObject galaxySphere;
-        private Material galaxyMat;
 
         private static ReflectionManager instance;
 
@@ -228,27 +225,6 @@ namespace KSPShaderTools
                     MonoBehaviour.print("ERROR: SSTUReflectionManager - Could not find skybox shader.");
                 }
             }
-            if (galaxySphere == null)
-            {
-                galaxySphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                GameObject.DestroyImmediate(galaxySphere.GetComponent<Collider>());
-                galaxySphere.layer = sphereLayer;
-                galaxySphere.transform.localScale = new Vector3(10, 10, 10);
-                galaxyMat = new Material(skyboxShader);
-                galaxyMat.renderQueue = 1;
-                MeshRenderer r = galaxySphere.GetComponent<MeshRenderer>();
-                r.material = galaxyMat;
-                galaxySphere.SetActive(false);
-            }
-            if (galaxyTex == null)
-            {
-                galaxyTex = new RenderTexture(envMapSize, envMapSize, 24);
-                galaxyTex.dimension = UnityEngine.Rendering.TextureDimension.Cube;
-                galaxyTex.format = RenderTextureFormat.ARGB32;
-                galaxyTex.wrapMode = TextureWrapMode.Clamp;
-                galaxyTex.filterMode = FilterMode.Trilinear;
-                galaxyTex.autoGenerateMips = false;
-            }
             probeData = createProbe();
             if (HighLogic.LoadedSceneIsEditor)
             {
@@ -357,42 +333,36 @@ namespace KSPShaderTools
 
         private void renderFaceAlt(RenderTexture envMap, int face, Vector3 partPos, int pass)
         {
+            if (proxyData == null) { createProxy(); }
             int faceMask = 1 << face;
             if (renderGalaxy && pass==0)
             {
                 //render galaxy to galaxy sphere texture, the galaxy
                 reflectionCamera.clearFlags = CameraClearFlags.Color;
                 reflectionCamera.backgroundColor = new Color(0, 0, 0, 1);
-                reflectionCamera.cullingMask = galaxyMask;
-                reflectionCamera.nearClipPlane = 0.1f;
-                reflectionCamera.farClipPlane = 20f;
-                reflectionCamera.transform.position = GalaxyCubeControl.Instance.transform.position;
-                reflectionCamera.RenderToCubemap(galaxyTex, faceMask);
+                cameraSetup(GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
+                reflectionCamera.RenderToCubemap(proxyData.proxyCube, faceMask);
             }
             if (renderScaled && pass==0)
             {
-                //render to galaxy sphere texture, the atmosphere
+                //render to galaxy sphere texture, the atmosphere+scaled space
                 //clear flags handle bug in unity where re-uses the same buffer before x-fer to the target face
                 reflectionCamera.clearFlags = renderGalaxy ? CameraClearFlags.Depth : CameraClearFlags.Color;
                 reflectionCamera.backgroundColor = new Color(0, 0, 0, 1);
-                reflectionCamera.cullingMask = scaledSpaceMask | atmosphereMask;
-                reflectionCamera.nearClipPlane = 1f;
-                reflectionCamera.farClipPlane = 3.0e7f;
-                reflectionCamera.transform.position = ScaledSpace.Instance.transform.position;
-                reflectionCamera.RenderToCubemap(galaxyTex, faceMask);
+                cameraSetup(ScaledSpace.Instance.transform.position, scaledSpaceMask | atmosphereMask, 1f, 3.0e7f);
+                reflectionCamera.RenderToCubemap(proxyData.proxyCube, faceMask);
             }
             if (pass == 2)
             {
-                galaxySphere.SetActive(true);
-                galaxyMat.SetTexture("_Tex", galaxyTex);
+                //render the proxy sphere as a background skybox
+                //render the local scenery in front of this new skybox
+                proxyData.proxySphere.SetActive(true);
+                proxyData.proxyMaterial.SetTexture("_Tex", proxyData.proxyCube);
                 eveCameraFix.overwriteAlpha = eveInstalled;
-                reflectionCamera.cullingMask = renderScenery ? (sceneryMask | (1 << sphereLayer)) : (1 << sphereLayer);
-                reflectionCamera.nearClipPlane = 0.5f;
-                reflectionCamera.farClipPlane = 750000f;
-                reflectionCamera.transform.position = partPos;
+                cameraSetup(partPos, renderScenery ? (sceneryMask | (1 << sphereLayer)) : (1 << sphereLayer), 0.5f, 750000f);
                 reflectionCamera.RenderToCubemap(probeData.renderedCube, faceMask);
                 eveCameraFix.overwriteAlpha = false;
-                galaxySphere.SetActive(false);
+                proxyData.proxySphere.SetActive(false);
             }
         }
 
@@ -499,6 +469,25 @@ namespace KSPShaderTools
             tex.autoGenerateMips = false;
             //TODO -- loop through texture and set to default = black
             return tex;
+        }
+
+        private void createProxy()
+        {
+            if (proxyData == null)
+            {
+                GameObject galaxySphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                GameObject.DestroyImmediate(galaxySphere.GetComponent<Collider>());
+                galaxySphere.layer = sphereLayer;
+                galaxySphere.transform.localScale = new Vector3(10, 10, 10);
+                galaxySphere.SetActive(false);
+                Material galaxyMat = new Material(skyboxShader);
+                galaxyMat.renderQueue = 1;
+                MeshRenderer r = galaxySphere.GetComponent<MeshRenderer>();
+                r.material = galaxyMat;
+                RenderTexture tex = createTexture(envMapSize);
+                galaxyMat.SetTexture("_Tex", tex);
+                proxyData = new ReflectionSkyboxProxy(galaxySphere, tex, galaxyMat);
+            }
         }
 
         #endregion
@@ -736,6 +725,19 @@ namespace KSPShaderTools
                 this.skyboxMateral = mat;
                 this.probe = probe;
                 this.renderedCube = envMap;
+            }
+        }
+
+        public class ReflectionSkyboxProxy
+        {
+            public readonly GameObject proxySphere;//background sphere used for skybox
+            public readonly RenderTexture proxyCube;
+            public readonly Material proxyMaterial;
+            public ReflectionSkyboxProxy(GameObject sphere, RenderTexture tex, Material mat)
+            {
+                this.proxySphere = sphere;
+                this.proxyCube = tex;
+                this.proxyMaterial = mat;
             }
         }
 
