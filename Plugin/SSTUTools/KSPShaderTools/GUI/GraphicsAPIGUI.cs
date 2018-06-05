@@ -40,7 +40,7 @@ namespace KSPShaderTools
             GUILayout.BeginVertical();
             GUILayout.Label("The Graphics API Detected: "+ SystemInfo.graphicsDeviceType);
             GUILayout.Label("Is unsupported by Textures Unlimited, and some graphics may not render correctly.");
-            GUILayout.Label("For best results, use the -force-glcore command line option to start KSP using the OpenGL Core graphics API");
+            GUILayout.Label("For best results, use the -force-d3d11 or -force-glcore command line option to start KSP using either DirectX11 or the OpenGL Core graphics API");
             GUILayout.FlexibleSpace();//push button to bottom of window
             if (GUILayout.Button("Acknowledge & Close"))
             {

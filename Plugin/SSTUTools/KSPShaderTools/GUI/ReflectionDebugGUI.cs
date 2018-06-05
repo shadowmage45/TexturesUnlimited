@@ -40,7 +40,7 @@ namespace KSPShaderTools
             manager.renderAtmo = addButtonRowToggle("Render Atmo", atmo);
             manager.renderScaled = addButtonRowToggle("Render Scaled", scaled);
             manager.renderScenery = addButtonRowToggle("Render Scenery", scenery);
-            manager.alternateRender = addButtonRowToggle("Alternate Render", manager.alternateRender);
+            TexturesUnlimitedLoader.alternateRender = addButtonRowToggle("Alternate Render", TexturesUnlimitedLoader.alternateRender);
             manager.eveInstalled = addButtonRowToggle("Eve Fix", manager.eveInstalled);
 
             if (GUILayout.Button("Toggle Debug Sphere"))

@@ -49,7 +49,6 @@ namespace KSPShaderTools
         public bool renderScaled = true;
         public bool renderAtmo = true;
         public bool renderScenery = true;
-        public bool alternateRender = false;
 
         public bool reflectionsEnabled = true;
 
@@ -107,9 +106,9 @@ namespace KSPShaderTools
                 return;
             }
             ConfigNode node = nodes[0];
-            MonoBehaviour.print("SSTUReflectionManager - Loading reflection configuration: \n" + node.ToString());
+            MonoBehaviour.print("TU-Reflection Manager - Loading reflection configuration: \n" + node.ToString());
+            MonoBehaviour.print("TU-Reflection Manager - Alternate Render Enabled (DX9/DX11 Fix): " + TexturesUnlimitedLoader.alternateRender);
             reflectionsEnabled = node.GetBoolValue("enabled", false);
-            alternateRender = node.GetBoolValue("directXFix", false);
             envMapSize = node.GetIntValue("resolution", envMapSize);
             mapUpdateSpacing = node.GetIntValue("interval", mapUpdateSpacing);
             eveInstalled = node.GetBoolValue("eveInstalled", false);
@@ -186,7 +185,6 @@ namespace KSPShaderTools
 
         public void OnDestroy()
         {
-            MonoBehaviour.print("SSTUReflectionManager OnDestroy()");
             if (instance == this) { instance = null; }
             if (gui != null)
             {
@@ -208,14 +206,12 @@ namespace KSPShaderTools
 
         private void init()
         {
-            MonoBehaviour.print("SSTUReflectionManager init()");
             if (cameraObject == null)
             {
                 cameraObject = new GameObject("TRReflectionCamera");
                 reflectionCamera = cameraObject.AddComponent<Camera>();
                 eveCameraFix = cameraObject.AddComponent<CameraAlphaFix>();
                 reflectionCamera.enabled = false;
-                MonoBehaviour.print("SSTUReflectionManager created camera: "+reflectionCamera);
             }
             if (skyboxShader == null)
             {
@@ -272,7 +268,7 @@ namespace KSPShaderTools
                     if (probeData.updateTime >= mapUpdateSpacing)
                     {
                         reflectionCamera.gameObject.SetActive(true);
-                        if (alternateRender)
+                        if (TexturesUnlimitedLoader.alternateRender)
                         {
                             renderFaceAlt(probeData.renderedCube, probeData.updateFace, vessel.transform.position, probeData.updatePass);
                         }

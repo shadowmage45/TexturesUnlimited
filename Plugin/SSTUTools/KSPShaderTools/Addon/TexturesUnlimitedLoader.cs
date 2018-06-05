@@ -64,6 +64,8 @@ namespace KSPShaderTools
         public static int recolorGUISectionHeight = 540;
         public static int recolorGUITotalHeight = 100;
 
+        public static bool alternateRender = false;
+
         #endregion ENDREGION - Config Values loaded from disk
 
         public static TexturesUnlimitedLoader INSTANCE;
@@ -87,8 +89,28 @@ namespace KSPShaderTools
 
             //check the graphics API, popup warning if using unsupported gfx (dx9/11/12/legacy-openGL)
             UnityEngine.Rendering.GraphicsDeviceType graphicsAPI = SystemInfo.graphicsDeviceType;
-            if (graphicsAPI != UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
+            if (graphicsAPI == UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
             {
+                //noop, everything is fine
+            }
+            else if (graphicsAPI == UnityEngine.Rendering.GraphicsDeviceType.Direct3D11)
+            {
+                //works, but needs alternate render
+                alternateRender = true;
+            }
+            else if (graphicsAPI == UnityEngine.Rendering.GraphicsDeviceType.Direct3D9)
+            {
+                //has issues -- display warning, and needs alternate render
+                alternateRender = true;
+                if (apiCheckGUI == null)
+                {
+                    apiCheckGUI = this.gameObject.AddComponent<GraphicsAPIGUI>();
+                    apiCheckGUI.openGUI();
+                }
+            }
+            else
+            {
+                //unknown API -- display warning
                 if (apiCheckGUI == null)
                 {
                     apiCheckGUI = this.gameObject.AddComponent<GraphicsAPIGUI>();
