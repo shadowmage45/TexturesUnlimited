@@ -205,6 +205,14 @@ namespace KSPShaderTools
             this.persistentDataField = persistentDataField;
             loadPersistentData(persistentData);
             this.textureSets = TexturesUnlimitedLoader.getTextureSets(textureSetNames);
+            int len = textureSets.Length;
+            for (int i = 0; i < len; i++)
+            {
+                if (textureSets[i] == null)
+                {
+                    MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + textureSetNames[i] + " on part: " + pm.part.name);
+                }
+            }
         }
 
         /// <summary>
