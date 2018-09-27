@@ -72,7 +72,7 @@ namespace KSPShaderTools
             BaseField field = Fields[nameof(currentTextureSet)];
             field.uiControlEditor.onFieldChanged = onChangeAction;
             field.uiControlFlight.onFieldChanged = onChangeAction;
-            field.guiActive = canChangeInFlight;
+            field.guiActive = canChangeInFlight && textureSets.textureSets.Length > 1;
             if (textureSets.textureSets.Length <= 1)
             {
                 field.guiActive = field.guiActiveEditor = false;
@@ -90,7 +90,7 @@ namespace KSPShaderTools
                 return;
             }
             ConfigNode node = Utils.parseConfigNode(configNodeData);
-            string[] setNames = node.GetStringValues("textureSet", true);
+            string[] setNames = node.GetStringValues("textureSet", false);
             textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNames);
             if (string.IsNullOrEmpty(currentTextureSet))
             {
@@ -181,7 +181,15 @@ namespace KSPShaderTools
         
         public TextureSet currentTextureSet
         {
-            get { return Array.Find(textureSets, m => m.name == currentTextureSetName); }
+            get
+            {
+                TextureSet set = Array.Find(textureSets, m => m.name == currentTextureSetName);
+                if (set == null)
+                {
+                    MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName+" on part: "+pm.part.name);
+                }
+                return set;
+            }
         }
 
         private string persistentData
@@ -218,7 +226,7 @@ namespace KSPShaderTools
             TextureSet set = currentTextureSet;
             if (set == null)
             {
-                MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName);
+                return;
             }
             if (customColors == null || customColors.Length == 0)
             {
@@ -244,7 +252,7 @@ namespace KSPShaderTools
             TextureSet set = currentTextureSet;
             if (set == null)
             {
-                MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName);
+                return;
             }
             if (customColors == null || customColors.Length == 0)
             {
@@ -265,6 +273,10 @@ namespace KSPShaderTools
         public void applyRecoloring(Transform root, RecoloringData[] userColors)
         {
             TextureSet set = currentTextureSet;
+            if (set == null)
+            {
+                return;
+            }
             set.applyRecoloring(root, userColors);
         }
 
