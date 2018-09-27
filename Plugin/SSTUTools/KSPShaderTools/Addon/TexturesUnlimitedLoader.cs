@@ -341,6 +341,11 @@ namespace KSPShaderTools
                 {
                     setName = textureNode.GetStringValue("textureSet");
                     set = getTextureSet(setName);
+                    if (set == null)
+                    {
+                        MonoBehaviour.print("ERROR: Did not locate texture set from global cache for input name: " + setName+" while applying KSP_MODEL_SHADER with name of: "+modelShaderNodes[i].GetStringValue("name","UNKNOWN"));
+                        continue;
+                    }
                 }
                 modelNames = textureNode.GetStringValues("model");
                 int len2 = modelNames.Length;
@@ -352,8 +357,12 @@ namespace KSPShaderTools
                         if (logReplacements)
                         {
                             MonoBehaviour.print("TexturesUnlimited -- Replacing textures on database model: " + modelNames[k]);
-                        }                        
+                        }
                         set.enable(model.transform, set.maskColors);
+                    }
+                    else
+                    {
+                        MonoBehaviour.print("ERROR: Could not locate model: " + modelNames[k] + " while applying KSP_MODEL_SHADER with name of: " + modelShaderNodes[i].GetStringValue("name", "UNKNOWN"));
                     }
                 }
             }
