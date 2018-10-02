@@ -215,10 +215,10 @@ namespace KSPShaderTools
             }
             if (skyboxShader == null)
             {
-                skyboxShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("SSTU/Skybox/Cubemap");
+                skyboxShader = TexturesUnlimitedLoader.getShader("TU/Skybox");
                 if (skyboxShader == null)
                 {
-                    MonoBehaviour.print("ERROR: SSTUReflectionManager - Could not find skybox shader.");
+                    MonoBehaviour.print("ERROR: TexturesUnlimited ReflectionManager - Could not find skybox shader.");
                 }
             }
             probeData = createProbe();
@@ -427,7 +427,7 @@ namespace KSPShaderTools
             
             refSphere.transform.localScale = new Vector3(10, 10, 10);
             refSphere.layer = skyboxLayer;
-            refSphere.name = "SSTUReflectionProbe";
+            refSphere.name = "TexturesUnlimitedReflectionProbe";
 
             MeshRenderer rend = refSphere.GetComponent<MeshRenderer>();
             Material mat = new Material(skyboxShader);
@@ -639,7 +639,7 @@ namespace KSPShaderTools
                 debugSphere.name = "ReflectionDebugSphere";
                 GameObject.DestroyImmediate(debugSphere.GetComponent<Collider>());
                 debugSphere.transform.localScale = Vector3.one * 10f;
-                Shader metallic = TexturesUnlimitedLoader.getShader("SSTU/PBR/Metallic");
+                Shader metallic = TexturesUnlimitedLoader.getShader("TU/Metallic");
                 Material mat = new Material(metallic);
                 mat.SetFloat("_Metallic", 1);
                 mat.SetFloat("_Smoothness", 1);
@@ -749,7 +749,7 @@ namespace KSPShaderTools
      
             public void Start()
             {
-                Shader setAlpha = KSPShaderTools.TexturesUnlimitedLoader.getShader("SSTU/SetAlpha");
+                Shader setAlpha = KSPShaderTools.TexturesUnlimitedLoader.getShader("TU/SetAlpha");
                 mat = new Material(setAlpha);
             }
 

@@ -335,7 +335,7 @@ namespace KSPShaderTools
             {
                 if (TexturesUnlimitedLoader.logReplacements)
                 {
-                    MonoBehaviour.print("Replacing empty textureslot: " + slot + " with color: " + textureColor);
+                    MonoBehaviour.print("TexturesUnlimitedLoader -- Replacing empty textureslot: " + slot + " with color: " + textureColor);
                 }
                 mat.SetTexture(slot, TexturesUnlimitedLoader.getTextureColor(textureColor));
             }

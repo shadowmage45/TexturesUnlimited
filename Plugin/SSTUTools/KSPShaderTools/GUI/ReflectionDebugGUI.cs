@@ -17,11 +17,11 @@ namespace KSPShaderTools
         {
             try
             {
-                windowRect = GUI.Window(windowID, windowRect, updateWindow, "SSTUReflectionDebug");
+                windowRect = GUI.Window(windowID, windowRect, updateWindow, "TUReflectionDebug");
             }
             catch (Exception e)
             {
-                MonoBehaviour.print("Caught exception while rendering SSTUReflectionDebug GUI");
+                MonoBehaviour.print("Caught exception while rendering TUReflectionDebug GUI");
                 MonoBehaviour.print(e.Message);
                 MonoBehaviour.print(System.Environment.StackTrace);
             }

@@ -51,7 +51,7 @@ namespace KSPShaderTools
             }
             ControlTypes controls = ControlTypes.ALLBUTCAMERAS;
             controls = controls & ~ControlTypes.TWEAKABLES;
-            InputLockManager.SetControlLock(controls, "SSTURecolorGUILock");
+            InputLockManager.SetControlLock(controls, "TURecolorGUILock");
             setupForPart(part);
             if (moduleIndex < 0 || sectionIndex < 0)
             {
@@ -75,7 +75,7 @@ namespace KSPShaderTools
             moduleRecolorData.Clear();
             sectionData = null;
             openPart = null;
-            InputLockManager.RemoveControlLock("SSTURecolorGUILock");
+            InputLockManager.RemoveControlLock("TURecolorGUILock");
             colorIndex = -1;
             moduleIndex = -1;
             sectionIndex = -1;

@@ -78,7 +78,7 @@ namespace KSPShaderTools
 
         public void Start()
         {
-            MonoBehaviour.print("TULoader - Start()");
+            MonoBehaviour.print("TexturesUnlimitedLoader - Start()");
             INSTANCE = this;
             DontDestroyOnLoad(this);
             if (partListLoadedEvent == null)
@@ -253,7 +253,7 @@ namespace KSPShaderTools
                 node = shaderNodes[i];
                 sName = node.GetStringValue("shader", "KSP/Diffuse");
                 iName = node.GetStringValue("iconShader", "KSP/ScreenSpaceMask");
-                MonoBehaviour.print("Loading shader icon replacement data for: " + sName + " :: " + iName);
+                MonoBehaviour.print("Textures Unlimited - Loading shader icon replacement data for: " + sName + " :: " + iName);
                 Shader shader = dict[sName];
                 Shader iconShader = dict[iName];
                 IconShaderData data = new IconShaderData(shader, iconShader);
@@ -410,7 +410,7 @@ namespace KSPShaderTools
                         iconShader = loadedShaders[ptsn].iconShader;
                         if (!outputName)
                         {
-                            MonoBehaviour.print("KSPShaderLoader - Adjusting icon shaders for part: " + p.name + " for original shader:" + ptsn + " replacement: " + iconShader.name);
+                            MonoBehaviour.print("TexturesUnlimitedLoader - Adjusting icon shaders for part: " + p.name + " for original shader:" + ptsn + " replacement: " + iconShader.name);
                             outputName = true;
                         }
                         Transform[] ictrs = p.iconPrefab.gameObject.transform.FindChildren(ptr.name);//find transforms from icon with same name

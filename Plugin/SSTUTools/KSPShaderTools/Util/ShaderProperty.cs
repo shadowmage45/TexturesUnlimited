@@ -94,7 +94,7 @@ namespace KSPShaderTools
             {
                 if (TexturesUnlimitedLoader.logErrors)
                 {
-                    MonoBehaviour.print("KSPShaderLoader -- Shader: " + mat.shader + " did not have property: " + name);
+                    MonoBehaviour.print("ERROR: TexturesUnlimitedLoader -- Shader: " + mat.shader + " did not have property: " + name);
                 }
             }
             return false;
@@ -275,7 +275,7 @@ namespace KSPShaderTools
                 Texture2D texture = GameDatabase.Instance.GetTexture(textureName, normal);
                 if (texture == null && TexturesUnlimitedLoader.logErrors)
                 {
-                    MonoBehaviour.print("ERROR: KSPShaderLoader - Texture could not be located for name: " + textureName + " for texture slot: " + name + " while loading textures for material: " + mat);
+                    MonoBehaviour.print("ERROR: TexturesUnlimitedLoader - Texture could not be located for name: " + textureName + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }
                 mat.SetTexture(name, texture);
             }
@@ -341,7 +341,7 @@ namespace KSPShaderTools
                 Texture2D texture = TexturesUnlimitedLoader.getTextureColor(colorString);
                 if (texture == null && TexturesUnlimitedLoader.logErrors)
                 {
-                    MonoBehaviour.print("ERROR: KSPShaderLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
+                    MonoBehaviour.print("ERROR: TexturesUnlimitedLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }
                 mat.SetTexture(name, texture);
             }

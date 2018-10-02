@@ -34,7 +34,7 @@ namespace KSPShaderTools
             }
             if (open)
             {
-                guiObject = new GameObject("SSTURecolorGUI");
+                guiObject = new GameObject("TURecolorGUI");
                 gui = guiObject.AddComponent<CraftRecolorGUI>();
                 gui.openGUIPart(part);
                 gui.guiCloseAction = recolorClose;
