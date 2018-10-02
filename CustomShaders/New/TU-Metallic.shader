@@ -11,6 +11,11 @@ Shader "TU/Metallic"
 		_Emissive("_Emission", 2D) = "black" {}
 		_Thickness("_Thickness", 2D) = "black" {}
 		
+		//standard shader params
+		_Color ("_Color", Color) = (1,1,1)
+		_Metallic ("_Metallic", Range(0,1)) = 1
+		_Smoothness ("_Smoothness", Range(0,1)) = 1
+		
 		//recoloring input color values
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
@@ -47,7 +52,7 @@ Shader "TU/Metallic"
 		#pragma multi_compile __ TU_EMISSIVE
 		//#pragma multi_compile __ TU_BUMPMAP
 		#pragma multi_compile __ TU_RECOLOR
-		#pragma multi_compile __ TU_SUBSURF
+		//#pragma multi_compile __ TU_SUBSURF
 		#pragma multi_compile __ TU_STOCK_SPEC
 		
         #include "HLSLSupport.cginc"
@@ -58,6 +63,7 @@ Shader "TU/Metallic"
 		#include "SSTUShaders.cginc"
 		
 		#define TU_BUMPMAP 1
+		#define TU_SUBSURF 1
 		
 		//Texture samplers for all possible texture slots
 		sampler2D _MainTex;
@@ -117,51 +123,48 @@ Shader "TU/Metallic"
         
 		//custom lighting function to enable SubSurf functionality
         inline half4 LightingTU(SurfaceOutputTU s, half3 viewDir, UnityGI gi)
-        {
-			#if TU_SUBSURF			            
-				//SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/
-				
+        {			
+			#if TU_BUMPMAP
 				s.Normal = normalize(s.Normal);
-				half fLTScale = s.SubSurfParams.r;//main output scalar
-				half iLTPower = s.SubSurfParams.g;//exponent used in power
-				half fLTDistortion = s.SubSurfParams.b;//how much the surface normal distorts the outgoing light
-				half fLightAttenuation = s.SubSurfParams.a;//how much light attenuates while traveling through the surface (gets multiplied by distance)            
+			#endif
+			
+			#if TU_SUBSURF			            
+				//SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/	
+				
+				half fLTScale = _SubSurfScale;//main output scalar
+				half iLTPower = _SubSurfPower;//exponent used in power
+				half fLTDistortion = _SubSurfDistort;;//how much the surface normal distorts the outgoing light
+				half fLightAttenuation = _SubSurfAtten;//how much light attenuates while traveling through the surface (gets multiplied by distance)  
+				
+				//half fLTScale = s.SubSurfParams.r;//main output scalar
+				//half iLTPower = s.SubSurfParams.g;//exponent used in power
+				//half fLTDistortion = s.SubSurfParams.b;//how much the surface normal distorts the outgoing light
+				//half fLightAttenuation = s.SubSurfParams.a;//how much light attenuates while traveling through the surface (gets multiplied by distance)
+				
 				half fLTAmbient = s.Backlight.a;//ambient from texture/material
 				half3 fLTThickness = s.Backlight.rgb;//sampled from texture
 				
 				float3 H = normalize(gi.light.dir + s.Normal * fLTDistortion);
 				float vdh = pow(saturate(dot(viewDir, -H)), iLTPower) * fLTScale;
 				float3 I = fLightAttenuation * (vdh + fLTAmbient) * fLTThickness;
-				half3 backColor = I * gi.light.color;			
-				
-				half oneMinusReflectivity;
-				half3 specSampleColor;
-				s.Albedo = DiffuseAndSpecularFromMetallic(s.Albedo, s.Metallic, /*out*/ specSampleColor, /*out*/ oneMinusReflectivity);
-
-				//shader relies on pre-multiply alpha-blend (_SrcBlend = One, _DstBlend = OneMinusSrcAlpha)
-				//this is necessary to handle transparency in physically correct way - only diffuse component gets affected by alpha
-				
-				half outputAlpha;
-				s.Albedo = PreMultiplyAlpha (s.Albedo, s.Alpha, oneMinusReflectivity, /*out*/ outputAlpha);
-
-				half4 c = UNITY_BRDF_PBS (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
-				c.rgb += UNITY_BRDF_GI (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
-				c.rgb += backColor;
-				c.a = outputAlpha;
-				return c;
-			#else
-				//Unity 'Standard' lighting function, unabridged
-				s.Normal = normalize(s.Normal);
-				half oneMinusReflectivity;
-				half3 specSampleColor;
-				s.Albedo = DiffuseAndSpecularFromMetallic(s.Albedo, s.Metallic, /*out*/ specSampleColor, /*out*/ oneMinusReflectivity);
-				half outputAlpha;
-				s.Albedo = PreMultiplyAlpha (s.Albedo, s.Alpha, oneMinusReflectivity, /*out*/ outputAlpha);
-				half4 c = UNITY_BRDF_PBS (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
-				c.rgb += UNITY_BRDF_GI (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
-				c.a = outputAlpha;
-				return c;
+				half3 backColor = I * gi.light.color;
 			#endif
+			
+			//Unity 'Standard' lighting function, unabridged			
+			half oneMinusReflectivity;
+			half3 specSampleColor;
+			s.Albedo = DiffuseAndSpecularFromMetallic(s.Albedo, s.Metallic, /*out*/ specSampleColor, /*out*/ oneMinusReflectivity);
+			half outputAlpha;
+			s.Albedo = PreMultiplyAlpha (s.Albedo, s.Alpha, oneMinusReflectivity, /*out*/ outputAlpha);			
+			half4 c = UNITY_BRDF_PBS (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
+			c.rgb += UNITY_BRDF_GI (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
+			c.a = outputAlpha;
+			
+			#if TU_SUBSURF
+				c.rgb += backColor;
+			#endif
+			
+			return c;
         }
 		
 		void surf (Input IN, inout SurfaceOutputTU o)
@@ -181,6 +184,7 @@ Shader "TU/Metallic"
 				fixed smooth = specSample.a;
 			#endif
 			
+			//if bump-map enabled, sample texture; else assign default NRM
 			#if TU_BUMPMAP			
 				fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
 				o.Normal = normal;
@@ -188,6 +192,8 @@ Shader "TU/Metallic"
 				fixed3 normal = fixed3(0,0,1);
 			#endif
 			
+			//if recoloring is enabled, sample mask textures and use color input params to determine render color
+			//else sample textures and apply to output directly
 			#if TU_RECOLOR
 				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
 				fixed m = saturate(1 - (mask.r + mask.g + mask.b));
@@ -216,30 +222,44 @@ Shader "TU/Metallic"
 				#endif
 			#else
 				o.Albedo = color.rgb;
-				o.Smoothness = specSample.a;
-				o.Metallic = specSample.r;
+				o.Smoothness = smooth;
+				o.Metallic = metal;
 			#endif
 			
+			//If subsurf is enabled, this is a bit of pre-setup to pass params to lighting function
 			#if TU_SUBSURF
 				fixed4 thick = tex2D(_Thickness, (IN.uv_MainTex));
 				o.Backlight.rgb = thick.rgb;
 				o.Backlight.a = _SubSurfAmbient;
-				o.SubSurfParams = half4(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten);
+				//o.SubSurfParams = half4(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten);
 			#endif
 			
+			//only sample and apply AO map
 			#if TU_AOMAP
 				fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
 				o.Occlusion = ao.r;
+			#else
+				o.Occlusion = 1;
 			#endif
 			
+			//only sample and apply value from emissive map and color if emission is enabled
+			//else only apply stock part-highlighting emissive functionality		
 			#if TU_EMISSIVE
 				fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
 				o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+			#else
+				o.Emission = stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			#endif
 			
 			o.Alpha = _Opacity;
+			
+			//apply the standard shader param multipliers to the sampled/computed values.
+			o.Albedo *= _Color;
+			o.Metallic *= _Metallic;
+			o.Smoothness *= _Smoothness;
+			
 		}
 		ENDCG
 	}
-	Fallback "Bumped specSampleular"
+	Fallback "Standard"
 }
