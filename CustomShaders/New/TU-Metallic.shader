@@ -4,23 +4,23 @@ Shader "TU/Metallic"
 	{
 		//texture input slots
 		_MainTex("_MainTex (RGB)", 2D) = "white" {}
-		_MetallicGlossMap("_MetallicGlossMap (RGB)", 2D) = "white" {}
-		_MaskTex("_MaskTex (Grayscale)", 2D) = "black" {}
+		_MetallicGlossMap("_MetallicGlossMap (RGBA)", 2D) = "white" {}
+		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
-		_Emissive("_Emission", 2D) = "black" {}
-		_Thickness("_Thickness", 2D) = "black" {}
+		_Emissive("_Emission (RGB Emissive Map)", 2D) = "black" {}
+		_Thickness("_Thickness (RGB Subsurf Thickness) ", 2D) = "white" {}
 		
 		//standard shader params
 		_Color ("_Color", Color) = (1,1,1)
-		_Metallic ("_Metallic", Range(0,1)) = 1
+		_Metal ("_Metal", Range(0,1)) = 1
 		_Smoothness ("_Smoothness", Range(0,1)) = 1
 		
 		//recoloring input color values
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
-		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,1)
+		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,0)
 		
 		//sub-surface scattering shader parameters		
         _SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
@@ -31,10 +31,10 @@ Shader "TU/Metallic"
 		
 		//stock KSP compatibility properties -- used for emission/glow, part-highlighting, part-thermal overlay, and part 'burn' discoloring
 		_EmissiveColor("EmissionColor", Color) = (0,0,0)
-		_Opacity("Emission Opacity", Range(0,1) ) = 1
+		_Opacity("Part Opacity", Range(0,1) ) = 1
 		_RimFalloff("_RimFalloff", Range(0.01,5) ) = 0.1
 		_RimColor("_RimColor", Color) = (0,0,0,0)
-		_TemperatureColor("_TemperatureColor", Color) = (0,0,0,0)
+		_TemperatureColor("Temperature Color", Color) = (0,0,0,0)
 		_BurnColor ("Burn Color", Color) = (1,1,1,1)
 	}
 	
@@ -73,6 +73,11 @@ Shader "TU/Metallic"
 		sampler2D _AOMap;
 		sampler2D _Emissive;
 		sampler2D _Thickness;
+		
+		//standard shader params for adjusting color/etc
+		float3 _Color; 
+		float _Smoothness;
+		float _Metal;		
 
 		//standard KSP shader property values
 		float _Opacity;
@@ -255,7 +260,7 @@ Shader "TU/Metallic"
 			
 			//apply the standard shader param multipliers to the sampled/computed values.
 			o.Albedo *= _Color;
-			o.Metallic *= _Metallic;
+			o.Metallic *= _Metal;
 			o.Smoothness *= _Smoothness;
 			
 		}
