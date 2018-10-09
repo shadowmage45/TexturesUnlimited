@@ -294,12 +294,21 @@ namespace KSPShaderTools
 
         private static void loadTextureSets()
         {
+            loadedTextureSets.Clear();
             ConfigNode[] setNodes = GameDatabase.Instance.GetConfigNodes("KSP_TEXTURE_SET");
             TextureSet[] sets = TextureSet.parse(setNodes);
             int len = sets.Length;
             for (int i = 0; i < len; i++)
             {
-                loadedTextureSets.Add(sets[i].name, sets[i]);
+                if (loadedTextureSets.ContainsKey(sets[i].name))
+                {
+                    MonoBehaviour.print("ERROR: Duplicate texture set definition found for name: " + sets[i].name +
+                        "  This is a major configuration error that should be corrected.  Correct operation cannot be ensured.");
+                }
+                else
+                {
+                    loadedTextureSets.Add(sets[i].name, sets[i]);
+                }
             }
         }
 
@@ -332,6 +341,11 @@ namespace KSPShaderTools
                 {
                     setName = textureNode.GetStringValue("textureSet");
                     set = getTextureSet(setName);
+                    if (set == null)
+                    {
+                        MonoBehaviour.print("ERROR: Did not locate texture set from global cache for input name: " + setName+" while applying KSP_MODEL_SHADER with name of: "+modelShaderNodes[i].GetStringValue("name","UNKNOWN"));
+                        continue;
+                    }
                 }
                 modelNames = textureNode.GetStringValues("model");
                 int len2 = modelNames.Length;
@@ -343,8 +357,12 @@ namespace KSPShaderTools
                         if (logReplacements)
                         {
                             MonoBehaviour.print("TexturesUnlimited -- Replacing textures on database model: " + modelNames[k]);
-                        }                        
+                        }
                         set.enable(model.transform, set.maskColors);
+                    }
+                    else
+                    {
+                        MonoBehaviour.print("ERROR: Could not locate model: " + modelNames[k] + " while applying KSP_MODEL_SHADER with name of: " + modelShaderNodes[i].GetStringValue("name", "UNKNOWN"));
                     }
                 }
             }
@@ -464,7 +482,7 @@ namespace KSPShaderTools
             {
                 return s;
             }
-            MonoBehaviour.print("ERROR: Could not locate texture set for name: " + name);
+            MonoBehaviour.print("ERROR: Could not locate TextureSet from global cache for the input name of: " + name);
             return null;
         }
 
