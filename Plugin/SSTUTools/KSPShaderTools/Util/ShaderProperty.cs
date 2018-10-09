@@ -298,9 +298,10 @@ namespace KSPShaderTools
 
         public ShaderPropertyKeyword(string line) : base(line)
         {
+            line = line.Split('=')[1];//grab everything after the '='
             string[] vals = line.Split(',');
-            this.keyword = vals[1].Trim();
-            this.enable = Utils.safeParseBool(vals[2].Trim());
+            this.keyword = vals[0].Trim();
+            this.enable = Utils.safeParseBool(vals[1].Trim());
         }
 
         protected override void applyInternal(Material mat)
