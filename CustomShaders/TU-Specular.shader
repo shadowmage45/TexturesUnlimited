@@ -1,10 +1,10 @@
-Shader "TU/Metallic"
+Shader "TU/Specular"
 {
 	Properties 
 	{
 		//standard texture input slots
 		_MainTex("_MainTex (RGB)", 2D) = "white" {}
-		_MetallicGlossMap("_MetallicGlossMap (RGBA)", 2D) = "white" {}
+		_SpecGlossMap("_SpecGlossMap (RGBA)", 2D) = "white" {}
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
 		_Emissive("_Emission (RGB Emissive Map)", 2D) = "black" {}
@@ -14,12 +14,10 @@ Shader "TU/Metallic"
 		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
 		_MetalGlossNormMask("_MetalGlossNormMask", 2D) = "black" {}
 		_MetalGlossInputMask("_MetalGlossInputMask", 2D) = "white" {}
-		
-		//detail textures -- diff/met/nrm??
-		
+				
 		//standard shader params
 		_Color ("_Color", Color) = (1,1,1)
-		_Metal ("_Metal", Range(0,1)) = 1
+		_SpecularColor ("_SpecColor", Color) = (1,1,1)
 		_Smoothness ("_Smoothness", Range(0,1)) = 1
 		
 		//recoloring input color values
@@ -63,7 +61,7 @@ Shader "TU/Metallic"
 		// #pragma multi_compile __ TU_SUBSURF
 		// #pragma multi_compile __ TU_AOMAP
 		// #pragma multi_compile __ TU_STOCK_SPEC
-		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD TU_RECOLOR_TINTING
+		// #pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD TU_RECOLOR_LEGACY TU_RECOLOR_TINTING
 		// #pragma multi_compile __ TU_RECOLOR_NORM
 		// #pragma multi_compile __ TU_RECOLOR_INPUT
 		
@@ -89,8 +87,8 @@ Shader "TU/Metallic"
 		
 		//standard shader params for adjusting color/etc
 		float3 _Color;
+		float3 _SpecularColor;
 		float _Smoothness;
-		float _Metal;
 
 		//standard KSP shader property values
 		float _Opacity;
@@ -127,7 +125,7 @@ Shader "TU/Metallic"
             fixed3 Albedo;		// base (diffuse or specSampleular) color
 			fixed3 Normal;		// tangent space normal, if written
 			half3 Emission;		// emissive / glow color
-            half Metallic;		// 0=non-metal, 1=metal
+            half3 Specular;		// 0=non-metal, 1=metal
             half Smoothness;	// 0=rough, 1=smooth
 			half Occlusion;		// occlusion (default 1)
             fixed Alpha;		// alpha for transparencies
@@ -171,13 +169,15 @@ Shader "TU/Metallic"
 			#endif
 			
 			//Unity 'Standard' lighting function, unabridged
+			// energy conservation
 			half oneMinusReflectivity;
-			half3 specSampleColor;
-			s.Albedo = DiffuseAndSpecularFromMetallic(s.Albedo, s.Metallic, /*out*/ specSampleColor, /*out*/ oneMinusReflectivity);
+			s.Albedo = EnergyConservationBetweenDiffuseAndSpecular (s.Albedo, s.Specular, /*out*/ oneMinusReflectivity);
+			// shader relies on pre-multiply alpha-blend (_SrcBlend = One, _DstBlend = OneMinusSrcAlpha)
+			// this is necessary to handle transparency in physically correct way - only diffuse component gets affected by alpha
 			half outputAlpha;
 			s.Albedo = PreMultiplyAlpha (s.Albedo, s.Alpha, oneMinusReflectivity, /*out*/ outputAlpha);
-			half4 c = UNITY_BRDF_PBS (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
-			c.rgb += UNITY_BRDF_GI (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
+			half4 c = UNITY_BRDF_PBS (s.Albedo, s.Specular, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
+			c.rgb += UNITY_BRDF_GI (s.Albedo, s.Specular, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
 			c.a = outputAlpha;
 			
 			#if TU_SUBSURF
@@ -230,7 +230,7 @@ Shader "TU/Metallic"
 					fixed metalMaskFactor = diffMaskFactor;
 				#endif
 				
-				fixed3 userColor = getUserColor(mask, _MaskColor1, _MaskColor2, _MaskColor3);
+				fixed3 userColor = saturate(mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb);
 				fixed userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
 				fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
 				
@@ -260,14 +260,41 @@ Shader "TU/Metallic"
 				o.Metallic = mix1(userMetallic, metal, metalMaskFactor);
 				
 			#endif
+			//SSTU legacy recoloring mode (gray base textures)
+			#if TU_RECOLOR_LEGACY
+				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
+				fixed m = saturate(1 - (mask.r + mask.g + mask.b));
+				fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
+				fixed3 userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
+				fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
+					
+				fixed3 diffuseColor = color.rgb * m;
+				fixed baseSpecSample = smooth * m;
+				fixed baseMetallic = metal * m;
+				fixed3 detailColor = (color.rgb - 0.5) * (1 - m);
+				fixed3 detailspecSample = (specSample.rgb - 0.5) * (1 - m);
+				fixed detailMetallic = (specSample.a - 0.5) * (1 - m);
+				o.Albedo = saturate(userColor + diffuseColor + detailColor);
+				o.Smoothness = saturate(userSpecSample + baseSpecSample + detailspecSample).r;
+				o.Metallic = saturate(userMetallic + baseMetallic + detailMetallic);
+			#endif
 			//SSTU legacy tinting mode
 			#if TU_RECOLOR_TINTING
 				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
 				fixed m = saturate(1 - (mask.r + mask.g + mask.b));
-				
-				o.Albedo = recolorTinting(color.rgb, mask, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb);
-				o.Smoothness = recolorTinting(smooth, mask, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
-				o.Metallic = recolorTinting(metal, mask, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
+				fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
+				fixed3 userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
+				fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
+					
+				fixed3 diffuseColor = color.rgb * m;
+				fixed baseSpecSample = smooth * m;
+				fixed baseMetallic = metal * m;
+				fixed3 detailColor = color.rgb * (1 - m);
+				fixed3 detailspecSample = specSample.rgb * (1 - m);
+				fixed detailMetallic = specSample.a * (1 - m);
+				o.Albedo = saturate(userColor * detailColor + diffuseColor);
+				o.Smoothness = saturate(userSpecSample * detailspecSample + baseSpecSample).r;
+				o.Metallic = saturate(userMetallic * detailMetallic + baseMetallic);
 			#endif
 			//no recoloring enabled -- use standard texture sampling -- use the values directly from the source textures
 			#if TU_RECOLOR_OFF
@@ -305,13 +332,12 @@ Shader "TU/Metallic"
 			
 			//apply the standard shader param multipliers to the sampled/computed values.
 			o.Albedo *= _Color;
-			o.Metallic *= _Metal;
-			o.Smoothness *= _Smoothness;
-			
+			o.Specular *= _SpecularColor;
+			o.Smoothness *= _Smoothness;			
 		}
 		
 		ENDCG
 	}
 	Fallback "Standard"
-	CustomEditor "TUMetallicUI"
+	//CustomEditor "TUMetallicUI"
 }
