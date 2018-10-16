@@ -4,7 +4,7 @@ Shader "TU/Legacy"
 	{
 		//standard texture input slots
 		_MainTex("_MainTex (RGB)", 2D) = "white" {}
-		_MetallicGlossMap("_MetallicGlossMap (RGBA)", 2D) = "white" {}
+		_SpecGlossMap("_SpecGlossMap (RGBA)", 2D) = "white" {}
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
 		_Emissive("_Emission (RGB Emissive Map)", 2D) = "black" {}
@@ -12,8 +12,8 @@ Shader "TU/Legacy"
 		
 		//recoloring texture input slots
 		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
-		_SpecNormMask("_MetalGlossNormMask", 2D) = "black" {}
-		_SpecInputMask("_MetalGlossInputMask", 2D) = "white" {}
+		_SpecGlossNormMask("_SpecGlossNormMask", 2D) = "black" {}
+		_SpecGlossInputMask("_SpecGlossInputMask", 2D) = "white" {}
 		
 		//detail textures -- diff/met/nrm??
 		
@@ -25,6 +25,11 @@ Shader "TU/Legacy"
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
+		
+		//recoloring normalization params -- diffuse in R, Specular in G, smooth in B
+		_Channel1Norm ("Mask Channel 1 Normallization", Vector) = (0,0,0,0)
+		_Channel2Norm ("Mask Channel 2 Normallization", Vector) = (0,0,0,0)
+		_Channel3Norm ("Mask Channel 3 Normallization", Vector) = (0,0,0,0)
 		
 		//sub-surface scattering shader parameters		
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
@@ -60,7 +65,7 @@ Shader "TU/Legacy"
 		// #pragma multi_compile __ TU_BUMPMAP		
 		// #pragma multi_compile __ TU_SUBSURF
 		// #pragma multi_compile __ TU_AOMAP
-		// #pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC TU_COLORED_SPEC
+		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC TU_COLORED_SPEC
 		// #pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD TU_RECOLOR_LEGACY TU_RECOLOR_TINTING
 		// #pragma multi_compile __ TU_RECOLOR_NORM
 		// #pragma multi_compile __ TU_RECOLOR_INPUT
@@ -75,15 +80,15 @@ Shader "TU/Legacy"
 		//Texture samplers for all possible texture slots
 		//TODO -- block out unused samplers by keyword
 		sampler2D _MainTex;
-		sampler2D _MetallicGlossMap;
+		sampler2D _SpecGlossMap;
 		sampler2D _BumpMap;
 		sampler2D _AOMap;
 		sampler2D _Emissive;
 		sampler2D _Thickness;
 		
 		sampler2D _MaskTex;
-		sampler2D _MetalGlossNormMask;
-		sampler2D _MetalGlossInputMask;
+		sampler2D _SpecGlossNormMask;
+		sampler2D _SpecGlossInputMask;
 		
 		//standard shader params for adjusting color/etc
 		float3 _Color;
@@ -101,6 +106,10 @@ Shader "TU/Legacy"
 		float4 _MaskColor1;
 		float4 _MaskColor2;
 		float4 _MaskColor3;
+		
+		float4 _Channel1Norm;
+		float4 _Channel2Norm;
+		float4 _Channel3Norm;
 		
 		//subsurf property values
 		float _SubSurfAmbient;
@@ -124,15 +133,11 @@ Shader "TU/Legacy"
             fixed3 Albedo;		// base (diffuse or specSampleular) color
 			fixed3 Normal;		// tangent space normal, if written
 			half3 Emission;		// emissive / glow color
-            half Metallic;		// 0=non-metal, 1=metal
-			half Smoothness;// 0=rough, 1=smooth
-			#if TU_COLORED_SPEC
-				half3 GlossColor;
-			#endif
+			half Smoothness;	// 0=rough, 1=smooth (specular hardness/shininess)
+			half3 GlossColor;	// specular reflection color
 			half Occlusion;		// occlusion (default 1)
             fixed Alpha;		// alpha for transparencies
 			half4 Backlight;	// backlight emissive glow color(RGB) and ambient light value (A)
-			half4 SubSurfParams;// subsurface scattering parameters R = Scale, G = Power, B = Scale, A = Attenuation
         };
 
 		//custom lighting function to enable SubSurf functionality
@@ -193,20 +198,19 @@ Shader "TU/Legacy"
 		{
 			//standard texture samplers used regardless of keywords...
 			fixed4 color = tex2D(_MainTex,(IN.uv_MainTex));
-			fixed4 specSample = tex2D(_MetallicGlossMap, (IN.uv_MainTex));
+			fixed4 specSample = tex2D(_SpecGlossMap, (IN.uv_MainTex));
 			
 			//if 'stock specular' mode is enabled, pull spec value from alpha channel of diffuse shader
 			//else pull it from the alpha channel of the metallic gloss map
-			#if TU_STOCK_SPEC
-				fixed smooth = color.a;
-			#endif
 			#if TU_STD_SPEC
 				fixed smooth = specSample.a;
 			#endif
-			#if TU_COLORED_SPEC
-				fixed smooth = Luminance(specSample.rgb);
+			#if TU_STOCK_SPEC
+				fixed smooth = color.a;
 			#endif
-			fixed smooth = 1;//TODO remove when adding variants...
+			#if TU_COLORED_SPEC
+				fixed smooth = specSample.a;
+			#endif
 			
 			//if bump-map enabled, sample texture; else assign default NRM
 			#if TU_BUMPMAP
@@ -222,58 +226,33 @@ Shader "TU/Legacy"
 			
 				//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 				fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-				
-				fixed diffMaskFactor = saturate(1 - (mask.r + mask.g + mask.b));//mixing factor between original source texture and user-specified value for diffuse channel
-				
-				//sample/calculate mix factors for user-specified spec and metal values if input-masking setting is enabled
-				#if TU_RECOLOR_INPUT				
-					fixed4 specMaskValues = tex2D(_MetalGlossInputMask, IN.uv_MainTex);
-					fixed specMaskFactor = diffMaskFactor * (1 - specMaskValues.a);
-					fixed metalMaskFactor = diffMaskFactor * (1 - specMaskValues.r);
-				#else
-					fixed specMaskFactor = diffMaskFactor;
-					fixed metalMaskFactor = diffMaskFactor;
-				#endif
-				
-				fixed3 userColor = saturate(mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb);
-				fixed userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-				
-				//convert original diffuse to luminance value
-				fixed originalTexLuminance = Luminance(color.rgb);				
-				//add the resultant grayscale detail onto the user-selected color for this pixel
-				userColor.rgb += originalTexLuminance;
-				//subtract normalization data from alpha channel of mask texture
-				userColor.rgb -= mask.a;
+				fixed diffuseNorm = mask.a - getUserValue(mask, _Channel1Norm.x, _Channel2Norm.x, _Channel3Norm.x);
+				fixed metallicNorm = -getUserValue(mask, _Channel1Norm.y, _Channel2Norm.y, _Channel3Norm.y);
+				fixed specularNorm = -getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
 				
 				//same for specular and metallic if normalization for those channels is enabled
 				#if TU_RECOLOR_NORM
 					fixed4 specMetNormData = tex2D(_MetalGlossNormMask, (IN.uv_MainTex));
-					userSpecSample += smooth;
-					userSpecSample -= specMetNormData.a;
-				#else
-					//noop?
-					//change from add to mult?
-					userSpecSample += smooth;
+					metallicNorm += specMetNormData.r;
+					specularNorm += specMetNormData.a;
 				#endif
 				
-				color.rgb = mix3(userColor, color, diffMaskFactor);
-				smooth = mix1(userSpecSample, smooth, specMaskFactor).rrr;
+				fixed metalMaskFactor = 1;
+				fixed specMaskFactor = 1;
+				
+				//sample/calculate mix factors for user-specified spec and metal values if input-masking setting is enabled
+				#if TU_RECOLOR_INPUT				
+					fixed4 specMaskValues = tex2D(_MetalGlossInputMask, IN.uv_MainTex);
+					metalMaskFactor = specMaskValues.r;
+					specMaskFactor = specMaskValues.a;
+				#endif
+				
+				o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1, _MaskColor2, _MaskColor3);				
+				o.GlossColor = recolorStandard(metal, mask * metalMaskFactor, metallicNorm, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
+				o.Smoothness = recolorStandard(smooth, mask * specMaskFactor, specularNorm, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
 				
 			#endif
-			//SSTU legacy recoloring mode (gray base textures)
-			#if TU_RECOLOR_LEGACY
-				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-				fixed m = saturate(1 - (mask.r + mask.g + mask.b));
-				fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
-				fixed3 userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-					
-				fixed3 diffuseColor = color.rgb * m;
-				fixed baseSpecSample = smooth * m;
-				fixed3 detailColor = (color.rgb - 0.5) * (1 - m);
-				fixed3 detailspecSample = (specSample.rgb - 0.5) * (1 - m);
-				color.rgb = saturate(userColor + diffuseColor + detailColor);
-				smooth = saturate(userSpecSample + baseSpecSample + detailspecSample).r;
-			#endif
+			
 			//SSTU legacy tinting mode
 			#if TU_RECOLOR_TINTING
 				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
