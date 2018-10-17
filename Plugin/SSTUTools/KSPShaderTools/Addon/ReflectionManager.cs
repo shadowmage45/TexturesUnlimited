@@ -622,6 +622,65 @@ namespace KSPShaderTools
             GameObject.Destroy(tex);
         }
 
+        private void exportStdCube(Material mat, string name)
+        {
+            Texture2D tex0 = (Texture2D)mat.GetTexture("_FrontTex");
+            Texture2D tex1 = (Texture2D)mat.GetTexture("_BackTex");
+            Texture2D tex2 = (Texture2D)mat.GetTexture("_LeftTex");
+            Texture2D tex3 = (Texture2D)mat.GetTexture("_RightTex");
+            Texture2D tex4 = (Texture2D)mat.GetTexture("_UpTex");
+            Texture2D tex5 = (Texture2D)mat.GetTexture("_DownTex");
+
+            RenderTexture rt = new RenderTexture(tex0.width, tex0.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+
+            Graphics.Blit(tex0, rt);
+            exportTexture(rt, name + "0");
+            Graphics.Blit(tex1, rt);
+            exportTexture(rt, name + "1");
+            Graphics.Blit(tex2, rt);
+            exportTexture(rt, name + "2");
+            Graphics.Blit(tex3, rt);
+            exportTexture(rt, name + "3");
+            Graphics.Blit(tex4, rt);
+            exportTexture(rt, name + "4");
+            Graphics.Blit(tex5, rt);
+            exportTexture(rt, name + "5");
+        }
+
+        private void exportTexture(Texture2D tex, string name)
+        {            
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes("cubeExport/" + name + ".png", bytes);
+        }
+
+        private void exportTexture(RenderTexture envMap, string name)
+        {
+            Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, false);
+            Graphics.SetRenderTarget(envMap);
+            tex.ReadPixels(new Rect(0, 0, envMap.width, envMap.height), 0, 0);
+            tex.Apply();
+            byte[] bytes = tex.EncodeToPNG();
+            File.WriteAllBytes("cubeExport/" + name + ".png", bytes);
+        }
+
+        private void exportCubemapReadOnly(Cubemap envMap, string name)
+        {
+            RenderTexture rt = new RenderTexture(envMap.width, envMap.height, 24, RenderTextureFormat.ARGB32);
+            rt.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+            rt.useMipMap = true;
+            Graphics.Blit(envMap, rt);
+            exportCubemap(rt, name);
+            
+            Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, true);
+            Graphics.CopyTexture(envMap, 0, 0, tex, 0, 0);
+            exportTexture(tex, name + "-single");
+
+            RenderTexture rt2 = new RenderTexture(tex.width, tex.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+            
+            Graphics.Blit(tex, rt2);
+            exportTexture(rt2, name+"-single2");
+        }
+
         #endregion DEBUG RENDERING
 
         #region DEBUG SPHERE
@@ -671,6 +730,55 @@ namespace KSPShaderTools
                 string output = "camera: "+cam.name+","+cam.gameObject+","+cam.gameObject.transform.parent+","+cam.cullingMask + "," + cam.nearClipPlane + "," + cam.farClipPlane + ","+cam.transform.position.x+","+cam.transform.position.y+","+cam.transform.position.z;
                 MonoBehaviour.print(output);
             }
+        }
+
+        public void dumpReflectionData()
+        {
+            MonoBehaviour.print("------------------REFLECTION DATA--------------------");
+            MonoBehaviour.print("Reflection probes found in scene:");
+            ReflectionProbe[] probes = GameObject.FindObjectsOfType<ReflectionProbe>();
+            int len = probes.Length;
+            for (int i = 0; i < len; i++)
+            {
+                MonoBehaviour.print(string.Format("ReflectionProbe[{0}] : Object Parent: {1}  Probe: {2}", i, probes[i].gameObject, probes[i]));
+            }
+            Material mat = RenderSettings.skybox;
+            MonoBehaviour.print("Rendersetting skybox: " + mat);
+            if (mat != null)
+            {
+                Texture tex = mat.GetTexture("_Tex");
+                MonoBehaviour.print("skybox shader: " + mat.shader);
+                MonoBehaviour.print("skybox texture: " + tex);
+                Cubemap cube = tex as Cubemap;
+                if (cube != null)
+                {
+                    exportCubemap(cube, "RenderSettings-Skybox");
+                }
+                RenderTexture rTex = tex as RenderTexture;
+                if (rTex != null)
+                {
+                    exportCubemap(rTex, "RenderSettings-Skybox");
+                }
+                if (tex == null)//not a std cubemap shader, check for six-sided
+                {
+                    exportStdCube(mat, "RenderSettings-Skybox");
+                }
+            }
+            Skybox[] skies = GameObject.FindObjectsOfType<Skybox>();
+            len = skies.Length;
+            for (int i = 0; i < len; i++)
+            {
+                Skybox sky = skies[i];
+                mat = sky.material;
+                MonoBehaviour.print(string.Format("Camera Skybox[{0}]: {1}  Material: {2} ", i, sky, mat));
+            }
+            Cubemap cube2 = RenderSettings.customReflection;
+            if (cube2 != null)
+            {
+                MonoBehaviour.print("Custom cube reflection: " + cube2);
+                exportCubemapReadOnly(cube2, "RenderSettings-CustomReflection");
+            }
+            MonoBehaviour.print("------------------REFLECTION DATA--------------------");
         }
 
         #endregion DEBUG SPHERE
