@@ -130,21 +130,22 @@ inline fixed3 mix3(fixed3 a, fixed3 b, fixed t)
 	return a * (1 - t) + b * t;
 }
 
-inline fixed3 recolorLegacyDiffuse(fixed3 diffuseSample, fixed3 maskSample, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
+inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed norm, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
 {	
-	//input contribution mix between user selected color and base color
-	//this specifically is the 'diffuse' contribution
 	fixed mixFactor = getMaskMix(maskSample);
+	//the color to use from the recoloring channels
 	fixed3 userSelectedColor = getUserColor(maskSample, userColor1, userColor2, userColor3);
-	fixed3 detailColor = (diffuseSample - 0.5) * (1 - mixFactor);
+	//luminance of the original texture -- used for details in masked portions
+	fixed luminance = Luminance(diffuseSample);
+	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;
 	return saturate(userSelectedColor + diffuseSample * mixFactor + detailColor);
 }
 
-inline fixed recolorLegacySingle(fixed sample1, fixed3 maskSample, fixed user1, fixed user2, fixed user3)
+inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed user1, fixed user2, fixed user3)
 {
 	fixed mixFactor = getMaskMix(maskSample);
 	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
-	fixed detail = (sample1 - 0.5) * (1 - mixFactor);
+	fixed detail = (sample1 - norm) * (1 - mixFactor);
 	return saturate(userSelectedValue + detail + sample1 * mixFactor);
 }
 

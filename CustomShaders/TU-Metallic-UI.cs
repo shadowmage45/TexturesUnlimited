@@ -10,13 +10,14 @@ public class TUMetallicUI : ShaderGUI
         base.OnGUI(materialEditor, properties);
 
         Material targetMat = materialEditor.target as Material;
-		keywordCheckbox(targetMat, "Bump Map", "TU_BUMPMAP");
-		keywordCheckbox(targetMat, "Smoothness from Diffuse Alpha", "TU_STOCK_SPEC");
+		
+		specularSource(targetMat);
+		
+		keywordCheckbox(targetMat, "Bump Map", "TU_BUMPMAP");		
 		keywordCheckbox(targetMat, "Subsurf", "TU_SUBSURF");
 		keywordCheckbox(targetMat, "Emission", "TU_EMISSIVE");
-		keywordCheckbox(targetMat, "Recolor Standard", "TU_RECOLOR_STANDARD");
-		keywordCheckbox(targetMat, "Std. Recolor Spec Normalization", "TU_RECOLOR_NORM");
-		keywordCheckbox(targetMat, "Std. Recolor Spec Control Mask", "TU_RECOLOR_INPUT");
+		recolorType(targetMat);
+		recolorNormalizationType(targetMat);
     }
 	
 	private void keywordCheckbox(Material mat, string description, string keyword)
@@ -34,6 +35,114 @@ public class TUMetallicUI : ShaderGUI
             else
                 mat.DisableKeyword(keyword);
         }		
+	}
+	
+	private void specularSource(Material mat)
+	{
+		string[] options = new string[]{"MetallicGloss Alpha", "Diffuse Alpha", "MetallicGloss R"};
+		int currentIndex = 0;
+		if(Array.IndexOf(mat.shaderKeywords, "TU_STD_SPEC")!=-1){currentIndex=0;}
+		else if(Array.IndexOf(mat.shaderKeywords, "TU_STOCK_SPEC")!=-1){currentIndex=1;}
+		else if(Array.IndexOf(mat.shaderKeywords, "TU_LEGACY_SPEC")!=-1){currentIndex=2;}
+		EditorGUILayout.BeginHorizontal();
+		EditorGUILayout.LabelField("Smoothness Source");
+		int index = EditorGUILayout.Popup(currentIndex, options);
+		EditorGUILayout.EndHorizontal();
+		if( index != currentIndex)
+		{
+			if(index==0)
+			{
+				mat.EnableKeyword("TU_STD_SPEC");
+				mat.DisableKeyword("TU_STOCK_SPEC");
+				mat.DisableKeyword("TU_LEGACY_SPEC");
+			}
+			else if(index==1)
+			{
+				mat.DisableKeyword("TU_STD_SPEC");
+				mat.EnableKeyword("TU_STOCK_SPEC");
+				mat.DisableKeyword("TU_LEGACY_SPEC");
+			}
+			else if(index==2)
+			{
+				mat.DisableKeyword("TU_STD_SPEC");
+				mat.DisableKeyword("TU_STOCK_SPEC");
+				mat.EnableKeyword("TU_LEGACY_SPEC");
+			}
+		}
+	}
+	
+	private void recolorType(Material mat)
+	{
+		string[] options = new string[]{"Disabled", "Standard", "Tinting"};
+		int currentIndex = 0;
+		if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_OFF")!=-1){currentIndex=0;}
+		else if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_STANDARD")!=-1){currentIndex=1;}
+		else if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_TINTING")!=-1){currentIndex=2;}
+		EditorGUILayout.BeginHorizontal();
+		EditorGUILayout.LabelField("Recolor Mode");
+		int index = EditorGUILayout.Popup(currentIndex, options);
+		EditorGUILayout.EndHorizontal();
+		if( index != currentIndex)
+		{
+			if(index==0)
+			{
+				mat.EnableKeyword("TU_RECOLOR_OFF");
+				mat.DisableKeyword("TU_RECOLOR_STANDARD");
+				mat.DisableKeyword("TU_RECOLOR_TINTING");
+			}
+			else if(index==1)
+			{
+				mat.DisableKeyword("TU_RECOLOR_OFF");
+				mat.EnableKeyword("TU_RECOLOR_STANDARD");
+				mat.DisableKeyword("TU_RECOLOR_TINTING");
+			}
+			else if(index==2)
+			{
+				mat.DisableKeyword("TU_RECOLOR_OFF");
+				mat.DisableKeyword("TU_RECOLOR_STANDARD");
+				mat.EnableKeyword("TU_RECOLOR_TINTING");
+			}
+		}
+	}
+	
+	private void recolorNormalizationType(Material mat)
+	{
+		string[] options = new string[]{"Disabled", "Normalization Only", "Input Mask Only", "Normalize + Input Mask"};
+		int currentIndex = 0;
+		if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_NORM")!=-1){currentIndex=1;}
+		else if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_INPUT")!=-1){currentIndex=2;}
+		else if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_NORM_INPUT")!=-1){currentIndex=3;}
+		EditorGUILayout.BeginHorizontal();
+		EditorGUILayout.LabelField("Recolor Mode");
+		int index = EditorGUILayout.Popup(currentIndex, options);
+		EditorGUILayout.EndHorizontal();
+		if( index != currentIndex)
+		{
+			if(index==0)
+			{
+				mat.DisableKeyword("TU_RECOLOR_NORM");
+				mat.DisableKeyword("TU_RECOLOR_INPUT");
+				mat.DisableKeyword("TU_RECOLOR_NORM_INPUT");
+			}
+			else if(index==1)
+			{
+				mat.EnableKeyword("TU_RECOLOR_NORM");
+				mat.DisableKeyword("TU_RECOLOR_INPUT");
+				mat.DisableKeyword("TU_RECOLOR_NORM_INPUT");
+			}
+			else if(index==2)
+			{
+				mat.DisableKeyword("TU_RECOLOR_NORM");
+				mat.EnableKeyword("TU_RECOLOR_INPUT");
+				mat.DisableKeyword("TU_RECOLOR_NORM_INPUT");
+			}
+			else if(index==3)
+			{
+				mat.DisableKeyword("TU_RECOLOR_NORM");
+				mat.DisableKeyword("TU_RECOLOR_INPUT");
+				mat.EnableKeyword("TU_RECOLOR_NORM_INPUT");
+			}
+		}
 	}
 	
 }
