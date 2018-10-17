@@ -12,19 +12,26 @@ Shader "TU/Specular"
 		
 		//recoloring texture input slots
 		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
-		_MetalGlossNormMask("_MetalGlossNormMask", 2D) = "black" {}
-		_MetalGlossInputMask("_MetalGlossInputMask", 2D) = "white" {}
+		_SpecGlossNormMask("_SpecGlossNormMask", 2D) = "black" {}
+		_SpecGlossInputMask("_SpecGlossInputMask", 2D) = "white" {}
 				
 		//standard shader params
 		_Color ("_Color", Color) = (1,1,1)
-		_SpecularColor ("_SpecColor", Color) = (1,1,1)
+		_GlossColor ("_SpecColor", Color) = (1,1,1)
 		_Smoothness ("_Smoothness", Range(0,1)) = 1
 		
 		//recoloring input color values
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
-		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,0)
+		_MaskSpec1 ("Mask Spec Color 1", Color) = (1,1,1,1)
+		_MaskSpec2 ("Mask Spec Color 2", Color) = (1,1,1,1)
+		_MaskSpec3 ("Mask Spec Color 3", Color) = (1,1,1,1)
+		
+		//recoloring normalization params -- diffuse in R, Specular in G, smooth in B
+		_Channel1Norm ("Mask Channel 1 Normallization", Vector) = (0,0,0,0)
+		_Channel2Norm ("Mask Channel 2 Normallization", Vector) = (0,0,0,0)
+		_Channel3Norm ("Mask Channel 3 Normallization", Vector) = (0,0,0,0)
 		
 		//sub-surface scattering shader parameters		
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
@@ -60,10 +67,9 @@ Shader "TU/Specular"
 		// #pragma multi_compile __ TU_BUMPMAP		
 		// #pragma multi_compile __ TU_SUBSURF
 		// #pragma multi_compile __ TU_AOMAP
-		// #pragma multi_compile __ TU_STOCK_SPEC
-		// #pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD TU_RECOLOR_LEGACY TU_RECOLOR_TINTING
-		// #pragma multi_compile __ TU_RECOLOR_NORM
-		// #pragma multi_compile __ TU_RECOLOR_INPUT
+		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC TU_LEGACY_SPEC
+		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD TU_RECOLOR_TINTING
+		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
 		#include "HLSLSupport.cginc"
 		#include "UnityCG.cginc"
@@ -75,19 +81,19 @@ Shader "TU/Specular"
 		//Texture samplers for all possible texture slots
 		//TODO -- block out unused samplers by keyword
 		sampler2D _MainTex;
-		sampler2D _MetallicGlossMap;
+		sampler2D _SpecGlossMap;
 		sampler2D _BumpMap;
 		sampler2D _AOMap;
 		sampler2D _Emissive;
 		sampler2D _Thickness;
 		
 		sampler2D _MaskTex;
-		sampler2D _MetalGlossNormMask;
-		sampler2D _MetalGlossInputMask;
+		sampler2D _SpecGlossNormMask;
+		sampler2D _SpecGlossInputMask;
 		
 		//standard shader params for adjusting color/etc
 		float3 _Color;
-		float3 _SpecularColor;
+		float3 _GlossColor;
 		float _Smoothness;
 
 		//standard KSP shader property values
@@ -101,7 +107,13 @@ Shader "TU/Specular"
 		float4 _MaskColor1;
 		float4 _MaskColor2;
 		float4 _MaskColor3;
-		float4 _MaskMetallic;
+		float4 _MaskSpec1;
+		float4 _MaskSpec2;
+		float4 _MaskSpec3;
+		
+		float4 _Channel1Norm;
+		float4 _Channel2Norm;
+		float4 _Channel3Norm;
 		
 		//subsurf property values
 		float _SubSurfAmbient;
@@ -125,12 +137,11 @@ Shader "TU/Specular"
             fixed3 Albedo;		// base (diffuse or specSampleular) color
 			fixed3 Normal;		// tangent space normal, if written
 			half3 Emission;		// emissive / glow color
-            half3 Specular;		// 0=non-metal, 1=metal
             half Smoothness;	// 0=rough, 1=smooth
+            half3 SpecularColor;// 0=specular color
 			half Occlusion;		// occlusion (default 1)
             fixed Alpha;		// alpha for transparencies
 			half4 Backlight;	// backlight emissive glow color(RGB) and ambient light value (A)
-			half4 SubSurfParams;// subsurface scattering parameters R = Scale, G = Power, B = Scale, A = Attenuation
         };
 		
 		//replacement for Unity bridge method to call GI with custom structs
@@ -171,13 +182,13 @@ Shader "TU/Specular"
 			//Unity 'Standard' lighting function, unabridged
 			// energy conservation
 			half oneMinusReflectivity;
-			s.Albedo = EnergyConservationBetweenDiffuseAndSpecular (s.Albedo, s.Specular, /*out*/ oneMinusReflectivity);
+			s.Albedo = EnergyConservationBetweenDiffuseAndSpecular (s.Albedo, s.SpecularColor, /*out*/ oneMinusReflectivity);
 			// shader relies on pre-multiply alpha-blend (_SrcBlend = One, _DstBlend = OneMinusSrcAlpha)
 			// this is necessary to handle transparency in physically correct way - only diffuse component gets affected by alpha
 			half outputAlpha;
 			s.Albedo = PreMultiplyAlpha (s.Albedo, s.Alpha, oneMinusReflectivity, /*out*/ outputAlpha);
-			half4 c = UNITY_BRDF_PBS (s.Albedo, s.Specular, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
-			c.rgb += UNITY_BRDF_GI (s.Albedo, s.Specular, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
+			half4 c = UNITY_BRDF_PBS (s.Albedo, s.SpecularColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, gi.light, gi.indirect);
+			c.rgb += UNITY_BRDF_GI (s.Albedo, s.SpecularColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
 			c.a = outputAlpha;
 			
 			#if TU_SUBSURF
@@ -191,17 +202,18 @@ Shader "TU/Specular"
 		{
 			//standard texture samplers used regardless of keywords...
 			fixed4 color = tex2D(_MainTex,(IN.uv_MainTex));
-			fixed4 specSample = tex2D(_MetallicGlossMap, (IN.uv_MainTex));
+			fixed4 specSample = tex2D(_SpecGlossMap, (IN.uv_MainTex));
+			fixed3 glossColor = specSample.rgb;
 			
-			//metal ALWAYS comes from MetallicGlossMap.r channel
-			fixed metal = specSample.r;
-			
-			//if 'stock specular' mode is enabled, pull spec value from alpha channel of diffuse shader
-			//else pull it from the alpha channel of the metallic gloss map
+			#if TU_STD_SPEC
+				fixed smooth = specSample.a;
+			#endif
 			#if TU_STOCK_SPEC
 				fixed smooth = color.a;
-			#else
-				fixed smooth = specSample.a;
+			#endif
+			#if TU_LEGACY_SPEC
+				fixed smooth = specSample.r;
+				glossColor = specSample.aaa;
 			#endif
 			
 			//if bump-map enabled, sample texture; else assign default NRM
@@ -217,90 +229,46 @@ Shader "TU/Specular"
 			
 				//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 				fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-				
-				fixed diffMaskFactor = saturate(1 - (mask.r + mask.g + mask.b));//mixing factor between original source texture and user-specified value for diffuse channel
-				
-				//sample/calculate mix factors for user-specified spec and metal values if input-masking setting is enabled
-				#if TU_RECOLOR_INPUT				
-					fixed4 specMaskValues = tex2D(_MetalGlossInputMask, IN.uv_MainTex);
-					fixed specMaskFactor = diffMaskFactor * (1 - specMaskValues.a);
-					fixed metalMaskFactor = diffMaskFactor * (1 - specMaskValues.r);
-				#else
-					fixed specMaskFactor = diffMaskFactor;
-					fixed metalMaskFactor = diffMaskFactor;
-				#endif
-				
-				fixed3 userColor = saturate(mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb);
-				fixed userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-				fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
-				
-				//convert original diffuse to luminance value
-				fixed originalTexLuminance = Luminance(color.rgb);				
-				//add the resultant grayscale detail onto the user-selected color for this pixel
-				userColor.rgb += originalTexLuminance;
-				//subtract normalization data from alpha channel of mask texture
-				userColor.rgb -= mask.a;
+				fixed diffuseNorm = mask.a - getUserValue(mask, _Channel1Norm.x, _Channel2Norm.x, _Channel3Norm.x);
+				fixed glossNorm = -getUserValue(mask, _Channel1Norm.y, _Channel2Norm.y, _Channel3Norm.y);
+				fixed smoothNorm = -getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
 				
 				//same for specular and metallic if normalization for those channels is enabled
-				#if TU_RECOLOR_NORM
-					fixed4 specMetNormData = tex2D(_MetalGlossNormMask, (IN.uv_MainTex));
-					userMetallic += metal;
-					userMetallic -= specMetNormData.r;
-					userSpecSample += smooth;
-					userSpecSample -= specMetNormData.a;
+				#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
+					fixed4 specMetNormData = tex2D(_SpecGlossNormMask, (IN.uv_MainTex));
+					glossNorm += specMetNormData.r;
+					smoothNorm += specMetNormData.a;
 				#else
-					//noop?
-					//change from add to mult?
-					userSpecSample += smooth;					
-					userMetallic += metal;
+					
 				#endif
 				
-				o.Albedo = mix3(userColor, color, diffMaskFactor);
-				o.Smoothness = mix1(userSpecSample, smooth, specMaskFactor);
-				o.Metallic = mix1(userMetallic, metal, metalMaskFactor);
+				fixed metalMaskFactor = 1;
+				fixed specMaskFactor = 1;
 				
-			#endif
-			//SSTU legacy recoloring mode (gray base textures)
-			#if TU_RECOLOR_LEGACY
-				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-				fixed m = saturate(1 - (mask.r + mask.g + mask.b));
-				fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
-				fixed3 userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-				fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
-					
-				fixed3 diffuseColor = color.rgb * m;
-				fixed baseSpecSample = smooth * m;
-				fixed baseMetallic = metal * m;
-				fixed3 detailColor = (color.rgb - 0.5) * (1 - m);
-				fixed3 detailspecSample = (specSample.rgb - 0.5) * (1 - m);
-				fixed detailMetallic = (specSample.a - 0.5) * (1 - m);
-				o.Albedo = saturate(userColor + diffuseColor + detailColor);
-				o.Smoothness = saturate(userSpecSample + baseSpecSample + detailspecSample).r;
-				o.Metallic = saturate(userMetallic + baseMetallic + detailMetallic);
+				//sample/calculate mix factors for user-specified spec and metal values if input-masking setting is enabled
+				#if TU_RECOLOR_INPUT || TU_RECOLOR_NORM_INPUT
+					fixed4 specMaskValues = tex2D(_SpecGlossInputMask, IN.uv_MainTex);
+					metalMaskFactor = specMaskValues.r;
+					specMaskFactor = specMaskValues.a;
+				#endif
+				
+				o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb);				
+				o.SpecularColor = recolorStandard(glossColor, mask * metalMaskFactor, glossNorm, _MaskSpec1.rgb, _MaskSpec2.rgb, _MaskSpec3.rgb);
+				o.Smoothness = recolorStandard(smooth, mask * specMaskFactor, smoothNorm, _MaskSpec1.a, _MaskSpec2.a, _MaskSpec3.a);
+				
 			#endif
 			//SSTU legacy tinting mode
 			#if TU_RECOLOR_TINTING
-				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-				fixed m = saturate(1 - (mask.r + mask.g + mask.b));
-				fixed3 userColor = mask.rrr * _MaskColor1.rgb + mask.ggg * _MaskColor2.rgb + mask.bbb * _MaskColor3.rgb;
-				fixed3 userSpecSample = mask.r * _MaskColor1.a + mask.g * _MaskColor2.a + mask.b * _MaskColor3.a;
-				fixed userMetallic = mask.r * _MaskMetallic.r + mask.g * _MaskMetallic.g + mask.b * _MaskMetallic.b;
-					
-				fixed3 diffuseColor = color.rgb * m;
-				fixed baseSpecSample = smooth * m;
-				fixed baseMetallic = metal * m;
-				fixed3 detailColor = color.rgb * (1 - m);
-				fixed3 detailspecSample = specSample.rgb * (1 - m);
-				fixed detailMetallic = specSample.a * (1 - m);
-				o.Albedo = saturate(userColor * detailColor + diffuseColor);
-				o.Smoothness = saturate(userSpecSample * detailspecSample + baseSpecSample).r;
-				o.Metallic = saturate(userMetallic * detailMetallic + baseMetallic);
+				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));				
+				o.Albedo = recolorTinting(color.rgb, mask, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb);
+				o.Smoothness = recolorTinting(smooth, mask, _MaskSpec1.a, _MaskSpec2.a, _MaskSpec3.a);
+				o.SpecularColor = recolorTinting(glossColor, mask, _MaskSpec1.rgb, _MaskSpec2.rgb, _MaskSpec3.rgb);			
 			#endif
 			//no recoloring enabled -- use standard texture sampling -- use the values directly from the source textures
 			#if TU_RECOLOR_OFF
 				o.Albedo = color.rgb;
 				o.Smoothness = smooth;
-				o.Metallic = metal;
+				o.SpecularColor = glossColor;
 			#endif
 			
 			//If subsurf is enabled, this is a bit of pre-setup to pass params to lighting function
@@ -327,17 +295,17 @@ Shader "TU/Specular"
 			#else
 				o.Emission = stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
 			#endif
-			
+
 			o.Alpha = _Opacity;
 			
 			//apply the standard shader param multipliers to the sampled/computed values.
-			o.Albedo *= _Color;
-			o.Specular *= _SpecularColor;
-			o.Smoothness *= _Smoothness;			
+			o.Albedo *= _Color.rgb;
+			o.Smoothness *= _Smoothness;
+			o.SpecularColor *= _GlossColor;
 		}
 		
 		ENDCG
 	}
 	Fallback "Standard"
-	//CustomEditor "TUMetallicUI"
+	CustomEditor "TUMetallicUI"
 }

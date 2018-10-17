@@ -232,7 +232,7 @@ Shader "TU/Metallic"
 				fixed specularNorm = -getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
 				
 				//same for specular and metallic if normalization for those channels is enabled
-				#if TU_RECOLOR_NORM
+				#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
 					fixed4 specMetNormData = tex2D(_MetalGlossNormMask, (IN.uv_MainTex));
 					metallicNorm += specMetNormData.r;
 					specularNorm += specMetNormData.a;
@@ -242,7 +242,7 @@ Shader "TU/Metallic"
 				fixed specMaskFactor = 1;
 				
 				//sample/calculate mix factors for user-specified spec and metal values if input-masking setting is enabled
-				#if TU_RECOLOR_INPUT				
+				#if TU_RECOLOR_INPUT || TU_RECOLOR_NORM_INPUT
 					fixed4 specMaskValues = tex2D(_MetalGlossInputMask, IN.uv_MainTex);
 					metalMaskFactor = specMaskValues.r;
 					specMaskFactor = specMaskValues.a;
@@ -298,7 +298,6 @@ Shader "TU/Metallic"
 			o.Albedo *= _Color;
 			o.Metallic *= _Metal;
 			o.Smoothness *= _Smoothness;
-			
 		}
 		
 		ENDCG
