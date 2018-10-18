@@ -29,10 +29,12 @@ namespace KSPShaderTools
 
         #region REGION - Maps of shaders, texture sets, procedural textures
 
+        public static Dictionary<string, Shader> loadedShaders = new Dictionary<string, Shader>();
+
         /// <summary>
         /// List of loaded shaders and corresponding icon shader.  Loaded from KSP_SHADER_DATA config nodes.
         /// </summary>
-        public static Dictionary<string, IconShaderData> loadedShaders = new Dictionary<string, IconShaderData>();
+        public static Dictionary<string, IconShaderData> iconShaders = new Dictionary<string, IconShaderData>();
 
         /// <summary>
         /// List of loaded global texture sets.  Loaded from KSP_TEXTURE_SET config nodes.
@@ -146,9 +148,8 @@ namespace KSPShaderTools
             recolorGUIWidth = config.GetIntValue("recolorGUIWidth");
             recolorGUITotalHeight = config.GetIntValue("recolorGUITotalHeight");
             recolorGUISectionHeight = config.GetIntValue("recolorGUISectionHeight");
-            Dictionary<string, Shader> dict = new Dictionary<string, Shader>();
-            loadBundles(dict);
-            buildShaderSets(dict);
+            loadBundles(loadedShaders);
+            buildShaderSets();
             PresetColor.loadColors();
             loadTextureSets();
             applyToModelDatabase();
@@ -170,6 +171,11 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 loadBundle(shaderNodes[i], dict);
+            }
+            len = dict.Count;
+            foreach (Shader shader in dict.Values)
+            {
+                if (!loadedShaders.ContainsKey(shader.name)) { loadedShaders.Add(shader.name, shader); }
             }
         }
 
@@ -242,7 +248,7 @@ namespace KSPShaderTools
             postLoadCallbacks.Remove(func);
         }
 
-        private static void buildShaderSets(Dictionary<string, Shader> dict)
+        private static void buildShaderSets()
         {
             ConfigNode[] shaderNodes = GameDatabase.Instance.GetConfigNodes("KSP_SHADER_DATA");
             ConfigNode node;
@@ -254,10 +260,20 @@ namespace KSPShaderTools
                 sName = node.GetStringValue("shader", "KSP/Diffuse");
                 iName = node.GetStringValue("iconShader", "KSP/ScreenSpaceMask");
                 MonoBehaviour.print("Loading shader icon replacement data for: " + sName + " :: " + iName);
-                Shader shader = dict[sName];
-                Shader iconShader = dict[iName];
+                Shader shader = getShader(sName);
+                if (shader == null)
+                {
+                    MonoBehaviour.print("ERROR: Could not locate base Shader for name: " + sName + " while setting up icon shaders.");
+                    continue;
+                }
+                Shader iconShader = getShader(iName);
+                if (iconShader == null)
+                {
+                    MonoBehaviour.print("ERROR: Could not locate icon Shader for name: " + iName + " while setting up icon shaders.");
+                    continue;
+                }
                 IconShaderData data = new IconShaderData(shader, iconShader);
-                loadedShaders.Add(shader.name, data);
+                iconShaders.Add(shader.name, data);
             }
         }
 
@@ -394,33 +410,35 @@ namespace KSPShaderTools
                 bool outputName = false;//only log the adjustment a single time
                 Transform pt = p.partPrefab.gameObject.transform;
                 Renderer[] ptrs = pt.GetComponentsInChildren<Renderer>();
-                foreach (Renderer ptr in ptrs)
+                foreach (Renderer partRenderer in ptrs)
                 {
-                    Material m = ptr.sharedMaterial;
-                    if (m == null || ptr.sharedMaterial.shader == null)
+                    Material mat = partRenderer.sharedMaterial;
+                    if (mat == null || partRenderer.sharedMaterial.shader == null)
                     {
-                        if (m == null) { MonoBehaviour.print("ERROR: Null material found on renderer: " + ptr.gameObject.name); }
-                        else if (m.shader == null) { MonoBehaviour.print("ERROR: Null shader found on renderer: " + ptr.gameObject.name); }
+                        if (mat == null) { MonoBehaviour.print("ERROR: Null material found on renderer: " + partRenderer.gameObject.name); }
+                        else if (mat.shader == null) { MonoBehaviour.print("ERROR: Null shader found on renderer: " + partRenderer.gameObject.name); }
                         continue;
                     }
                     //part transform shader name
-                    string ptsn = m.shader.name;
-                    if (!string.IsNullOrEmpty(ptsn) && loadedShaders.ContainsKey(ptsn))//is a shader that we care about
+                    string materialShaderName = mat.shader.name;
+                    if (!string.IsNullOrEmpty(materialShaderName) && iconShaders.ContainsKey(materialShaderName))//is a shader that we care about
                     {
-                        iconShader = loadedShaders[ptsn].iconShader;
-                        if (!outputName)
+                        iconShader = iconShaders[materialShaderName].iconShader;
+                        if (!outputName && logReplacements)
                         {
-                            MonoBehaviour.print("KSPShaderLoader - Adjusting icon shaders for part: " + p.name + " for original shader:" + ptsn + " replacement: " + iconShader.name);
+                            MonoBehaviour.print("KSPShaderLoader - Adjusting icon shaders for part: " + p.name + " for original shader:" + materialShaderName + " replacement: " + iconShader.name);
                             outputName = true;
                         }
-                        Transform[] ictrs = p.iconPrefab.gameObject.transform.FindChildren(ptr.name);//find transforms from icon with same name
+                        //transforms in the icon prefab
+                        //adjust the materials on these to use the specified shader from config
+                        Transform[] ictrs = p.iconPrefab.gameObject.transform.FindChildren(partRenderer.name);//find transforms from icon with same name
                         foreach (Transform ictr in ictrs)
                         {
                             Renderer itr = ictr.GetComponent<Renderer>();
                             if (itr == null) { continue; }
-                            m = itr.sharedMaterial;
-                            if (m == null) { continue; }
-                            m.shader = iconShader;
+                            mat = itr.sharedMaterial;
+                            if (mat == null) { continue; }
+                            mat.shader = iconShader;
                         }
                     }
                 }
@@ -460,7 +478,7 @@ namespace KSPShaderTools
         {
             if (loadedShaders.ContainsKey(name))
             {
-                return loadedShaders[name].shader;
+                return loadedShaders[name];
             }
             Shader s = GameDatabase.Instance.databaseShaders.Find(m => m.name == name);
             if (s != null)
@@ -665,7 +683,12 @@ namespace KSPShaderTools
         {
             if (!presetColors.ContainsKey(name))
             {
-                MonoBehaviour.print("ERROR: No Color data for name: " + name);
+                MonoBehaviour.print("ERROR: No Color data for name: " + name + " returning the first available color preset.");
+                if (colorList.Count > 0)
+                {
+                    return colorList[0];
+                }
+                MonoBehaviour.print("ERROR: No preset colors defined, could not return a valid preset.");
             }
             return presetColors[name];
         }
