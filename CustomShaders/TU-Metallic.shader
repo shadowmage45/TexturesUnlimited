@@ -63,12 +63,11 @@ Shader "TU/Metallic"
 		#pragma target 3.0
 		//#pragma skip_variants POINT POINT_COOKIE DIRECTIONAL_COOKIE //need to find out what variants are -actually- used...
 		//#pragma multi_compile_fwdadd_fullshadows //stalls out Unity Editor while compiling shader....
-		#pragma multi_compile __ TU_EMISSIVE
-		#pragma multi_compile __ TU_BUMPMAP		
+		//subsurface scattering toggle
 		#pragma multi_compile __ TU_SUBSURF
-		#pragma multi_compile __ TU_AOMAP
-		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC TU_LEGACY_SPEC
-		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD TU_RECOLOR_TINTING
+		//specular input source toggle
+		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC
+		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
 		#include "HLSLSupport.cginc"
@@ -153,9 +152,7 @@ Shader "TU/Metallic"
 		//custom lighting function to enable SubSurf functionality
 		inline half4 LightingTU(SurfaceOutputTU s, half3 viewDir, UnityGI gi)
 		{
-			#if TU_BUMPMAP
-				s.Normal = normalize(s.Normal);
-			#endif
+			s.Normal = normalize(s.Normal);
 			
 			#if TU_SUBSURF
 				//SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/	
@@ -197,8 +194,7 @@ Shader "TU/Metallic"
 			fixed4 color = tex2D(_MainTex,(IN.uv_MainTex));
 			fixed4 specSample = tex2D(_MetallicGlossMap, (IN.uv_MainTex));
 			
-			//metal ALWAYS comes from MetallicGlossMap.r channel except in TU_LEGACY_SPEC mode,
-			//where it comes from specmap.a
+			//metal ALWAYS comes from MetallicGlossMap.r
 			fixed metal = specSample.r;
 			
 			//if 'stock specular' mode is enabled, pull spec value from alpha channel of diffuse shader
@@ -209,27 +205,16 @@ Shader "TU/Metallic"
 			#if TU_STOCK_SPEC
 				fixed smooth = color.a;
 			#endif
-			#if TU_LEGACY_SPEC
-				fixed smooth = specSample.r;
-				metal = specSample.a;
-			#endif
-			
-			//if bump-map enabled, sample texture; else assign default NRM
-			#if TU_BUMPMAP
-				fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
-				o.Normal = normal;
-			#else
-				fixed3 normal = fixed3(0,0,1);
-			#endif
 			
 			//new TU recolor mode based on normalization maps
 			#if TU_RECOLOR_STANDARD
 			
 				//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 				fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-				fixed diffuseNorm = mask.a - getUserValue(mask, _Channel1Norm.x, _Channel2Norm.x, _Channel3Norm.x);
-				fixed metallicNorm = -getUserValue(mask, _Channel1Norm.y, _Channel2Norm.y, _Channel3Norm.y);
-				fixed specularNorm = -getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
+				//
+				fixed diffuseNorm = mask.a + getUserValue(mask, _Channel1Norm.x, _Channel2Norm.x, _Channel3Norm.x);
+				fixed metallicNorm = getUserValue(mask, _Channel1Norm.y, _Channel2Norm.y, _Channel3Norm.y);
+				fixed specularNorm = getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
 				
 				//same for specular and metallic if normalization for those channels is enabled
 				#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
@@ -248,18 +233,11 @@ Shader "TU/Metallic"
 					specMaskFactor = specMaskValues.a;
 				#endif
 				
-				o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1, _MaskColor2, _MaskColor3);				
+				o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1, _MaskColor2, _MaskColor3);
 				o.Metallic = recolorStandard(metal, mask * metalMaskFactor, metallicNorm, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
 				o.Smoothness = recolorStandard(smooth, mask * specMaskFactor, specularNorm, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
 				
-			#endif
-			//SSTU legacy tinting mode
-			#if TU_RECOLOR_TINTING
-				fixed3 mask = tex2D(_MaskTex, (IN.uv_MainTex));				
-				o.Albedo = recolorTinting(color.rgb, mask, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb);
-				o.Smoothness = recolorTinting(smooth, mask, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
-				o.Metallic = recolorTinting(metal, mask, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
-			#endif
+			#endif			
 			//no recoloring enabled -- use standard texture sampling -- use the values directly from the source textures
 			#if TU_RECOLOR_OFF
 				o.Albedo = color.rgb;
@@ -275,23 +253,19 @@ Shader "TU/Metallic"
 				o.Backlight.a = _SubSurfAmbient;
 			#endif
 			
-			//only sample and apply AO map if AO is enabled
-			#if TU_AOMAP
-				fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
-				o.Occlusion = ao.r;
-			#else
-				o.Occlusion = 1;
-			#endif
+			//normal map always sampled and assigned directly to surface
+			fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
+			o.Normal = normal;
 			
-			//only sample and apply value from emissive map and color if emission is enabled
-			//else only apply stock part-highlighting emissive functionality
-			#if TU_EMISSIVE
-				fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
-				o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
-			#else
-				o.Emission = stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
-			#endif
+			//ambient occlusion always sampled and assigned directly to surface
+			fixed4 ao = tex2D(_AOMap, (IN.uv_MainTex));
+			o.Occlusion = ao.g;
 			
+			//emission always sampled and assigned to surface along with stock part-highlighting functionality
+			fixed4 glow = tex2D(_Emissive, (IN.uv_MainTex));
+			o.Emission = glow.rgb * glow.aaa * _EmissiveColor.rgb *_EmissiveColor.aaa + stockEmit(IN.viewDir, normal, _RimColor, _RimFalloff, _TemperatureColor) * _Opacity;
+			
+			//controlled directly by shader property
 			o.Alpha = _Opacity;
 			
 			//apply the standard shader param multipliers to the sampled/computed values.
