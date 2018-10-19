@@ -37,6 +37,7 @@ public class AssetBundleCompiler
             build.assetNames[i] = AssetDatabase.GetAssetPath((UnityEngine.Object)selection[i]);
         }
         BuildPipeline.BuildAssetBundles(directory, new AssetBundleBuild[] { build }, BuildAssetBundleOptions.None, target);
+		System.IO.File.Move(path, path.Replace(".assetbundle", ""));
     }
 
 }
