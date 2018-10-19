@@ -1,4 +1,4 @@
-Shader "TU/Icon/Legacy"
+Shader "TU/Icon/Specular"
 {
 	Properties 
 	{
@@ -14,12 +14,10 @@ Shader "TU/Icon/Legacy"
 		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
 		_SpecGlossNormMask("_SpecGlossNormMask", 2D) = "black" {}
 		_SpecGlossInputMask("_SpecGlossInputMask", 2D) = "white" {}
-		
-		//detail textures -- diff/met/nrm??
-		
+				
 		//standard shader params
 		_Color ("_Color", Color) = (1,1,1)
-		_GlossColor ("_GlossColor", Color) = (1,1,1)
+		_GlossColor ("_SpecColor", Color) = (1,1,1)
 		_Smoothness ("_Smoothness", Range(0,1)) = 1
 		
 		//recoloring input color values
@@ -74,11 +72,15 @@ Shader "TU/Icon/Legacy"
 		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
-		#define TU_LIGHT_SPECLEGACY 1
 		#define TU_SURF_SPEC 1
+		#define TU_LIGHT_SPEC 1
 		#define TU_ICON 1
 		
+		#include "HLSLSupport.cginc"
+		#include "UnityCG.cginc"
 		#include "Lighting.cginc"
+		#include "AutoLight.cginc"
+		#include "UnityPBSLighting.cginc"
 		#include "TU-Include-Functions.cginc"
 		#include "TU-Include-Structs.cginc"
 		#include "TU-Include-Lighting.cginc"

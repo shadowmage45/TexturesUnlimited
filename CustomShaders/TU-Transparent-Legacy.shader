@@ -1,4 +1,4 @@
-Shader "TU/Icon/Legacy"
+Shader "TU/Transparent/Legacy"
 {
 	Properties 
 	{
@@ -47,18 +47,12 @@ Shader "TU/Icon/Legacy"
 		_RimColor("_RimColor", Color) = (0,0,0,0)
 		_TemperatureColor("Temperature Color", Color) = (0,0,0,0)
 		_BurnColor ("Burn Color", Color) = (1,1,1,1)
-		
-		_MinX ("MinX", Range(0.000000,1.000000)) = 0.500000
-		_MaxX ("MaxX", Range(0.000000,1.000000)) = 0.800000
-		_MinY ("MinY", Range(0.000000,1.000000)) = 0.500000
-		_MaxY ("MaxY", Range(0.000000,1.000000)) = 0.800000
-		_Multiplier("Multiplier", Float) = 2
 	}
 	
 	SubShader
 	{
-		Tags {"RenderType"="Opaque"}
-		ZWrite On
+		Tags {"Queue"="Transparent" "RenderType"="Transparent"}
+		ZWrite Off
 		ZTest LEqual
 		Blend SrcAlpha OneMinusSrcAlpha
 
@@ -76,14 +70,14 @@ Shader "TU/Icon/Legacy"
 		
 		#define TU_LIGHT_SPECLEGACY 1
 		#define TU_SURF_SPEC 1
-		#define TU_ICON 1
+		#define TU_TRANSPARENT 1
 		
 		#include "Lighting.cginc"
 		#include "TU-Include-Functions.cginc"
 		#include "TU-Include-Structs.cginc"
 		#include "TU-Include-Lighting.cginc"
 		#include "TU-Include-Surfaces.cginc"
-		
+				
 		ENDCG
 	}
 	Fallback "Standard"

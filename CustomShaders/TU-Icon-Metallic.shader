@@ -1,46 +1,46 @@
-Shader "TU/Icon/Legacy"
+Shader "TU/Icon/Metallic"
 {
 	Properties 
 	{
-		//standard texture input slots
+        [Header(Standard Texture Maps)]
 		_MainTex("_MainTex (RGB)", 2D) = "white" {}
-		_SpecGlossMap("_SpecGlossMap (RGBA)", 2D) = "white" {}
+		_MetallicGlossMap("_MetallicGlossMap (R Metal/A Gloss)", 2D) = "white" {}
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
-		_AOMap("_AOMap (Grayscale)", 2D) = "white" {}
+		_AOMap("_AOMap (R Grayscale)", 2D) = "white" {}
 		_Emissive("_Emission (RGB Emissive Map)", 2D) = "black" {}
 		_Thickness("_Thickness (RGB Subsurf Thickness) ", 2D) = "white" {}
-		
-		//recoloring texture input slots
+				
+        [Header(Recoloring Texture Maps)]
 		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
-		_SpecGlossNormMask("_SpecGlossNormMask", 2D) = "black" {}
-		_SpecGlossInputMask("_SpecGlossInputMask", 2D) = "white" {}
+		_MetalGlossNormMask("_MetalGlossNormMask (R/A Normalization)", 2D) = "black" {}
+		_MetalGlossInputMask("_MetalGlossInputMask (R/A Input Masking)", 2D) = "white" {}
 		
 		//detail textures -- diff/met/nrm??
 		
-		//standard shader params
+        [Header(Color Multiplier Parameters)]
 		_Color ("_Color", Color) = (1,1,1)
-		_GlossColor ("_GlossColor", Color) = (1,1,1)
+		_Metal ("_Metal", Range(0,1)) = 1
 		_Smoothness ("_Smoothness", Range(0,1)) = 1
 		
-		//recoloring input color values
+        [Header(Recoloring Input Parameters)]
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
 		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,0)
 		
-		//recoloring normalization params -- diffuse in R, Specular in G, smooth in B
+        [Header(Recoloring Normalization Parameters)]
 		_Channel1Norm ("Mask Channel 1 Normallization", Vector) = (0,0,0,0)
 		_Channel2Norm ("Mask Channel 2 Normallization", Vector) = (0,0,0,0)
 		_Channel3Norm ("Mask Channel 3 Normallization", Vector) = (0,0,0,0)
 		
-		//sub-surface scattering shader parameters		
+		[Header(Subsurface Scattering Parameters)]
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
 		_SubSurfScale("SubSurf Scale", Range(0, 10)) = 1
 		_SubSurfPower("SubSurf Falloff Power", Range(0, 10)) = 1
 		_SubSurfDistort("SubSurf Distortion", Range(0, 1)) = 0
 		_SubSurfAtten("SubSurf Attenuation", Range(0, 1)) = 1
 		
-		//stock KSP compatibility properties -- used for emission/glow, part-highlighting, part-thermal overlay, and part 'burn' discoloring
+		[Header(Stock KSP Parameters)]
 		_EmissiveColor("EmissionColor", Color) = (0,0,0)
 		_Opacity("Part Opacity", Range(0,1) ) = 1
 		_RimFalloff("_RimFalloff", Range(0.01,5) ) = 0.1
@@ -69,21 +69,27 @@ Shader "TU/Icon/Legacy"
 		#pragma target 3.0
 		//#pragma skip_variants POINT POINT_COOKIE DIRECTIONAL_COOKIE //need to find out what variants are -actually- used...
 		//#pragma multi_compile_fwdadd_fullshadows //stalls out Unity Editor while compiling shader....
+		//subsurface scattering toggle
 		#pragma multi_compile __ TU_SUBSURF
+		//specular input source toggle
 		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC
 		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
-		#define TU_LIGHT_SPECLEGACY 1
-		#define TU_SURF_SPEC 1
+		#define TU_SURF_MET 1
+		#define TU_LIGHT_METAL 1
 		#define TU_ICON 1
 		
+		#include "HLSLSupport.cginc"
+		#include "UnityCG.cginc"
 		#include "Lighting.cginc"
+		#include "AutoLight.cginc"
+		#include "UnityPBSLighting.cginc"
 		#include "TU-Include-Functions.cginc"
 		#include "TU-Include-Structs.cginc"
 		#include "TU-Include-Lighting.cginc"
 		#include "TU-Include-Surfaces.cginc"
-		
+				
 		ENDCG
 	}
 	Fallback "Standard"
