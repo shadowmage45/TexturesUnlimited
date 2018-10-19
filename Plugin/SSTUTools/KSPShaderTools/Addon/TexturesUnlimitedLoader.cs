@@ -385,7 +385,8 @@ namespace KSPShaderTools
         }
 
         /// <summary>
-        /// Update the part-icons for any parts using shaders found in the part-icon-updating shader map.  Adjusts models specifically based on what shader they are currently using.
+        /// Update the part-icons for any parts using shaders found in the part-icon-updating shader map.
+        /// Adjusts models specifically based on what shader they are currently using, with the goal of replacing the stock default icon shader with something more suitable.
         /// </summary>
         private static void applyToPartIcons()
         {
@@ -436,9 +437,15 @@ namespace KSPShaderTools
                         {
                             Renderer itr = ictr.GetComponent<Renderer>();
                             if (itr == null) { continue; }
-                            mat = itr.sharedMaterial;
-                            if (mat == null) { continue; }
-                            mat.shader = iconShader;
+                            Material mat2 = itr.sharedMaterial;
+                            if (mat2 == null) { continue; }
+                            mat2.shader = iconShader;
+                            itr.sharedMaterial = mat2;
+                            //TODO -- since these parts have already been mangled and had the stock icon shader applied
+                            //  do any properties not present on stock parts need to be re-seated, or do they stay resident in
+                            //  the material even if the current shader lacks the property?
+                            //TODO -- check the above, esp. in regards to keywords now that TU is using them
+                            //  need to make sure keywords stay resident in the material itself between shader swaps.
                         }
                     }
                 }
