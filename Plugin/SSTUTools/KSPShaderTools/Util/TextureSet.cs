@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace KSPShaderTools
 {
@@ -358,6 +359,7 @@ namespace KSPShaderTools
         public readonly String[] inheritedTex;
         public readonly String[] inheritedFloat;
         public readonly String[] inheritedColor;
+        public readonly int renderQueue = (int)RenderQueue.Geometry;
         public readonly string mode;//ghetto enum - 'update' or 'create' are the only valid values
 
         public TextureSetMaterialData(ConfigNode node)
@@ -370,6 +372,7 @@ namespace KSPShaderTools
             inheritedFloat = node.GetStringValues("inheritFloat");
             inheritedColor = node.GetStringValues("inheritColor");
             mode = node.GetStringValue("mode", "update");
+            renderQueue = node.GetIntValue("renderQueue", (TexturesUnlimitedLoader.isTransparentShader(shader)? (int)RenderQueue.Transparent : (int)RenderQueue.Geometry));
         }
 
         /// <summary>
@@ -428,7 +431,7 @@ namespace KSPShaderTools
             material.shader = TexturesUnlimitedLoader.getShader(shader);
             TextureSet.updateMaterialProperties(material, shaderProperties);
             TextureSet.fillEmptyStockTextureSlots(material);
-            material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
+            material.renderQueue = renderQueue;
         }
 
         /// <summary>

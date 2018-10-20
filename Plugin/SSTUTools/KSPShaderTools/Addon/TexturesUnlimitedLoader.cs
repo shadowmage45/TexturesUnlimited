@@ -583,10 +583,15 @@ namespace KSPShaderTools
         /// <returns></returns>
         public static bool isTransparentMaterial(Material mat)
         {
+            return isTransparentShader(mat.shader.name);
+        }
+
+        public static bool isTransparentShader(string name)
+        {
             TransparentShaderData tsd = null;
-            if (transparentShaderData.TryGetValue(mat.shader.name, out tsd))
+            if (transparentShaderData.TryGetValue(name, out tsd))
             {
-                return tsd.isTransparencyEnabled(mat);
+                return true;
             }
             else
             {
@@ -599,29 +604,12 @@ namespace KSPShaderTools
     public class TransparentShaderData
     {
         public readonly Shader shader;
-        public bool alwaysTransparent = true;
-        public string[] transparentKeywords;
+        public readonly string shaderName;
+
         public TransparentShaderData(ConfigNode node)
         {
-            string shaderName = node.GetStringValue("name");
+            shaderName = node.GetStringValue("name");
             shader = TexturesUnlimitedLoader.getShader(shaderName);
-            alwaysTransparent = node.GetBoolValue("alwaysTransparent", true);
-            transparentKeywords = node.GetStringValues("keyword");
-        }
-
-        public bool isTransparencyEnabled(Material mat)
-        {
-            if (mat.shader != this.shader) { throw new ArgumentOutOfRangeException("Improper shader.  Expecting: " + shader.name + " was passed: " + mat.shader.name); }
-            if (alwaysTransparent) { return true; }
-            int len = transparentKeywords.Length;
-            for (int i = 0; i < len; i++)
-            {
-                if (mat.IsKeywordEnabled(transparentKeywords[i]))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 
