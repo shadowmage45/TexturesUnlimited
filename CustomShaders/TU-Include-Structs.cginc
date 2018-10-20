@@ -83,6 +83,7 @@ struct Input
 {
 	float2 uv_MainTex;
 	float3 viewDir;
+	float3 worldPos;
 	#if TU_ICON
 		float4 screenPos;
 	#endif

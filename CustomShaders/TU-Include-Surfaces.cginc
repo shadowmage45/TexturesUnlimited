@@ -97,9 +97,12 @@
 		#if TU_TRANSPARENT
 			o.Alpha *= _Color.a * color.a;
 		#endif
-		
+				
 		//apply the standard shader param multipliers to the sampled/computed values.
-		o.Albedo *= _Color;
+		o.Albedo *= _Color.rgb;
+		fixed4 fog = UnderwaterFog(IN.worldPos, o.Albedo);
+		o.Albedo = fog.rgb;
+		o.Emission *= fog.a;
 		o.Metallic *= _Metal;
 		o.Smoothness *= _Smoothness;
 	}
@@ -204,6 +207,9 @@
 		
 		//apply the standard shader param multipliers to the sampled/computed values.
 		o.Albedo *= _Color.rgb;
+		fixed4 fog = UnderwaterFog(IN.worldPos, o.Albedo);
+		o.Albedo = fog.rgb;
+		o.Emission *= fog.a;
 		o.Smoothness *= _Smoothness;
 		o.SpecularColor *= _GlossColor;
 	}

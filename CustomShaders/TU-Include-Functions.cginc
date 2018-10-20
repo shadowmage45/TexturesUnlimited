@@ -1,4 +1,28 @@
 //functions to be shared across all shaders
+
+//MORE KSP shader properties...for fog.. they have to go here so that they are declared prior to the function
+//silly C-style ordered linking...
+float4 _LocalCameraPos;
+float4 _LocalCameraDir;
+float4 _UnderwaterFogColor;
+float _UnderwaterMinAlphaFogDistance;
+float _UnderwaterMaxAlbedoFog;
+float _UnderwaterMaxAlphaFog;
+float _UnderwaterAlbedoDistanceScalar;
+float _UnderwaterAlphaDistanceScalar;
+float _UnderwaterFogFactor;
+//stock fog function
+fixed4 UnderwaterFog(fixed3 worldPos, fixed3 color)
+{
+	fixed3 toPixel = worldPos - _LocalCameraPos.xyz;
+	fixed toPixelLength = length(toPixel);
+	
+	fixed underwaterDetection = _UnderwaterFogFactor * _LocalCameraDir.w; ///< sign(1 - sign(_LocalCameraPos.w));
+	fixed albedoLerpValue = underwaterDetection * (_UnderwaterMaxAlbedoFog * saturate(toPixelLength * _UnderwaterAlbedoDistanceScalar));
+	fixed alphaFactor = 1 - underwaterDetection * (_UnderwaterMaxAlphaFog * saturate((toPixelLength - _UnderwaterMinAlphaFogDistance) * _UnderwaterAlphaDistanceScalar));
+
+	return fixed4(lerp(color, _UnderwaterFogColor.rgb, albedoLerpValue), alphaFactor);
+}
 		
 inline half3 stockEmit (float3 viewDir, float3 normal, half4 rimColor, half rimFalloff, half4 tempColor)
 {

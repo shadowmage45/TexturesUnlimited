@@ -45,6 +45,7 @@ Shader "TU/Specular"
 		_RimColor("_RimColor", Color) = (0,0,0,0)
 		_TemperatureColor("Temperature Color", Color) = (0,0,0,0)
 		_BurnColor ("Burn Color", Color) = (1,1,1,1)
+		_UnderwaterFogFactor ("Underwater Fog Factor", Range(0,1)) = 0
 	}
 	
 	SubShader
