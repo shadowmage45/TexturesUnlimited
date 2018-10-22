@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Windows.Forms;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace BaseMapCreation
 {
@@ -17,49 +20,55 @@ namespace BaseMapCreation
         private static string inputPath;
         private static string outputPath;
 
+        private static Image[] maskImages;
+        private static Bitmap[] maskMaps;
+        private static Image inputImage;
+        private static Bitmap inputMap;
+        private static Image outputImage;
+        private static Bitmap outputMap;
+
         static void Main(string[] args)
         {
-            if (args.Length < 1)
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            //get base folder path of the executable
+            string basePath = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
+            //create a log.txt file to output to
+            logStream = new StreamWriter(new FileStream(basePath + "/log.txt", FileMode.Create));
+            //check for input/output folder existence, and create if not present
+            string inputMaskFolder = basePath + Path.DirectorySeparatorChar + "masks";
+            createDirectory(inputMaskFolder);
+            string inputBaseFolder = basePath + Path.DirectorySeparatorChar + "base";
+            createDirectory(inputBaseFolder);
+            string outputFolder = basePath + Path.DirectorySeparatorChar + "output";
+            createDirectory(outputFolder);
+
+            loadMasks(inputMaskFolder);
+            if (maskImages.Length <= 0)
             {
-                throw new InvalidOperationException("Not enough arguments passed.  Must include relative or absolute path to GameData folder.");
+                print("No masks were found in /masks subfolder.  Please add some RGB section masks in .png format.");
             }
-            string gameDataPath = args[0];
-            string fullPath = Path.GetFullPath(gameDataPath);
+            loadInput(inputBaseFolder);            
 
-            outputPath = fullPath + "\\output";
-            inputPath = fullPath + "\\input";
-            //create the directory in case it didn't previously exist
-            Directory.CreateDirectory(outputPath);
-            logStream = new StreamWriter(new FileStream(outputPath + "/log.txt", FileMode.Create));
-            print("BaseMap creation - running with paths - input/output: " + inputPath + " -> " + outputPath);
-
-            if (!Directory.Exists(inputPath))
-            {
-                print("ERROR: Could not locate input file directory at: " + inputPath + "  There must be a directory there that contains the textures and configs.");
-                Console.ReadLine();
-                return;
-            }
-
-            string[] fileNames = Directory.GetFiles(inputPath);
-            int len = fileNames.Length;
-            for (int i = 0; i < len; i++)
-            {
-                if (fileNames[i].ToLower().EndsWith(".cfg"))
-                {
-                    ConfigNode fileNode = ConfigNode.Load(fileNames[i]);
-                    ConfigNode[] createNodes = fileNode.GetNodes("BASEMAP_CREATE");
-                    int len2 = createNodes.Length;
-                    for (int k = 0; k < len2; k++)
-                    {
-                        processTextureFromNode(createNodes[k]);
-                    }
-                }
-            }
-
+            Bitmap output = new Bitmap(inputMap.Width, inputMap.Height, PixelFormat.Format32bppArgb);
+            process(output);
+            output.Save(outputFolder + Path.DirectorySeparatorChar + "output-mask.png");
+            sw.Stop();
             print("Application exiting due to completed run.");
+            print("Elapsed time (ms): " + sw.ElapsedMilliseconds);
+            print("Masks processed: " + maskMaps.Length);
             logStream.Flush();
             logStream.Close();
             Console.ReadLine();
+        }
+
+        public static void createDirectory(string path)
+        {
+            if (!Directory.Exists(path))
+            {
+                print("Creating image processing folder: " + path);
+                Directory.CreateDirectory(path);
+            }
         }
 
         public static void print(string line)
@@ -69,117 +78,211 @@ namespace BaseMapCreation
             Console.WriteLine(line);
         }
 
-        private static void processTextureFromNode(ConfigNode config)
+        private static void loadMasks(string path)
         {
-            string fileName = inputPath + "\\" + config.GetValue("texture");
-
-            ConfigNode[] replacementNodes = config.GetNodes("COLOR");
-            int len = replacementNodes.Length;
-            ColorReplacement[] replacements = new ColorReplacement[len];
-            for (int i = 0; i < len; i++)
+            string[] fileNames = Directory.GetFiles(path, "*.png");
+            List <Image> images = new List<Image>();
+            foreach (string file in fileNames)
             {
-                replacements[i] = new ColorReplacement(replacementNodes[i]);
-            }
-
-            Image img = Image.FromFile(fileName);
-            Bitmap bmp = new Bitmap(img);
-            int width = bmp.Width;
-            int height = bmp.Height;
-
-            Bitmap detailMap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-
-            Color c;
-            Color orig;
-            Color detail;
-            int dr, dg, db;
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
+                Image img = loadImage(file);
+                if (img != null)
                 {
-                    c = bmp.GetPixel(x, y);
-                    orig = c;
-                    for (int i = 0; i < len; i++)
-                    {
-                        if (replacements[i].isTarget(c))
-                        {
-                            c = replacements[i].baseColor;
-                            break;
-                        }
-                    }
-                    bmp.SetPixel(x, y, c);
-                    //dr = 127 + (orig.R - c.R);
-                    //dg = 127 + (orig.G - c.G);
-                    //db = 127 + (orig.B - c.B);
-                    //detail = Color.FromArgb(255, dr, dg, db);
-                    //detailMap.SetPixel(x, y, detail);
+                    images.Add(img);
+                    print("Loaded image: " + file);
+                }
+                else
+                {
+                    print("Could not load image: " + file);
                 }
             }
-            bmp.Save(fileName.Substring(0, fileName.Length - 4) + "-basemap.png");
-            //detailMap.Save(fileName.Substring(0, fileName.Length - 4) + "-detailmap.png");
+            int len = images.Count;
+            maskImages = new Image[len];
+            maskMaps = new Bitmap[len];
+            for (int i = 0; i < len; i++)
+            {
+                maskImages[i] = images[i];
+                maskMaps[i] = new Bitmap(images[i]);
+            }
         }
 
-        private class ColorReplacement
+        private static void loadInput(string path)
         {
-
-            public Color baseColor;
-
-            public float inHue;
-            public float inSat;
-            public float inVal;
-
-            public float hueRange;
-            public float satRange;
-            public float valRange;
-
-            private float minHue;
-            private float maxHue;
-            private float minSat;
-            private float maxSat;
-            private float minVal;
-            private float maxVal;
-
-            public ColorReplacement(ConfigNode node)
+            string[] fileNames = Directory.GetFiles(path, "*.png");
+            if (fileNames.Length > 0)
             {
-                //the input HSV to look for
-                string[] hsv = node.GetValue("hsv").Split(',');
-                inHue = float.Parse(hsv[0].Trim());
-                inSat = float.Parse(hsv[1].Trim());
-                inVal = float.Parse(hsv[2].Trim());
+                Image image = loadImage(fileNames[0]);
+                inputImage = image;
+                inputMap = new Bitmap(inputImage);
+            }            
+        }
 
-                //the range of validity (input +/- range)
-                hueRange = float.Parse(node.GetValue("hueRange"));
-                satRange = float.Parse(node.GetValue("satRange"));
-                valRange = float.Parse(node.GetValue("valRange"));
+        private static Image loadImage(string fileName)
+        {
+            return Image.FromFile(fileName);
+        }
 
-                minHue = inHue - hueRange;
-                maxHue = inHue + hueRange;
-                minSat = inSat - satRange;
-                maxSat = inSat + satRange;
-                minVal = inVal - valRange;
-                maxVal = inVal + valRange;
+        private static void process(Bitmap output)
+        {
+            //create value cache arrays, one for each of R,G,B in each of the input masks
+            //track min and max for reach of R,G,B for each input mask
+            //loop through input mask textures, aggregating values
+            int len1 = maskMaps.Length;
+            MaskData[] data = new MaskData[len1];
+            for (int i = 0; i < len1; i++)
+            {
+                data[i] = new MaskData(maskMaps[i]);
+                data[i].processMaskCount(inputMap);
+                data[i].writeOutputs(output);
+            }
+        }
 
-                //the output replacement color for inputs within range
-                int r, g, b;
-                string[] baseVals = node.GetValue("base").Split(',');
-                r = byte.Parse(baseVals[0].Trim());
-                g = byte.Parse(baseVals[1].Trim());
-                b = byte.Parse(baseVals[2].Trim());
-                baseColor = Color.FromArgb(255, r, g, b);                
+        public class DirectBitmap : IDisposable
+        {
+            //code from: https://stackoverflow.com/questions/24701703/c-sharp-faster-alternatives-to-setpixel-and-getpixel-for-bitmaps-for-windows-f
+            // with so far no modification.  Used for both inputs and output textures.
+            public Bitmap Bitmap { get; private set; }
+            public Int32[] Bits { get; private set; }
+            public bool Disposed { get; private set; }
+            public int Height { get; private set; }
+            public int Width { get; private set; }
+
+            protected GCHandle BitsHandle { get; private set; }
+
+            public DirectBitmap(int width, int height)
+            {
+                Width = width;
+                Height = height;
+                Bits = new Int32[width * height];
+                BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
+                Bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
             }
 
-            public bool isTarget(Color input)
+            public void SetPixel(int x, int y, Color colour)
             {
-                float cH = inHue;
-                float cS = inSat;
-                float cV = inVal;
+                int index = x + (y * Width);
+                int col = colour.ToArgb();
 
-                float iH = input.GetHue();
-                float iS = input.GetSaturation();
-                float iV = input.GetBrightness();
-                bool hueGood = iH >= minHue && iH <= maxHue;
-                bool satGood = iS >= minSat && iS <= maxSat;
-                bool valGood = iV >= minVal && iV <= maxVal;
-                return hueGood && satGood && valGood;
+                Bits[index] = col;
+            }
+
+            public Color GetPixel(int x, int y)
+            {
+                int index = x + (y * Width);
+                int col = Bits[index];
+                Color result = Color.FromArgb(col);
+
+                return result;
+            }
+
+            public void Dispose()
+            {
+                if (Disposed) return;
+                Disposed = true;
+                Bitmap.Dispose();
+                BitsHandle.Free();
+            }
+        }
+
+        private class MaskData
+        {
+
+            long aggregateValueR;
+            long aggregateValueG;
+            long aggregateValueB;
+
+            long sampleCountR;
+            long sampleCountG;
+            long sampleCountB;
+
+            int minR = 255;
+            int maxR = 0;
+            int minG = 255;
+            int maxG = 0;
+            int minB = 255;
+            int maxB = 0;
+
+            Bitmap mask;
+
+            public MaskData(Bitmap image)
+            {
+                mask = image;
+            }
+
+            public void processMaskCount(Bitmap inputTexture)
+            {
+                int width = inputTexture.Width;
+                int height = inputTexture.Height;
+                Color maskColor;
+                Color imageColor;
+                int luminosity;
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        maskColor = mask.GetPixel(x, y);
+                        if (maskColor.R > 0 || maskColor.G > 0 || maskColor.B > 0)
+                        {
+                            imageColor = inputTexture.GetPixel(x, y);
+                            luminosity = (int)(imageColor.GetBrightness() * 255);
+                            if (maskColor.R > 0)
+                            {
+                                sampleCountR++;
+                                minR = (int)Math.Min(minR, luminosity);
+                                maxR = (int)Math.Max(maxR, luminosity);
+                                aggregateValueR += luminosity;
+                            }
+                            if (maskColor.G > 0)
+                            {
+                                sampleCountG++;
+                                minG = (int)Math.Min(minR, luminosity);
+                                maxG = (int)Math.Max(maxR, luminosity);
+                                aggregateValueG += luminosity;
+                            }
+                            if (maskColor.B > 0)
+                            {
+                                sampleCountB++;
+                                minB = (int)Math.Min(minR, luminosity);
+                                maxB = (int)Math.Max(maxR, luminosity);
+                                aggregateValueB += luminosity;
+                            }
+                        }
+                    }
+                }
+            }
+
+            public void writeOutputs(Bitmap map)
+            {
+                Color maskColor;
+                int width = map.Width;
+                int height = map.Height;
+                byte valR = (byte)(aggregateValueR / sampleCountR);
+                byte valG = (byte)(aggregateValueG / sampleCountG);
+                byte valB = (byte)(aggregateValueB / sampleCountB);
+                byte colVal;
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        maskColor = mask.GetPixel(x, y);                        
+                        if (maskColor.R > 0 || maskColor.G > 0 || maskColor.B > 0)
+                        {
+                            colVal = 0;
+                            if (maskColor.R > 0)
+                            {
+                                colVal += (byte)(valR * (float)maskColor.R/255f);
+                            }
+                            else if (maskColor.G > 0)
+                            {
+                                colVal += valG;
+                            }
+                            else// if (maskColor.B > 0)
+                            {
+                                colVal += valB;
+                            }
+                            map.SetPixel(x, y, Color.FromArgb(255, colVal, colVal, colVal));
+                        }
+                    }
+                }
             }
 
         }
