@@ -39,13 +39,14 @@
 			//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 			fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
 			//
-			fixed diffuseNorm = mask.a + getUserValue(mask, _Channel1Norm.x, _Channel2Norm.x, _Channel3Norm.x);
-			fixed metallicNorm = getUserValue(mask, _Channel1Norm.y, _Channel2Norm.y, _Channel3Norm.y);
-			fixed specularNorm = getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
+			fixed diffuseNorm = getUserValue(mask, _DiffuseNorm.x, _DiffuseNorm.y, _DiffuseNorm.z);
+			fixed metallicNorm = getUserValue(mask, _MetalNorm.x, _MetalNorm.y, _MetalNorm.z);
+			fixed specularNorm = getUserValue(mask, _SmoothnessNorm.x, _SmoothnessNorm.y, _SmoothnessNorm.z);
 			
 			//same for specular and metallic if normalization for those channels is enabled
 			#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
 				fixed4 specMetNormData = tex2D(_MetalGlossNormMask, (IN.uv_MainTex));
+				diffuseNorm += mask.a;
 				metallicNorm += specMetNormData.r;
 				specularNorm += specMetNormData.a;
 			#endif
@@ -82,6 +83,8 @@
 		
 		//normal map always sampled and assigned directly to surface
 		fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
+		normal.x *= _NormalFlipX;
+		normal.y *= _NormalFlipY;
 		o.Normal = normal;
 		
 		//ambient occlusion always sampled and assigned directly to surface
@@ -143,13 +146,14 @@
 		
 			//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 			fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
-			fixed diffuseNorm = mask.a + getUserValue(mask, _Channel1Norm.x, _Channel2Norm.x, _Channel3Norm.x);
-			fixed glossNorm = getUserValue(mask, _Channel1Norm.y, _Channel2Norm.y, _Channel3Norm.y);
-			fixed smoothNorm = getUserValue(mask, _Channel1Norm.z, _Channel2Norm.z, _Channel3Norm.z);
+			fixed diffuseNorm = getUserValue(mask, _DiffuseNorm.x, _DiffuseNorm.y, _DiffuseNorm.z);
+			fixed glossNorm = getUserValue(mask, _SpecularNorm.x, _SpecularNorm.y, _SpecularNorm.z);
+			fixed smoothNorm = getUserValue(mask, _SmoothnessNorm.x, _SmoothnessNorm.y, _SmoothnessNorm.z);
 			
 			//same for specular and metallic if normalization for those channels is enabled
 			#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
 				fixed4 specGlossNormData = tex2D(_SpecGlossNormMask, (IN.uv_MainTex));
+				diffuseNorm += mask.a;
 				glossNorm += specGlossNormData.r;
 				smoothNorm += specGlossNormData.a;					
 			#endif
@@ -189,6 +193,8 @@
 		
 		//normal map always sampled and assigned directly to surface
 		fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
+		normal.x *= _NormalFlipX;
+		normal.y *= _NormalFlipY;
 		o.Normal = normal;
 		
 		//ambient occlusion always sampled and assigned directly to surface

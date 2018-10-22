@@ -29,9 +29,9 @@ Shader "TU/Icon/Metallic"
 		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,0)
 		
         [Header(Recoloring Normalization Parameters)]
-		_Channel1Norm ("Mask Channel 1 Normallization", Vector) = (0,0,0,0)
-		_Channel2Norm ("Mask Channel 2 Normallization", Vector) = (0,0,0,0)
-		_Channel3Norm ("Mask Channel 3 Normallization", Vector) = (0,0,0,0)
+		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
+		_MetalNorm("Metallic Normalization", Vector) = (1,1,1,0)
+		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
 		
 		[Header(Subsurface Scattering Parameters)]
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0

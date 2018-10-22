@@ -50,15 +50,23 @@ float4 _TemperatureColor;
 float4 _RimColor;
 float _RimFalloff;
 
+float _NormalFlipX;
+float _NormalFlipY;
+
 //recoloring property values
 #if TU_RECOLOR_STANDARD
 	float4 _MaskColor1;
 	float4 _MaskColor2;
 	float4 _MaskColor3;
 	float4 _MaskMetallic;
-	float4 _Channel1Norm;
-	float4 _Channel2Norm;
-	float4 _Channel3Norm;
+	float4 _DiffuseNorm;
+	#if TU_SURF_SPEC
+		float4 _SpecularNorm;
+	#endif
+	#if TU_SURF_MET
+		float4 _MetalNorm;
+	#endif
+	float4 _SmoothnessNorm;
 #endif
 
 #if TU_SUBSURF

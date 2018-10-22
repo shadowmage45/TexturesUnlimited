@@ -12,23 +12,6 @@
 	{
 		s.Normal = normalize(s.Normal);
 		
-		#if TU_SUBSURF
-			//SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/	
-			
-			half fLTScale = _SubSurfScale;//main output scalar
-			half iLTPower = _SubSurfPower;//exponent used in power
-			half fLTDistortion = _SubSurfDistort;;//how much the surface normal distorts the outgoing light
-			half fLightAttenuation = _SubSurfAtten;//how much light attenuates while traveling through the surface (gets multiplied by distance)
-			
-			half fLTAmbient = s.Backlight.a;//ambient from texture/material
-			half3 fLTThickness = s.Backlight.rgb;//sampled from texture
-			
-			float3 H = normalize(gi.light.dir + s.Normal * fLTDistortion);
-			float vdh = pow(saturate(dot(viewDir, -H)), iLTPower) * fLTScale;
-			float3 I = fLightAttenuation * (vdh + fLTAmbient) * fLTThickness;
-			half3 backColor = I * gi.light.color;
-		#endif
-		
 		//Unity 'Standard Metallic' lighting function, unabridged
 		half oneMinusReflectivity;
 		half3 specSampleColor;
@@ -39,8 +22,9 @@
 		c.rgb += UNITY_BRDF_GI (s.Albedo, specSampleColor, oneMinusReflectivity, s.Smoothness, s.Normal, viewDir, s.Occlusion, gi);
 		c.a = outputAlpha;
 		
+		//subsurface scattering contribution
 		#if TU_SUBSURF
-			c.rgb += backColor;
+			c.rgb += subsurf(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten, s.Backlight.a, s.Albedo, s.Backlight.rgb, s.Normal, viewDir, gi.light.color, gi.light.dir);
 		#endif
 		
 		return c;
@@ -66,12 +50,7 @@
 			half iLTPower = _SubSurfPower;//exponent used in power
 			half fLTDistortion = _SubSurfDistort;;//how much the surface normal distorts the outgoing light
 			half fLightAttenuation = _SubSurfAtten;//how much light attenuates while traveling through the surface (gets multiplied by distance)  
-			
-			//half fLTScale = s.SubSurfParams.r;//main output scalar
-			//half iLTPower = s.SubSurfParams.g;//exponent used in power
-			//half fLTDistortion = s.SubSurfParams.b;//how much the surface normal distorts the outgoing light
-			//half fLightAttenuation = s.SubSurfParams.a;//how much light attenuates while traveling through the surface (gets multiplied by distance)
-			
+						
 			half fLTAmbient = s.Backlight.a;//ambient from texture/material
 			half3 fLTThickness = s.Backlight.rgb;//sampled from texture
 			
@@ -94,7 +73,7 @@
 		c.a = outputAlpha;
 		
 		#if TU_SUBSURF
-			c.rgb += backColor;
+			c.rgb += subsurf(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten, s.Backlight.a, s.Albedo, s.Backlight.rgb, s.Normal, viewDir, gi.light.color, gi.light.dir);
 		#endif
 		
 		return c;
@@ -150,7 +129,7 @@
 		c.a = s.Alpha;
 		
 		#if TU_SUBSURF
-			c.rgb += backColor;
+			c.rgb += subsurf(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten, s.Backlight.a, s.Albedo, s.Backlight.rgb, s.Normal, viewDir, _LightColor0.rgb, lightDir);
 		#endif			
 		
 		return c;

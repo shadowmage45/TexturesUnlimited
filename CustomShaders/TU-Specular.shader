@@ -20,16 +20,19 @@ Shader "TU/Specular"
 		_GlossColor ("_SpecColor", Color) = (1,1,1)
 		_Smoothness ("_Smoothness", Range(0,1)) = 1
 		
+		[Header(Normal Map Correction)]
+		_NormalFlipX("Normal X Flip", Range(-1, 1)) = 1
+		_NormalFlipY("Normal Y Flip", Range(-1, 1)) = 1
+		
 		//recoloring input color values
 		_MaskColor1 ("Mask Color 1", Color) = (1,1,1,1)
 		_MaskColor2 ("Mask Color 2", Color) = (1,1,1,1)
 		_MaskColor3 ("Mask Color 3", Color) = (1,1,1,1)
 		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,0)
 		
-		//recoloring normalization params -- diffuse in R, Specular in G, smooth in B
-		_Channel1Norm ("Mask Channel 1 Normallization", Vector) = (0,0,0,0)
-		_Channel2Norm ("Mask Channel 2 Normallization", Vector) = (0,0,0,0)
-		_Channel3Norm ("Mask Channel 3 Normallization", Vector) = (0,0,0,0)
+		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
+		_SpecularNorm("Specular Normalization", Vector) = (1,1,1,0)
+		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
 		
 		//sub-surface scattering shader parameters		
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0

@@ -8,12 +8,15 @@ Shader "TU/Metallic"
 		_BumpMap("_BumpMap (NRM)", 2D) = "bump" {}
 		_AOMap("_AOMap (R Grayscale)", 2D) = "white" {}
 		_Emissive("_Emission (RGB Emissive Map)", 2D) = "black" {}
-		_Thickness("_Thickness (RGB Subsurf Thickness) ", 2D) = "white" {}
-				
+		_Thickness("_Thickness (RGB Subsurf Thickness) ", 2D) = "white" {}				
         [Header(Recoloring Texture Maps)]
 		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
 		_MetalGlossNormMask("_MetalGlossNormMask (R/A Normalization)", 2D) = "black" {}
 		_MetalGlossInputMask("_MetalGlossInputMask (R/A Input Masking)", 2D) = "white" {}
+		
+		[Header(Normal Map Correction)]
+		_NormalFlipX("Normal X Flip", Range(-1, 1)) = 1
+		_NormalFlipY("Normal Y Flip", Range(-1, 1)) = 1
 		
 		//detail textures -- diff/met/nrm??
 		
@@ -29,15 +32,15 @@ Shader "TU/Metallic"
 		_MaskMetallic ("Mask Metals", Vector) = (0,0,0,0)
 		
         [Header(Recoloring Normalization Parameters)]
-		_Channel1Norm ("Mask Channel 1 Normallization", Vector) = (0,0,0,0)
-		_Channel2Norm ("Mask Channel 2 Normallization", Vector) = (0,0,0,0)
-		_Channel3Norm ("Mask Channel 3 Normallization", Vector) = (0,0,0,0)
+		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
+		_MetalNorm("Metallic Normalization", Vector) = (1,1,1,0)
+		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
 		
 		[Header(Subsurface Scattering Parameters)]
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
 		_SubSurfScale("SubSurf Scale", Range(0, 10)) = 1
 		_SubSurfPower("SubSurf Falloff Power", Range(0, 10)) = 1
-		_SubSurfDistort("SubSurf Distortion", Range(0, 1)) = 0
+		_SubSurfDistort("SubSurf Distortion", Range(-1, 1)) = 0
 		_SubSurfAtten("SubSurf Attenuation", Range(0, 1)) = 1
 		
 		[Header(Stock KSP Parameters)]

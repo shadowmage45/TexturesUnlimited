@@ -1,5 +1,4 @@
 //functions to be shared across all shaders
-
 //MORE KSP shader properties...for fog.. they have to go here so that they are declared prior to the function
 //silly C-style ordered linking...
 float4 _LocalCameraPos;
@@ -62,8 +61,11 @@ inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed nor
 	fixed3 userSelectedColor = getUserColor(maskSample, userColor1, userColor2, userColor3);
 	//luminance of the original texture -- used for details in masked portions
 	fixed luminance = Luminance(diffuseSample);
+	//gets a +/- 0 value
 	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;
-	return saturate(userSelectedColor + diffuseSample * mixFactor + detailColor);
+	//offset it to a +/- 1 value
+	detailColor += 1;
+	return saturate(userSelectedColor * detailColor + diffuseSample * mixFactor);
 }
 
 inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glossSample, fixed3 maskSample, fixed3 maskMetallic, fixed norm, fixed glossNorm, fixed specInput, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3, out fixed3 glossColor)
@@ -113,4 +115,21 @@ inline fixed recolorTinting(fixed sample1, fixed3 maskSample, fixed user1, fixed
 	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
 	fixed detail = sample1 * (1 - mixFactor);
 	return saturate(userSelectedValue + detail + sample1 * mixFactor);
+}
+inline float3 subsurf(float SubSurfScale, float SubSurfPower, float SubSurfDistort, float SubSurfAtten, float SubSurfAmbient, float3 color, float3 Thickness, float3 normal, float3 viewDir, float3 lightColor, float3 lightDir)
+{
+	//SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/	
+	float fLTScale = SubSurfScale;//main output scalar
+	float iLTPower = SubSurfPower;//exponent used in power
+	float fLTDistortion = SubSurfDistort;;//how much the surface normal distorts the outgoing light
+	float fLightAttenuation = SubSurfAtten;//how much light attenuates while traveling through the surface (gets multiplied by distance)
+	
+	float fLTAmbient = SubSurfAmbient;//ambient from texture/material
+	float3 fLTThickness = Thickness;//sampled from texture
+	
+	//float3 vLTLight = lightDir * (1-abs(fLTDistortion)) + normal * fLTDistortion;
+	float3 vLTLight = lightDir + normal * fLTDistortion;
+	float fLTDot = pow(saturate(dot(viewDir, -vLTLight)), iLTPower) * fLTScale;
+	float3 fLT = fLightAttenuation * (fLTDot + fLTAmbient) * fLTThickness;
+	return color * lightColor * fLT;
 }
