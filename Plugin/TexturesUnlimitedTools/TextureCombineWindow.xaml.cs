@@ -22,12 +22,9 @@ namespace TexturesUnlimitedTools
     /// </summary>
     public partial class TextureCombineWindow : Window
     {
-
-        private ObservableCollection<ChannelSelection> channelOptionsRaw = new ObservableCollection<ChannelSelection>();
-        public ObservableCollection<ChannelSelection> channelOptions { get { return channelOptionsRaw; } }
         
-        private ObservableCollection<ImageSelection> imageOptionsRaw = new ObservableCollection<ImageSelection>();
-        public ObservableCollection<ImageSelection> imageOptions { get { return imageOptionsRaw; } }
+        private ObservableCollection<ImageChannelSelection> imageOptionsRaw = new ObservableCollection<ImageChannelSelection>();
+        public ObservableCollection<ImageChannelSelection> imageOptions { get { return imageOptionsRaw; } }
 
         private ObservableCollection<TextureRemapEntry> recordsRaw = new ObservableCollection<TextureRemapEntry>();
         public ObservableCollection<TextureRemapEntry> records { get { return recordsRaw; } }
@@ -35,13 +32,16 @@ namespace TexturesUnlimitedTools
 
         public TextureCombineWindow()
         {
-            channelOptionsRaw.Add(ChannelSelection.R);
-            channelOptionsRaw.Add(ChannelSelection.G);
-            channelOptionsRaw.Add(ChannelSelection.B);
-            channelOptionsRaw.Add(ChannelSelection.A);
-            channelOptionsRaw.Add(ChannelSelection.RGB);
-            imageOptionsRaw.Add(ImageSelection.Image1);
-            imageOptionsRaw.Add(ImageSelection.Image2);
+            imageOptionsRaw.Add(ImageChannelSelection.Image1_R);
+            imageOptionsRaw.Add(ImageChannelSelection.Image1_G);
+            imageOptionsRaw.Add(ImageChannelSelection.Image1_B);
+            imageOptionsRaw.Add(ImageChannelSelection.Image1_A);
+            imageOptionsRaw.Add(ImageChannelSelection.Image1_RGB);
+            imageOptionsRaw.Add(ImageChannelSelection.Image2_R);
+            imageOptionsRaw.Add(ImageChannelSelection.Image2_B);
+            imageOptionsRaw.Add(ImageChannelSelection.Image2_G);
+            imageOptionsRaw.Add(ImageChannelSelection.Image2_A);
+            imageOptionsRaw.Add(ImageChannelSelection.Image2_RGB);
             InitializeComponent();
 
             DataGridComboBoxColumn column;
@@ -49,54 +49,31 @@ namespace TexturesUnlimitedTools
             column = RecordGrid.Columns[3] as DataGridComboBoxColumn;
             column.ItemsSource = imageOptions;
             column.SelectedItemBinding = new Binding("ImageR");
-
+            
             column = RecordGrid.Columns[4] as DataGridComboBoxColumn;
-            column.ItemsSource = channelOptions;
-            column.SelectedItemBinding = new Binding("ChannelR");
-
-
-            column = RecordGrid.Columns[5] as DataGridComboBoxColumn;
             column.ItemsSource = imageOptions;
             column.SelectedItemBinding = new Binding("ImageG");
-
-            column = RecordGrid.Columns[6] as DataGridComboBoxColumn;
-            column.ItemsSource = channelOptions;
-            column.SelectedItemBinding = new Binding("ChannelG");
-
-
-            column = RecordGrid.Columns[7] as DataGridComboBoxColumn;
+            
+            column = RecordGrid.Columns[5] as DataGridComboBoxColumn;
             column.ItemsSource = imageOptions;
             column.SelectedItemBinding = new Binding("ImageB");
-
-            column = RecordGrid.Columns[8] as DataGridComboBoxColumn;
-            column.ItemsSource = channelOptions;
-            column.SelectedItemBinding = new Binding("ChannelB");
-
-
-            column = RecordGrid.Columns[9] as DataGridComboBoxColumn;
+            
+            column = RecordGrid.Columns[6] as DataGridComboBoxColumn;
             column.ItemsSource = imageOptions;
             column.SelectedItemBinding = new Binding("ImageA");
-
-            column = RecordGrid.Columns[10] as DataGridComboBoxColumn;
-            column.ItemsSource = channelOptions;
-            column.SelectedItemBinding = new Binding("ChannelA");
-
+            
         }
 
         private void SelectImagesClick(object sender, RoutedEventArgs e)
         {
-            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.DefaultExt = ".png";
-            dialog.Filter = "Image Files|*.png;*.dds;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff";
-            dialog.CheckFileExists = true;
-            dialog.Multiselect = true;
-            dialog.ShowDialog();
-            string[] files = dialog.FileNames;
-            int len = files.Length;
-            for (int i = 0; i < len; i++)
-            {
-                MessageBox.Show("File name: " + files[i]);
-            }
+            string img1 = openFileSelectDialog("Primary Texture");
+            string img2 = openFileSelectDialog("Second Texture");
+            string img3 = openFileSaveDialog("Output Texture");
+            TextureRemapEntry entry = new TextureRemapEntry();
+            entry.Image1Name = img1;
+            entry.Image2Name = img2;
+            entry.OutputName = img3;
+            records.Add(entry);
         }
 
         private void ConvertImagesClick(object sender, RoutedEventArgs e)
@@ -104,19 +81,27 @@ namespace TexturesUnlimitedTools
 
         }
 
-        public enum ChannelSelection
+        private static string openFileSelectDialog(string title)
         {
-            R,
-            G,
-            B,
-            A,
-            RGB
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.Title = title;
+            dialog.DefaultExt = ".png";
+            dialog.Filter = "Image Files|*.png;*.dds;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff";
+            dialog.CheckFileExists = true;
+            dialog.Multiselect = false;
+            dialog.ShowDialog();
+            return dialog.FileName;
         }
 
-        public enum ImageSelection
+        private static string openFileSaveDialog(string title)
         {
-            Image1,
-            Image2
+            Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog();
+            dialog.Title = title;
+            dialog.DefaultExt = ".png";
+            dialog.Filter = "PNG Files|*.png";
+            dialog.CheckFileExists = false;
+            dialog.ShowDialog();
+            return dialog.FileName;
         }
 
         public enum ImageChannelSelection
@@ -137,31 +122,26 @@ namespace TexturesUnlimitedTools
         {
             public event PropertyChangedEventHandler PropertyChanged;
 
-            ImageSelection imageR = ImageSelection.Image1;
-            ChannelSelection channelR = ChannelSelection.R;
-            ImageSelection imageG = ImageSelection.Image1;
-            ChannelSelection channelG = ChannelSelection.G;
-            ImageSelection imageB = ImageSelection.Image1;
-            ChannelSelection channelB = ChannelSelection.B;
-            ImageSelection imageA = ImageSelection.Image2;
-            ChannelSelection channelA = ChannelSelection.RGB;
-
+            string image1Name = "";
+            string image2Name = "";
             string outputName = "";
 
-            public ImageSelection ImageR { get { return imageR; } set { imageR = value; propChanged(); } }
-            public ImageSelection ImageG { get { return imageG; } set { imageG = value; propChanged(); } }
-            public ImageSelection ImageB { get { return imageB; } set { imageB = value; propChanged(); } }
-            public ImageSelection ImageA { get { return imageA; } set { imageA = value; propChanged(); } }
-            public ChannelSelection ChannelR { get { return channelR; } set { channelR = value; propChanged(); } }
-            public ChannelSelection ChannelG { get { return channelG; } set { channelG = value; propChanged(); } }
-            public ChannelSelection ChannelB { get { return channelB; } set { channelB = value; propChanged(); } }
-            public ChannelSelection ChannelA { get { return channelA; } set { channelA = value; propChanged(); } }
+            ImageChannelSelection imageR = ImageChannelSelection.Image1_R;
+            ImageChannelSelection imageG = ImageChannelSelection.Image1_B;
+            ImageChannelSelection imageB = ImageChannelSelection.Image1_G;
+            ImageChannelSelection imageA = ImageChannelSelection.Image2_RGB;
 
+            public ImageChannelSelection ImageR { get { return imageR; } set { imageR = value; propChanged(); } }
+            public ImageChannelSelection ImageG { get { return imageG; } set { imageG = value; propChanged(); } }
+            public ImageChannelSelection ImageB { get { return imageB; } set { imageB = value; propChanged(); } }
+            public ImageChannelSelection ImageA { get { return imageA; } set { imageA = value; propChanged(); } }
+
+            public string Image1Name { get { return image1Name; } set { image1Name = value; propChanged(); } }
+            public string Image2Name { get { return image2Name; } set { image2Name = value; propChanged(); } }
             public string OutputName { get { return outputName; } set { outputName = value; propChanged(); } }
-
+            
             public TextureRemapEntry()
             {
-
             }
 
             private void propChanged([CallerMemberName]string name = null)
@@ -170,5 +150,6 @@ namespace TexturesUnlimitedTools
             }
 
         }
+
     }
 }

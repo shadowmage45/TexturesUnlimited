@@ -20,6 +20,9 @@ namespace TexturesUnlimitedTools
     /// </summary>
     public partial class MainWindow : Window
     {
+
+        public TextureCombineWindow window { get { return null; } }
+
         public MainWindow()
         {
             InitializeComponent();

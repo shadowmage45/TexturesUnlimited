@@ -6,43 +6,53 @@
         xmlns:local="clr-namespace:TexturesUnlimitedTools"
         mc:Ignorable="d"
         x:Name="TUCombineWindow"
-        Title="Texture Combine and Channel Remapping" Height="420" Width="900" MinHeight="420" MinWidth="640">
+        Title="Texture Combine and Channel Remapping" Height="420" Width="800" MinHeight="420" MinWidth="800">
     <Grid>
-        <Button Content="Select Images" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="290" Click="SelectImagesClick"/>
-        <Button Content="Convert Images" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="317" Click="ConvertImagesClick"/>
-        <DataGrid x:Name="RecordGrid" Margin="10,35,10,10" CanUserAddRows="True" CanUserDeleteRows="True" CanUserReorderColumns="False" CanUserSortColumns="False"
-                  ItemsSource="{Binding Path=records, ElementName=TUCombineWindow}">
+        <Button Content="Add Image Set" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="290" Click="SelectImagesClick"/>
+        <Button Content="Convert All Images" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="317" Click="ConvertImagesClick"/>
+        <DataGrid x:Name="RecordGrid" Margin="10,35,10,10" CanUserAddRows="False" CanUserDeleteRows="True" CanUserReorderColumns="False" CanUserSortColumns="False"
+                  ItemsSource="{Binding Path=records, ElementName=TUCombineWindow}" AutoGenerateColumns="False">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Input Img 1"/>
-                <DataGridTextColumn Header="Input Img 2"/>
-                <DataGridTextColumn Header="Output Name"/>                
-                <DataGridComboBoxColumn Header="R Img" 
+
+                <DataGridTextColumn x:Name ="Input1NameText" Header="Input Img 1" Binding="{Binding Image1Name}" Width="115">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType ="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+
+                <DataGridTextColumn x:Name ="Input2NameText" Header="Input Img 2" Binding="{Binding Image2Name}" Width="115">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType ="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>                    
+                </DataGridTextColumn>
+                
+                <DataGridTextColumn x:Name ="OutputNameText" Header="Output Name" Binding="{Binding OutputName}" Width="115">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType ="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>                    
+                </DataGridTextColumn>
+                
+                <DataGridComboBoxColumn Header="Out R" 
                     SelectedItemBinding="{Binding ImageR}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}"/>
-                <DataGridComboBoxColumn Header="R Channel" 
-                    SelectedItemBinding="{Binding ChannelR}" 
-                    ItemsSource="{Binding Path=channelOptions, ElementName=TUCombineWindow}"/>
+                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
 
-                <DataGridComboBoxColumn Header="G Img"
+                <DataGridComboBoxColumn Header="Out G"
                     SelectedItemBinding="{Binding ImageG}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}"/>
-                <DataGridComboBoxColumn Header="G Channel" 
-                    SelectedItemBinding="{Binding ChannelG}" 
-                    ItemsSource="{Binding Path=channelOptions, ElementName=TUCombineWindow}"/>
+                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
 
-                <DataGridComboBoxColumn Header="B Img"
+                <DataGridComboBoxColumn Header="Out B"
                     SelectedItemBinding="{Binding ImageB}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}"/>
-                <DataGridComboBoxColumn Header="B Channel" 
-                    SelectedItemBinding="{Binding ChannelB}" 
-                    ItemsSource="{Binding Path=channelOptions, ElementName=TUCombineWindow}"/>
+                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
 
-                <DataGridComboBoxColumn Header="A Img"
+                <DataGridComboBoxColumn Header="Out A"
                     SelectedItemBinding="{Binding ImageA}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}"/>
-                <DataGridComboBoxColumn Header="A Channel" 
-                    SelectedItemBinding="{Binding ChannelA}" 
-                    ItemsSource="{Binding Path=channelOptions, ElementName=TUCombineWindow}"/>
+                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
