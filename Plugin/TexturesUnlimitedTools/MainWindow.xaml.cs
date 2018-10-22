@@ -33,5 +33,15 @@ namespace TexturesUnlimitedTools
             TextureCombineWindow window = new TextureCombineWindow();
             window.ShowDialog();            
         }
+
+        private void TextureConvertClick(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ConfigurationClick(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

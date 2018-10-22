@@ -12,23 +12,21 @@
                 <MenuItem Header="Quit"/>
             </MenuItem>
             <MenuItem Header="Edit">
-                <MenuItem Header="Configuration"/>
+                <MenuItem Header="Configuration" Click="ConfigurationClick"/>
             </MenuItem>
             <MenuItem Header="Functions">
-                <MenuItem Header="Texture Combine" Click="TextureCombineClick"/>
-                <MenuItem Header="DDS Conversion"/>
-                <MenuItem Header="Channel Remap"/>
-                <MenuItem Header="Normalization Data Generation"/>
+                <MenuItem Header="Texture Combine/Remap" Click="TextureCombineClick"/>
+                <MenuItem Header="DDS Texture Conversion" Click="TextureConvertClick"/>
+                <MenuItem Header="Normalization Data Generation" Click="TextureNormClick"/>
             </MenuItem>
             <MenuItem Header="Help">
                 <MenuItem Header="About"/>
             </MenuItem>
         </Menu>
         <Label Content="Textures Unlimited Tools" HorizontalAlignment="Center" Margin="10,25,0,0" VerticalAlignment="Top" FontSize="20" FontWeight="Bold"/>
-        <Label Content="Collection of utilities for texture creation and manipulation" HorizontalAlignment="Center" Margin="10,67,10,0" VerticalAlignment="Top"/>
-        <Button Content="Texture Combine" Margin="10,98,10,0" VerticalAlignment="Top" Click="TextureCombineClick"/>
-        <Button Content="DDS Conversion" Margin="10,123,10,0" VerticalAlignment="Top"/>
-        <Button Content="Channel Remapping" Margin="10,148,10,0" VerticalAlignment="Top"/>
-        <Button Content="Normalization Data Generation" Margin="10,173,10,0" VerticalAlignment="Top"/>
+        <Label Content="Collection of utilities for texture generation, manipulation, and format conversion." HorizontalAlignment="Center" Margin="10,67,10,0" VerticalAlignment="Top"/>
+        <Button Content="Texture Combine/Channel Remap" Margin="10,98,10,0" VerticalAlignment="Top" Click="TextureCombineClick"/>
+        <Button Content="DDS Texture Conversion" Margin="10,123,10,0" VerticalAlignment="Top" Click="TextureConvertClick"/>
+        <Button Content="Normalization Data Generation" Margin="10,148,10,0" VerticalAlignment="Top" Click="TextureNormClick"/>
     </Grid>
 </Window>

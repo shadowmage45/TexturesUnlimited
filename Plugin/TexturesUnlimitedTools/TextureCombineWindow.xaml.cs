@@ -2,18 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
+using System.Drawing;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace TexturesUnlimitedTools
 {
@@ -28,7 +21,6 @@ namespace TexturesUnlimitedTools
 
         private ObservableCollection<TextureRemapEntry> recordsRaw = new ObservableCollection<TextureRemapEntry>();
         public ObservableCollection<TextureRemapEntry> records { get { return recordsRaw; } }
-
 
         public TextureCombineWindow()
         {
@@ -78,7 +70,7 @@ namespace TexturesUnlimitedTools
 
         private void ConvertImagesClick(object sender, RoutedEventArgs e)
         {
-
+            foreach (TextureRemapEntry entry in records) { processEntry(entry); }
         }
 
         private static string openFileSelectDialog(string title)
@@ -86,7 +78,7 @@ namespace TexturesUnlimitedTools
             Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
             dialog.Title = title;
             dialog.DefaultExt = ".png";
-            dialog.Filter = "Image Files|*.png;*.dds;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff";
+            dialog.Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff";
             dialog.CheckFileExists = true;
             dialog.Multiselect = false;
             dialog.ShowDialog();
@@ -102,6 +94,82 @@ namespace TexturesUnlimitedTools
             dialog.CheckFileExists = false;
             dialog.ShowDialog();
             return dialog.FileName;
+        }
+
+        private void processEntry(TextureRemapEntry entry)
+        {
+            MessageBox.Show("Processing entry...");
+            Bitmap image1 = ImageTools.loadImage(entry.Image1Name);
+            if (image1 == null)
+            {
+                MessageBox.Show("Cannot process pair; first image is null");
+                return;
+            }
+            MessageBox.Show("Loaded input image 1");
+            int width = image1.Width;
+            int height = image1.Height;
+            Bitmap image2 = ImageTools.loadImage(entry.Image2Name);
+            if (image2 != null)
+            {
+                if (image2.Width != width || image2.Height != height)
+                {
+                    image1.Dispose();
+                    image2.Dispose();
+                    MessageBox.Show("Cannot convert images, they must be the same width and height");
+                    return;
+                }
+            }
+            MessageBox.Show("Loaded input image 2");
+            Bitmap output = new Bitmap(width, height);
+            Color color1, color2;
+            byte r, g, b, a;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    color1 = image1.GetPixel(x, y);
+                    color2 = image2 == null? Color.White : image2.GetPixel(x, y);
+                    r = getChannelSelection(color1, color2, entry.ImageR);
+                    g = getChannelSelection(color1, color2, entry.ImageG);
+                    b = getChannelSelection(color1, color2, entry.ImageB);
+                    a = getChannelSelection(color1, color2, entry.ImageA);
+                    output.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                }
+            }
+            if (image1 != null) { image1.Dispose(); }
+            if (image2 != null) { image2.Dispose(); }
+            output.Save(entry.OutputName);
+            output.Dispose();
+        }
+
+        private byte getChannelSelection(Color color1, Color color2, ImageChannelSelection selection)
+        {
+            switch (selection)
+            {
+                case ImageChannelSelection.Image1_R:
+                    return color1.R;
+                case ImageChannelSelection.Image1_B:
+                    return color1.B;
+                case ImageChannelSelection.Image1_G:
+                    return color1.G;
+                case ImageChannelSelection.Image1_A:
+                    return color1.A;
+                case ImageChannelSelection.Image1_RGB:
+                    return (byte)((color1.R + color1.G + color1.B) / 3);
+                case ImageChannelSelection.Image2_R:
+                    return color2.R;
+                case ImageChannelSelection.Image2_G:
+                    return color2.G;
+                case ImageChannelSelection.Image2_B:
+                    return color2.B;
+                case ImageChannelSelection.Image2_A:
+                    return color2.A;
+                case ImageChannelSelection.Image2_RGB:
+                    return (byte)((color2.R + color2.G + color2.B) / 3f);
+                default:
+                    break;
+            }
+            return (byte)0;
         }
 
         public enum ImageChannelSelection
@@ -142,6 +210,7 @@ namespace TexturesUnlimitedTools
             
             public TextureRemapEntry()
             {
+
             }
 
             private void propChanged([CallerMemberName]string name = null)
