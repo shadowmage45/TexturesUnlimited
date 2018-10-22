@@ -153,7 +153,7 @@ namespace KSPShaderTools
             buildShaderSets();
             PresetColor.loadColors();
             loadTextureSets();
-            NormMaskCreation.processBatch();
+            //NormMaskCreation.processBatch();
             applyToModelDatabase();
             MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
