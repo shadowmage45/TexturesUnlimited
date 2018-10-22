@@ -141,14 +141,29 @@ namespace SSTUTools
 
         private static void replaceTexture(Material m, string name, bool nrm = false)
         {
-            Texture tex = m.GetTexture(name);
-            if (tex != null && !string.IsNullOrEmpty(tex.name))
+            if (m == null)
             {
-                Texture newTex = findTexture(tex.name, nrm);
-                if (newTex != null)
-                {
-                    m.SetTexture(name, newTex);
-                }
+                MonoBehaviour.print("Material was null for model...");
+                return;
+            }
+            Texture tex = m.GetTexture(name);
+            if (tex == null)
+            {
+                //MonoBehaviour.print("Model had null texture for shader property: " + name);
+                return;
+            }
+            MonoBehaviour.print("Attempting to replace SMF model texture: " +  tex.name);
+            if (string.IsNullOrEmpty(tex.name))
+            {
+                MonoBehaviour.print("Model texture name was null.");
+                return;
+            }
+            Texture newTex = findTexture(tex.name, nrm);
+            MonoBehaviour.print("Found replacement texture of: " + newTex);
+            if (newTex != null)
+            {
+                m.SetTexture(name, null);//clear existing texture reference; unity does silly caching stuff
+                m.SetTexture(name, newTex);
             }
         }
 
