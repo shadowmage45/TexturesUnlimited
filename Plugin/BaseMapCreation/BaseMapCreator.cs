@@ -16,16 +16,11 @@ namespace BaseMapCreation
     {
 
         private static StreamWriter logStream;
-
-        private static string inputPath;
-        private static string outputPath;
-
+        
         private static Image[] maskImages;
         private static Bitmap[] maskMaps;
         private static Image inputImage;
         private static Bitmap inputMap;
-        private static Image outputImage;
-        private static Bitmap outputMap;
 
         static void Main(string[] args)
         {
@@ -48,11 +43,13 @@ namespace BaseMapCreation
             {
                 print("No masks were found in /masks subfolder.  Please add some RGB section masks in .png format.");
             }
-            loadInput(inputBaseFolder);            
+            loadInput(inputBaseFolder);
 
-            Bitmap output = new Bitmap(inputMap.Width, inputMap.Height, PixelFormat.Format32bppArgb);
+            //Bitmap output = new Bitmap(inputMap.Width, inputMap.Height, PixelFormat.Format32bppArgb);
+            DirectBitmap output = new DirectBitmap(inputMap.Width, inputMap.Height);
             process(output);
-            output.Save(outputFolder + Path.DirectorySeparatorChar + "output-mask.png");
+            output.Bitmap.Save(outputFolder + Path.DirectorySeparatorChar + "output-mask.png");
+            output.Dispose();
             sw.Stop();
             print("Application exiting due to completed run.");
             print("Elapsed time (ms): " + sw.ElapsedMilliseconds);
@@ -121,7 +118,7 @@ namespace BaseMapCreation
             return Image.FromFile(fileName);
         }
 
-        private static void process(Bitmap output)
+        private static void process(DirectBitmap output)
         {
             //create value cache arrays, one for each of R,G,B in each of the input masks
             //track min and max for reach of R,G,B for each input mask
@@ -154,7 +151,7 @@ namespace BaseMapCreation
                 Height = height;
                 Bits = new Int32[width * height];
                 BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
-                Bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
+                Bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppArgb, BitsHandle.AddrOfPinnedObject());
             }
 
             public void SetPixel(int x, int y, Color colour)
@@ -250,36 +247,59 @@ namespace BaseMapCreation
                 }
             }
 
-            public void writeOutputs(Bitmap map)
+            public void writeOutputs(DirectBitmap map)
             {
                 Color maskColor;
                 int width = map.Width;
                 int height = map.Height;
-                byte valR = (byte)(aggregateValueR / sampleCountR);
-                byte valG = (byte)(aggregateValueG / sampleCountG);
-                byte valB = (byte)(aggregateValueB / sampleCountB);
-                byte colVal;
+                double valR = (double)aggregateValueR / (double)sampleCountR;
+                double valG = (double)aggregateValueG / (double)sampleCountG;
+                double valB = (double)aggregateValueB / (double)sampleCountB;
+                print(valR + ", " + valG + "," + valB);
+                double maskR, maskG, maskB;
+                double maskSum;
+                double colorValR;
+                double colorValG;
+                double colorValB;
+                byte byteColorR;
+                byte byteColorG;
+                byte byteColorB;
+                byte outColor;
                 for (int x = 0; x < width; x++)
                 {
                     for (int y = 0; y < height; y++)
                     {
-                        maskColor = mask.GetPixel(x, y);                        
-                        if (maskColor.R > 0 || maskColor.G > 0 || maskColor.B > 0)
+                        maskColor = mask.GetPixel(x, y);
+                        maskR = (double)maskColor.R / 255d;
+                        maskG = (double)maskColor.G / 255d;
+                        maskB = (double)maskColor.B / 255d;
+                        maskSum = maskR + maskG + maskB;
+                        if (maskSum > 0)
                         {
-                            colVal = 0;
-                            if (maskColor.R > 0)
+                            colorValR = 0;
+                            colorValG = 0;
+                            colorValB = 0;
+                            //normalize the mask value
+                            double length = Math.Sqrt(maskR * maskR + maskG * maskG + maskB * maskB);
+                            if (length > 1)
                             {
-                                colVal += (byte)(valR * (float)maskColor.R/255f);
+                                maskR = maskR / length;
+                                maskG = maskG / length;
+                                maskB = maskB / length;
                             }
-                            else if (maskColor.G > 0)
-                            {
-                                colVal += valG;
-                            }
-                            else// if (maskColor.B > 0)
-                            {
-                                colVal += valB;
-                            }
-                            map.SetPixel(x, y, Color.FromArgb(255, colVal, colVal, colVal));
+                            colorValR = maskR * valR;
+                            colorValG = maskG * valG;
+                            colorValB = maskB * valB;
+                            byteColorR = (byte)((colorValR));
+                            byteColorG = (byte)((colorValG));
+                            byteColorB = (byte)((colorValB));
+                            outColor = (byte)(byteColorR + byteColorG + byteColorB);
+                            map.SetPixel(x, y, Color.FromArgb(255, outColor, outColor, outColor));
+                        }
+                        else
+                        {
+                            //TODO read the existing texture, only write to it once; or do a pre-fill of the texture to black
+                            map.SetPixel(x, y, Color.FromArgb(255, 0, 0, 0));
                         }
                     }
                 }

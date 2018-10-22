@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPShaderTools.Util;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -152,6 +153,7 @@ namespace KSPShaderTools
             buildShaderSets();
             PresetColor.loadColors();
             loadTextureSets();
+            NormMaskCreation.processBatch();
             applyToModelDatabase();
             MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
