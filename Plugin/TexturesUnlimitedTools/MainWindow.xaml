@@ -1,0 +1,34 @@
+﻿<Window x:Class="TexturesUnlimitedTools.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TexturesUnlimitedTools"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Menu Height="20" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+            <MenuItem Header="File">
+                <MenuItem Header="Quit"/>
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Configuration"/>
+            </MenuItem>
+            <MenuItem Header="Functions">
+                <MenuItem Header="Texture Combine" Click="TextureCombineClick"/>
+                <MenuItem Header="DDS Conversion"/>
+                <MenuItem Header="Channel Remap"/>
+                <MenuItem Header="Normalization Data Generation"/>
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="About"/>
+            </MenuItem>
+        </Menu>
+        <Label Content="Textures Unlimited Tools" HorizontalAlignment="Center" Margin="10,25,0,0" VerticalAlignment="Top" FontSize="20" FontWeight="Bold"/>
+        <Label Content="Collection of utilities for texture creation and manipulation" HorizontalAlignment="Center" Margin="10,67,10,0" VerticalAlignment="Top"/>
+        <Button Content="Texture Combine" Margin="10,98,10,0" VerticalAlignment="Top" Click="TextureCombineClick"/>
+        <Button Content="DDS Conversion" Margin="10,123,10,0" VerticalAlignment="Top"/>
+        <Button Content="Channel Remapping" Margin="10,148,10,0" VerticalAlignment="Top"/>
+        <Button Content="Normalization Data Generation" Margin="10,173,10,0" VerticalAlignment="Top"/>
+    </Grid>
+</Window>
