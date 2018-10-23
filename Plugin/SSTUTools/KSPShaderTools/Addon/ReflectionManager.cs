@@ -98,8 +98,6 @@ namespace KSPShaderTools
         {
             MonoBehaviour.print("ReflectionManager Awake()");
             instance = this;
-            reflectionsEnabled = false;
-            return;
 
             ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("REFLECTION_CONFIG");
             if (nodes == null || nodes.Length < 1)
@@ -241,7 +239,6 @@ namespace KSPShaderTools
 
         public void updateReflections()
         {
-            return;
             if (HighLogic.LoadedSceneIsEditor)
             {
                 if (!renderedEditor)
