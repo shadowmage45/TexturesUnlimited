@@ -61,15 +61,15 @@ namespace KSPShaderTools
             }
             if (GUILayout.Button("Dump world data"))
             {
-                manager.dumpWorldHierarchy();
+                Utils.dumpWorldHierarchy();
             }
             if (GUILayout.Button("Dump cam data"))
             {
-                manager.dumpCameraData();
+                Utils.dumpCameraData();
             }
             if (GUILayout.Button("Dump Stock Refl Data"))
             {
-                manager.dumpReflectionData();
+                Utils.dumpReflectionData();
             }
             if (GUILayout.Button("Dump model UV Maps"))
             {

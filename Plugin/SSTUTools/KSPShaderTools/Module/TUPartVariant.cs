@@ -52,7 +52,7 @@ namespace KSPShaderTools
             if (applied == null)
             {
                 //TODO only subscribe based on scene?
-                GameEvents.onVariantApplied.Add(applied = new EventData<Part, PartVariant>.OnEvent(variantApplied));
+                //GameEvents.onVariantApplied.Add(applied = new EventData<Part, PartVariant>.OnEvent(variantApplied));
                 GameEvents.onEditorVariantApplied.Add(editorApplied = new EventData<Part, PartVariant>.OnEvent(editorVariantApplied));
                 GameEvents.onEditorDefaultVariantChanged.Add(editorDefaultApplied = new EventData<AvailablePart, PartVariant>.OnEvent(editorDefaultVariantApplied));
             }
@@ -61,7 +61,7 @@ namespace KSPShaderTools
         public void OnDestroy()
         {
             //TODO only remove if not null
-            GameEvents.onVariantApplied.Remove(applied);
+            //GameEvents.onVariantApplied.Remove(applied);
             GameEvents.onEditorVariantApplied.Remove(editorApplied);
             GameEvents.onEditorDefaultVariantChanged.Remove(editorDefaultApplied);
         }
