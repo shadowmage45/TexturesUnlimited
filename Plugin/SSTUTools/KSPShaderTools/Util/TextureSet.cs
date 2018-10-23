@@ -100,14 +100,14 @@ namespace KSPShaderTools
         /// </summary>
         /// <param name="root"></param>
         /// <param name="userColors"></param>
-        public void enable(Transform root, RecoloringData[] userColors)
+        public void enable(Transform root, RecoloringData[] userColors, bool isIcon = false)
         {
             TextureSetMaterialData mtd;
             int len = textureData.Length;
             for (int i = 0; i < len; i++)
             {
                 mtd = textureData[i];
-                mtd.enable(root);
+                mtd.enable(root, isIcon);
                 mtd.applyRecoloring(root, userColors);
             }
         }
@@ -381,7 +381,7 @@ namespace KSPShaderTools
         /// </summary>
         /// <param name="root"></param>
         /// <param name="userColors"></param>
-        public void enable(Transform root)
+        public void enable(Transform root, bool isIcon = false)
         {
             bool updateMode = string.Equals(mode, "update", StringComparison.CurrentCultureIgnoreCase);
             Transform[] trs = TextureSet.findApplicableTransforms(root, meshNames, excludedMeshes);
@@ -396,7 +396,7 @@ namespace KSPShaderTools
                     if (render != null)
                     {
                         material = render.material;
-                        apply(material);
+                        apply(material, isIcon);
                         render.material = material;
                     }
                 }
@@ -426,9 +426,16 @@ namespace KSPShaderTools
         /// Sets the shader and properties to the input material
         /// </summary>
         /// <param name="material"></param>
-        public void apply(Material material)
+        public void apply(Material material, bool isIcon = false)
         {
-            material.shader = TexturesUnlimitedLoader.getShader(shader);
+            if (isIcon)
+            {
+                material.shader = TexturesUnlimitedLoader.iconShaders[shader].iconShader;
+            }
+            else
+            {
+                material.shader = TexturesUnlimitedLoader.getShader(shader);
+            }            
             TextureSet.updateMaterialProperties(material, shaderProperties);
             TextureSet.fillEmptyStockTextureSlots(material);
             material.renderQueue = renderQueue;

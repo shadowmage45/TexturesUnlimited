@@ -10,8 +10,17 @@
     <Grid>
         <Button Content="Add Image Set" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="290" Click="SelectImagesClick"/>
         <Button Content="Convert All Images" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="317" Click="ConvertImagesClick"/>
-        <DataGrid x:Name="RecordGrid" Margin="10,35,10,10" CanUserAddRows="False" CanUserDeleteRows="True" CanUserReorderColumns="False" CanUserSortColumns="False"
-                  ItemsSource="{Binding Path=records, ElementName=TUCombineWindow}" AutoGenerateColumns="False">
+        <DataGrid x:Name="RecordGrid" 
+                  Margin="10,35,10,10" 
+                  CanUserAddRows="False" 
+                  CanUserDeleteRows="True" 
+                  CanUserReorderColumns="False" 
+                  CanUserSortColumns="False"
+                  AutoGenerateColumns="False"
+                  ItemsSource="{Binding RemapRecords}">
+            <DataGrid.DataContext>
+                <local:MainWindow/>
+            </DataGrid.DataContext>
             <DataGrid.Columns>
 
                 <DataGridTextColumn x:Name ="Input1NameText" Header="Input Img 1" Binding="{Binding Image1Name}" Width="115">
@@ -39,20 +48,16 @@
                 </DataGridTextColumn>
                 
                 <DataGridComboBoxColumn Header="Out R" 
-                    SelectedItemBinding="{Binding ImageR}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
+                    SelectedItemBinding="{Binding ImageR}" Width="100"/>
 
                 <DataGridComboBoxColumn Header="Out G"
-                    SelectedItemBinding="{Binding ImageG}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
+                    SelectedItemBinding="{Binding ImageG}" Width="100"/>
 
                 <DataGridComboBoxColumn Header="Out B"
-                    SelectedItemBinding="{Binding ImageB}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
+                    SelectedItemBinding="{Binding ImageB}" Width="100"/>
 
                 <DataGridComboBoxColumn Header="Out A"
-                    SelectedItemBinding="{Binding ImageA}" 
-                    ItemsSource="{Binding Path=imageOptions, ElementName=TUCombineWindow}" Width="100"/>
+                    SelectedItemBinding="{Binding ImageA}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

@@ -16,84 +16,46 @@ namespace TexturesUnlimitedTools
     public partial class TextureCombineWindow : Window
     {
         
-        private ObservableCollection<ImageChannelSelection> imageOptionsRaw = new ObservableCollection<ImageChannelSelection>();
-        public ObservableCollection<ImageChannelSelection> imageOptions { get { return imageOptionsRaw; } }
-
-        private ObservableCollection<TextureRemapEntry> recordsRaw = new ObservableCollection<TextureRemapEntry>();
-        public ObservableCollection<TextureRemapEntry> records { get { return recordsRaw; } }
 
         public TextureCombineWindow()
         {
-            imageOptionsRaw.Add(ImageChannelSelection.Image1_R);
-            imageOptionsRaw.Add(ImageChannelSelection.Image1_G);
-            imageOptionsRaw.Add(ImageChannelSelection.Image1_B);
-            imageOptionsRaw.Add(ImageChannelSelection.Image1_A);
-            imageOptionsRaw.Add(ImageChannelSelection.Image1_RGB);
-            imageOptionsRaw.Add(ImageChannelSelection.Image2_R);
-            imageOptionsRaw.Add(ImageChannelSelection.Image2_B);
-            imageOptionsRaw.Add(ImageChannelSelection.Image2_G);
-            imageOptionsRaw.Add(ImageChannelSelection.Image2_A);
-            imageOptionsRaw.Add(ImageChannelSelection.Image2_RGB);
             InitializeComponent();
 
             DataGridComboBoxColumn column;
 
             column = RecordGrid.Columns[3] as DataGridComboBoxColumn;
-            column.ItemsSource = imageOptions;
-            column.SelectedItemBinding = new Binding("ImageR");
+            column.ItemsSource = MainWindow.instance.ImageOptions;
+            //column.SelectedItemBinding = new Binding("ImageR");
             
             column = RecordGrid.Columns[4] as DataGridComboBoxColumn;
-            column.ItemsSource = imageOptions;
-            column.SelectedItemBinding = new Binding("ImageG");
-            
+            column.ItemsSource = MainWindow.instance.ImageOptions;
+            //column.SelectedItemBinding = new Binding("ImageG");
+
             column = RecordGrid.Columns[5] as DataGridComboBoxColumn;
-            column.ItemsSource = imageOptions;
-            column.SelectedItemBinding = new Binding("ImageB");
-            
+            column.ItemsSource = MainWindow.instance.ImageOptions;
+            //column.SelectedItemBinding = new Binding("ImageB");
+
             column = RecordGrid.Columns[6] as DataGridComboBoxColumn;
-            column.ItemsSource = imageOptions;
-            column.SelectedItemBinding = new Binding("ImageA");
-            
+            column.ItemsSource = MainWindow.instance.ImageOptions;
+            //column.SelectedItemBinding = new Binding("ImageA");
+
         }
 
         private void SelectImagesClick(object sender, RoutedEventArgs e)
         {
-            string img1 = openFileSelectDialog("Primary Texture");
-            string img2 = openFileSelectDialog("Second Texture");
-            string img3 = openFileSaveDialog("Output Texture");
+            string img1 = ImageTools.openFileSelectDialog("Primary Texture");
+            string img2 = ImageTools.openFileSelectDialog("Second Texture");
+            string img3 = ImageTools.openFileSaveDialog("Output Texture");
             TextureRemapEntry entry = new TextureRemapEntry();
             entry.Image1Name = img1;
             entry.Image2Name = img2;
             entry.OutputName = img3;
-            records.Add(entry);
+            MainWindow.instance.RemapRecords.Add(entry);
         }
 
         private void ConvertImagesClick(object sender, RoutedEventArgs e)
         {
-            foreach (TextureRemapEntry entry in records) { processEntry(entry); }
-        }
-
-        private static string openFileSelectDialog(string title)
-        {
-            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.Title = title;
-            dialog.DefaultExt = ".png";
-            dialog.Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff";
-            dialog.CheckFileExists = true;
-            dialog.Multiselect = false;
-            dialog.ShowDialog();
-            return dialog.FileName;
-        }
-
-        private static string openFileSaveDialog(string title)
-        {
-            Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog();
-            dialog.Title = title;
-            dialog.DefaultExt = ".png";
-            dialog.Filter = "PNG Files|*.png";
-            dialog.CheckFileExists = false;
-            dialog.ShowDialog();
-            return dialog.FileName;
+            foreach (TextureRemapEntry entry in MainWindow.instance.RemapRecords) { processEntry(entry); }
         }
 
         private void processEntry(TextureRemapEntry entry)
@@ -129,10 +91,10 @@ namespace TexturesUnlimitedTools
                 {
                     color1 = image1.GetPixel(x, y);
                     color2 = image2 == null? Color.White : image2.GetPixel(x, y);
-                    r = getChannelSelection(color1, color2, entry.ImageR);
-                    g = getChannelSelection(color1, color2, entry.ImageG);
-                    b = getChannelSelection(color1, color2, entry.ImageB);
-                    a = getChannelSelection(color1, color2, entry.ImageA);
+                    r = ImageTools.getChannelSelection(color1, color2, entry.ImageR);
+                    g = ImageTools.getChannelSelection(color1, color2, entry.ImageG);
+                    b = ImageTools.getChannelSelection(color1, color2, entry.ImageB);
+                    a = ImageTools.getChannelSelection(color1, color2, entry.ImageA);
                     output.SetPixel(x, y, Color.FromArgb(a, r, g, b));
                 }
             }
@@ -142,83 +104,6 @@ namespace TexturesUnlimitedTools
             output.Dispose();
         }
 
-        private byte getChannelSelection(Color color1, Color color2, ImageChannelSelection selection)
-        {
-            switch (selection)
-            {
-                case ImageChannelSelection.Image1_R:
-                    return color1.R;
-                case ImageChannelSelection.Image1_B:
-                    return color1.B;
-                case ImageChannelSelection.Image1_G:
-                    return color1.G;
-                case ImageChannelSelection.Image1_A:
-                    return color1.A;
-                case ImageChannelSelection.Image1_RGB:
-                    return (byte)((color1.R + color1.G + color1.B) / 3);
-                case ImageChannelSelection.Image2_R:
-                    return color2.R;
-                case ImageChannelSelection.Image2_G:
-                    return color2.G;
-                case ImageChannelSelection.Image2_B:
-                    return color2.B;
-                case ImageChannelSelection.Image2_A:
-                    return color2.A;
-                case ImageChannelSelection.Image2_RGB:
-                    return (byte)((color2.R + color2.G + color2.B) / 3f);
-                default:
-                    break;
-            }
-            return (byte)0;
-        }
-
-        public enum ImageChannelSelection
-        {
-            Image1_R,
-            Image1_B,
-            Image1_G,
-            Image1_A,
-            Image1_RGB,
-            Image2_R,
-            Image2_G,
-            Image2_B,
-            Image2_A,
-            Image2_RGB
-        }
-
-        public class TextureRemapEntry : INotifyPropertyChanged
-        {
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            string image1Name = "";
-            string image2Name = "";
-            string outputName = "";
-
-            ImageChannelSelection imageR = ImageChannelSelection.Image1_R;
-            ImageChannelSelection imageG = ImageChannelSelection.Image1_B;
-            ImageChannelSelection imageB = ImageChannelSelection.Image1_G;
-            ImageChannelSelection imageA = ImageChannelSelection.Image2_RGB;
-
-            public ImageChannelSelection ImageR { get { return imageR; } set { imageR = value; propChanged(); } }
-            public ImageChannelSelection ImageG { get { return imageG; } set { imageG = value; propChanged(); } }
-            public ImageChannelSelection ImageB { get { return imageB; } set { imageB = value; propChanged(); } }
-            public ImageChannelSelection ImageA { get { return imageA; } set { imageA = value; propChanged(); } }
-
-            public string Image1Name { get { return image1Name; } set { image1Name = value; propChanged(); } }
-            public string Image2Name { get { return image2Name; } set { image2Name = value; propChanged(); } }
-            public string OutputName { get { return outputName; } set { outputName = value; propChanged(); } }
-            
-            public TextureRemapEntry()
-            {
-
-            }
-
-            private void propChanged([CallerMemberName]string name = null)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-            }
-
-        }
 
     }
 }

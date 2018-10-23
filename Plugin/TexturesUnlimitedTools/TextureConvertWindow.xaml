@@ -7,6 +7,32 @@
         mc:Ignorable="d"
         Title="TextureConvertWindow" Height="420" Width="640">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Button Grid.Column="0" Content="Select Images" Margin="10,10,10,0" VerticalAlignment="Top" Click="SelectImagesClick"/>
+        <Button Grid.Column="1" Content="Convert Selections" Margin="10,10,10,0" VerticalAlignment="Top" Click="ConvertImagesClick"/>
+        <DataGrid 
+            x:Name="RecordGrid"
+            Grid.ColumnSpan="2"
+            Margin="10,35,10,10" 
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserDeleteRows="True"
+            CanUserReorderColumns="False"
+            CanUserSortColumns="False"
+            ItemsSource="{Binding ConvertRecords}">
+            <DataGrid.DataContext>
+                <local:MainWindow/>
+            </DataGrid.DataContext>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Input File" Width="300" Binding="{Binding ImageName}"/>
+                <DataGridComboBoxColumn 
+                    Header="Output Format" 
+                    Width="200"
+                    SelectedItemBinding="{Binding Format}"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>
