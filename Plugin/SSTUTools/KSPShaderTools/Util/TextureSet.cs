@@ -93,6 +93,19 @@ namespace KSPShaderTools
                 maskColors[1] = new RecoloringData(white, 0, 0);
                 maskColors[2] = new RecoloringData(white, 0, 0);
             }
+            //loop through materials, and auto-enable 'recoloring' flag if recoloring keyword is set
+            len = textureData.Length;
+            for (int i = 0; i < len; i++)
+            {
+                int len2 = textureData[i].shaderProperties.Length;
+                for (int k = 0; k < len2; k++)
+                {
+                    if (textureData[i].shaderProperties[k].name == "TU_RECOLOR_STANDARD")
+                    {
+                        supportsRecoloring = true;
+                    }
+                }
+            }
         }
 
         /// <summary>
