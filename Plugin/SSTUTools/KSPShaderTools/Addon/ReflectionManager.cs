@@ -520,7 +520,7 @@ namespace KSPShaderTools
             {
                 mask = 1 << i;
                 renderCube(map, pos, mask, nearClip, farClip);
-                exportCubemap(map, "layer"+i);
+                Utils.exportCubemap(map, "layer"+i);
             }
             reflectionCamera.clearFlags = CameraClearFlags.Depth;
             reflectionCamera.enabled = false;
@@ -537,15 +537,15 @@ namespace KSPShaderTools
             reflectionCamera.backgroundColor = Color.clear;
 
             renderCube(debugCube, GalaxyCubeControl.Instance.transform.position, galaxyMask, nearClip, farClip);
-            exportCubemap(debugCube, "galaxy");
+            Utils.exportCubemap(debugCube, "galaxy");
             renderCube(debugCube, ScaledSpace.Instance.transform.position, scaledSpaceMask, nearClip, farClip);
-            exportCubemap(debugCube, "scaled");
+            Utils.exportCubemap(debugCube, "scaled");
             renderCube(debugCube, pos, sceneryMask, nearClip, farClip);
-            exportCubemap(debugCube, "scene");
+            Utils.exportCubemap(debugCube, "scene");
             renderCube(debugCube, pos, atmosphereMask, nearClip, farClip);
-            exportCubemap(debugCube, "skybox");
+            Utils.exportCubemap(debugCube, "skybox");
             renderCube(debugCube, pos, fullSceneMask, nearClip, farClip);
-            exportCubemap(debugCube, "full");
+            Utils.exportCubemap(debugCube, "full");
             reflectionCamera.backgroundColor = bg;
 
             //export the same as the active reflection setup
@@ -577,7 +577,7 @@ namespace KSPShaderTools
                     eveCameraFix.overwriteAlpha = false;
                 }
             }
-            exportCubemap(debugCube, "reflect");
+            Utils.exportCubemap(debugCube, "reflect");
             reflectionCamera.enabled = false;
         }
 
@@ -592,34 +592,6 @@ namespace KSPShaderTools
         {
             cameraSetup(cameraPos, layerMask, nearClip, farClip);
             reflectionCamera.RenderToCubemap(envMap);
-        }
-
-        private void exportCubemap(Cubemap envMap, string name)
-        {
-            Directory.CreateDirectory("cubeExport");
-            Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, false);
-            for (int i = 0; i < 6; i++)
-            {
-                tex.SetPixels(envMap.GetPixels((CubemapFace)i));
-                byte[] bytes = tex.EncodeToPNG();
-                File.WriteAllBytes("cubeExport/" + name + "-" + i + ".png", bytes);
-            }
-            GameObject.Destroy(tex);
-        }
-
-        private void exportCubemap(RenderTexture envMap, string name)
-        {
-            Directory.CreateDirectory("cubeExport");
-            Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, false);
-            for (int i = 0; i < 6; i++)
-            {
-                Graphics.SetRenderTarget(envMap, 0, (CubemapFace)i);
-                tex.ReadPixels(new Rect(0, 0, envMap.width, envMap.height), 0, 0);
-                tex.Apply();
-                byte[] bytes = tex.EncodeToPNG();
-                File.WriteAllBytes("cubeExport/" + name + "-" + i + ".png", bytes);
-            }
-            GameObject.Destroy(tex);
         }
 
         private void exportStdCube(Material mat, string name)
@@ -669,7 +641,7 @@ namespace KSPShaderTools
             rt.dimension = UnityEngine.Rendering.TextureDimension.Cube;
             rt.useMipMap = true;
             Graphics.Blit(envMap, rt);
-            exportCubemap(rt, name);
+            Utils.exportCubemap(rt, name);
             
             Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, true);
             Graphics.CopyTexture(envMap, 0, 0, tex, 0, 0);
@@ -704,81 +676,6 @@ namespace KSPShaderTools
                 mat.SetFloat("_Smoothness", 1);
                 debugSphere.GetComponent<MeshRenderer>().material = mat;
             }
-        }
-
-        public void dumpWorldHierarchy()
-        {
-            GameObject[] allGos = GameObject.FindObjectsOfType<GameObject>();
-            int len = allGos.Length;
-            for (int i = 0; i < len; i++)
-            {
-                GameObject go = allGos[i];
-                if (go != null)
-                {
-                    MonoBehaviour.print("GO: " + go.name + "," + go.layer + "," + go.transform.position.x + "," + go.transform.position.y + "," + go.transform.position.z + "," + go.transform.localScale);
-                }
-            }
-        }
-
-        public void dumpCameraData()
-        {
-            Camera[] cams = GameObject.FindObjectsOfType<Camera>();
-            int len = cams.Length;
-            for (int i = 0; i < len; i++)
-            {
-                Camera cam = cams[i];
-                string output = "camera: "+cam.name+","+cam.gameObject+","+cam.gameObject.transform.parent+","+cam.cullingMask + "," + cam.nearClipPlane + "," + cam.farClipPlane + ","+cam.transform.position.x+","+cam.transform.position.y+","+cam.transform.position.z;
-                MonoBehaviour.print(output);
-            }
-        }
-
-        public void dumpReflectionData()
-        {
-            MonoBehaviour.print("------------------REFLECTION DATA--------------------");
-            MonoBehaviour.print("Reflection probes found in scene:");
-            ReflectionProbe[] probes = GameObject.FindObjectsOfType<ReflectionProbe>();
-            int len = probes.Length;
-            for (int i = 0; i < len; i++)
-            {
-                MonoBehaviour.print(string.Format("ReflectionProbe[{0}] : Object Parent: {1}  Probe: {2}", i, probes[i].gameObject, probes[i]));
-            }
-            Material mat = RenderSettings.skybox;
-            MonoBehaviour.print("Rendersetting skybox: " + mat);
-            if (mat != null)
-            {
-                Texture tex = mat.GetTexture("_Tex");
-                MonoBehaviour.print("skybox shader: " + mat.shader);
-                MonoBehaviour.print("skybox texture: " + tex);
-                Cubemap cube = tex as Cubemap;
-                if (cube != null)
-                {
-                    exportCubemap(cube, "RenderSettings-Skybox");
-                }
-                RenderTexture rTex = tex as RenderTexture;
-                if (rTex != null)
-                {
-                    exportCubemap(rTex, "RenderSettings-Skybox");
-                }
-                if (tex == null)//not a std cubemap shader, check for six-sided
-                {
-                    exportStdCube(mat, "RenderSettings-Skybox");
-                }
-            }
-            Skybox[] skies = GameObject.FindObjectsOfType<Skybox>();
-            len = skies.Length;
-            for (int i = 0; i < len; i++)
-            {
-                Skybox sky = skies[i];
-                mat = sky.material;
-                MonoBehaviour.print(string.Format("Camera Skybox[{0}]: {1}  Material: {2} ", i, sky, mat));
-            }
-            Cubemap cube2 = RenderSettings.customReflection;
-            if (cube2 != null)
-            {
-                MonoBehaviour.print("Custom cube reflection: " + cube2);
-                exportCubemapReadOnly(cube2, "RenderSettings-CustomReflection");
-            }
-            MonoBehaviour.print("------------------REFLECTION DATA--------------------");
         }
 
         #endregion DEBUG SPHERE
