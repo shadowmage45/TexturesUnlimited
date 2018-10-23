@@ -168,6 +168,12 @@ namespace KSPShaderTools
             }
             if (skyboxTexture == null)
             {
+                RenderTexture skyboxTexture = new RenderTexture(envMapSize, envMapSize, 24);
+                skyboxTexture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+                skyboxTexture.format = RenderTextureFormat.ARGB32;
+                skyboxTexture.wrapMode = TextureWrapMode.Clamp;
+                skyboxTexture.filterMode = FilterMode.Trilinear;
+                skyboxTexture.autoGenerateMips = false;
                 skyboxTexture = createTexture(envMapSize);
                 MonoBehaviour.print("TUREFMAN2 - created skybox texture");
             }
@@ -184,7 +190,16 @@ namespace KSPShaderTools
             }
             if (probe == null)
             {
-                probe = createReflectionProbe(this.gameObject);
+                probe = this.gameObject.AddComponent<ReflectionProbe>();
+                probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+                probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.EveryFrame;
+                probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
+                probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+                probe.hdr = false;
+                probe.size = new Vector3(2000, 2000, 2000);
+                probe.resolution = envMapSize;
+                probe.enabled = true;
+                probe.cullingMask = 0;
                 MonoBehaviour.print("TUREFMAN2 - created refl. probe");
             }
             if (debugMaterialSky == null)
@@ -290,17 +305,17 @@ namespace KSPShaderTools
 
         private ReflectionProbe createReflectionProbe(GameObject host)
         {
-            ReflectionProbe pr = host.AddComponent<ReflectionProbe>();
-            pr.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
-            pr.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.EveryFrame;
-            pr.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
-            pr.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
-            pr.hdr = false;
-            pr.size = new Vector3(2000, 2000, 2000);
-            pr.resolution = envMapSize;
-            pr.enabled = true;
-            pr.cullingMask = 0;//nothing -- only skybox
-            return pr;
+            ReflectionProbe probe = host.AddComponent<ReflectionProbe>();
+            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
+            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.EveryFrame;
+            probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
+            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+            probe.hdr = false;
+            probe.size = new Vector3(2000, 2000, 2000);
+            probe.resolution = envMapSize;
+            probe.enabled = true;
+            probe.cullingMask = 0;//nothing -- only skybox
+            return probe;
         }
 
         private RenderTexture createTexture(int size)
