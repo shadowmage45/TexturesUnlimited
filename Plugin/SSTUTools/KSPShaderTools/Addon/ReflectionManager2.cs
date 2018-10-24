@@ -3,6 +3,7 @@ using UnityEngine;
 using KSP.UI.Screens;
 using System.IO;
 using System;
+using System.Diagnostics;
 
 namespace KSPShaderTools
 {
@@ -15,7 +16,9 @@ namespace KSPShaderTools
         public const int galaxyMask = 1 << 18;
         public const int atmosphereMask = 1 << 9;
         public const int scaledSpaceMask = 1 << 10;
-        public const int sceneryMask = (1 << 4) | (1 << 15) | (1<<17) | (1<<23);
+        public const int sceneryMask = (1 << 4) | (1 << 15) | (1<<23);// used to also contain (1<<17) -- used by EVE or something? or was I trying to cap kerbs in reflections before?
+        public const int kerbalLayers = 1 << 17;
+        public const int partsMask = 1 << 0;
         public const int fullSceneMask = ~0;
 
         #endregion
@@ -28,25 +31,34 @@ namespace KSPShaderTools
         /// </summary>
         public int envMapSize = 256;
 
+        /// <summary>
+        /// Number of frames inbetween reflection map updates.
+        /// </summary>
+        public int mapUpdateSpacing = 60;
+
         #endregion
 
         #region DEBUG FIELDS
 
         //set through the reflection debug GUI
         public bool reflectionsEnabled = false;
+        public bool multiPassRender = false;
+        public bool debugSphereActive = false;
+        public bool sphereShowsSkybox = false;
 
-        public bool renderGalaxySky = false;
-        public bool renderScaledSky = false;
-        public bool renderAtmoSky = false;
+        public bool renderGalaxySky = true;
+        public bool renderAtmoSky = true;
+        public bool renderScaledSky = true;
         public bool renderScenerySky = false;
+        public bool renderStandardSky = false;
 
         public bool renderGalaxyProbe = false;
-        public bool renderScaledProbe = false;
         public bool renderAtmoProbe = false;
+        public bool renderScaledProbe = false;
         public bool renderSceneryProbe = false;
+        public bool renderStandardProbe = false;
 
-        public bool sphereShowsSkybox = false;
-        
+
         #endregion
 
         #region INTERNAL FIELDS
@@ -55,17 +67,30 @@ namespace KSPShaderTools
         public GameObject cameraObject;
         public Camera reflectionCamera;
         public RenderTexture skyboxTexture;
+        public RenderTexture capTex;
         public Material skyboxMaterial;
+        public Material copyMaterial;
         private static Shader skyboxShader;
+        private static Shader copyShader;
+
+        //Mod interop stuff
+
+        public bool eveInstalled = true;
+        //public CameraAlphaFix eveCameraFix;
+
+        //internal debug fields
+        private bool export = false;
+        private bool debug = false;
         
+
         private static ApplicationLauncherButton debugAppButton;
         private ReflectionDebugGUI2 gui;
+
         private GameObject debugSphere;
         private Material debugMaterialStd;
         private Material debugMaterialSky;
-
-        //debug/prototype stuff
-
+        private Stopwatch stopwatch = new Stopwatch();
+        
         private static ReflectionManager2 instance;
 
         public static ReflectionManager2 Instance
@@ -82,11 +107,22 @@ namespace KSPShaderTools
 
         public void Awake()
         {
-            MonoBehaviour.print("ReflectionManager2 Awake()");
-            instance = this;  
+            MonoBehaviour.print("ReflectionManager Awake()");
+            instance = this;
+
+            debug = TexturesUnlimitedLoader.configurationNode.GetBoolValue("debug", false);
+
+            ConfigNode node = TexturesUnlimitedLoader.configurationNode.GetNode("REFLECTION_CONFIG");
+            MonoBehaviour.print("TU-Reflection Manager - Loading reflection configuration: \n" + node.ToString());
+            MonoBehaviour.print("TU-Reflection Manager - Alternate Render Enabled (DX9/DX11 Fix): " + TexturesUnlimitedLoader.alternateRender);
+            reflectionsEnabled = node.GetBoolValue("enabled", false);
+            envMapSize = node.GetIntValue("resolution", envMapSize);
+            mapUpdateSpacing = node.GetIntValue("interval", mapUpdateSpacing);
+            eveInstalled = node.GetBoolValue("eveInstalled", false);
+            export = node.GetBoolValue("exportDebugCubes", false);
 
             Texture2D tex;
-            if (debugAppButton == null)//static reference; track if the button was EVER created, as KSP keeps them even if the addon is destroyed
+            if (debugAppButton == null && debug)//static reference; track if the button was EVER created, as KSP keeps them even if the addon is destroyed
             {                
                 //create a new button
                 tex = GameDatabase.Instance.GetTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry", false);
@@ -111,13 +147,6 @@ namespace KSPShaderTools
         public void Update()
         {
             updateReflections();
-            if (debugSphere != null)
-            {
-                if (FlightIntegrator.ActiveVesselFI != null)
-                {
-                    debugSphere.transform.position = FlightIntegrator.ActiveVesselFI.transform.position;
-                }
-            } 
         }
 
         private void debugGuiEnable()
@@ -168,13 +197,19 @@ namespace KSPShaderTools
             }
             if (skyboxTexture == null)
             {
-                RenderTexture skyboxTexture = new RenderTexture(envMapSize, envMapSize, 24);
+                skyboxTexture = new RenderTexture(envMapSize, envMapSize, 24);
                 skyboxTexture.dimension = UnityEngine.Rendering.TextureDimension.Cube;
                 skyboxTexture.format = RenderTextureFormat.ARGB32;
                 skyboxTexture.wrapMode = TextureWrapMode.Clamp;
                 skyboxTexture.filterMode = FilterMode.Trilinear;
                 skyboxTexture.autoGenerateMips = false;
-                skyboxTexture = createTexture(envMapSize);
+
+                capTex = new RenderTexture(envMapSize, envMapSize, 24);
+                capTex.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+                capTex.format = RenderTextureFormat.ARGB32;
+                capTex.wrapMode = TextureWrapMode.Clamp;
+                capTex.filterMode = FilterMode.Trilinear;
+                capTex.autoGenerateMips = false;
                 MonoBehaviour.print("TUREFMAN2 - created skybox texture");
             }
             if (skyboxShader == null)
@@ -187,10 +222,15 @@ namespace KSPShaderTools
                 skyboxMaterial = new Material(skyboxShader);
                 skyboxMaterial.SetTexture("_Tex", skyboxTexture);
                 MonoBehaviour.print("TUREFMAN2 - created skybox material and assigned tex");
+                RenderSettings.skybox = skyboxMaterial;
+                MonoBehaviour.print("TUREFMAN2 - assigned skybox material to RenderSettings.skybox");
+
+                copyShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("Hidden/CubeCopy");
+                copyMaterial = new Material(copyShader);
             }
             if (probe == null)
             {
-                probe = this.gameObject.AddComponent<ReflectionProbe>();
+                probe = cameraObject.AddComponent<ReflectionProbe>();
                 probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
                 probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.EveryFrame;
                 probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
@@ -202,16 +242,26 @@ namespace KSPShaderTools
                 probe.cullingMask = 0;
                 MonoBehaviour.print("TUREFMAN2 - created refl. probe");
             }
-            if (debugMaterialSky == null)
+            if (debug)
             {
-                debugMaterialSky = new Material(skyboxShader);
-                debugMaterialSky.SetTexture("_Tex", skyboxTexture);
-                Shader metallic = TexturesUnlimitedLoader.getShader("SSTU/PBR/Metallic");
-                debugMaterialStd = new Material(metallic);
-                debugMaterialStd.SetFloat("_Metallic", 1);
-                debugMaterialStd.SetFloat("_Smoothness", 1);
-            }
-            
+                if (debugMaterialSky == null)
+                {
+                    debugMaterialSky = new Material(skyboxShader);
+                    debugMaterialSky.SetTexture("_Tex", skyboxTexture);
+                    Shader metallic = TexturesUnlimitedLoader.getShader("TU/Metallic");
+                    debugMaterialStd = new Material(metallic);
+                    debugMaterialStd.SetFloat("_Metallic", 1);
+                    debugMaterialStd.SetFloat("_Smoothness", 1);
+                }
+                if (debugSphere == null)
+                {
+                    debugSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    debugSphere.name = "ReflectionDebugSphere";
+                    GameObject.DestroyImmediate(debugSphere.GetComponent<Collider>());
+                    debugSphere.transform.localScale = Vector3.one * 10f;
+                    debugSphere.GetComponent<MeshRenderer>().material = debugMaterialStd;
+                }
+            }            
             if (HighLogic.LoadedSceneIsEditor)
             {
                 probe.transform.position = new Vector3(0, 10, 0);
@@ -226,75 +276,185 @@ namespace KSPShaderTools
         {
             if (HighLogic.LoadedSceneIsEditor)
             {
-
+                //noop, let the probe do its thing... wtf layer should it be set to?
+                //if (EditorLogic.fetch.ship != null)
+                //{
+                //    ShipConstruct ship = EditorLogic.fetch.ship;
+                //    // //ship.shipSize
+                //}
             }
             else if (HighLogic.LoadedSceneIsFlight && FlightIntegrator.ActiveVesselFI != null)
             {
-                if (reflectionCamera == null)
+                //update sphere location even if reflections are currently disabled; as they may be disabled for debugging purposes...
+                if (debug && debugSphereActive)
                 {
-                    MonoBehaviour.print("CAM WAS NULL");
+                    debugSphere.transform.position = FlightIntegrator.ActiveVesselFI.transform.position;
                 }
-                if (skyboxTexture == null)
+                if (!reflectionsEnabled)
                 {
-                    MonoBehaviour.print("SKYTEX WAS NULL");
+                    return;
                 }
-                if (skyboxMaterial == null)
+                stopwatch.Start();
+                if (multiPassRender)
                 {
-                    MonoBehaviour.print("SKYMAT WAS NULL");
+                    multiPassSkyboxRender();
                 }
-                int camMask = 0;
-                if (renderGalaxySky) { camMask = camMask | galaxyMask; }
-                if (renderAtmoSky) { camMask = camMask | atmosphereMask; }
-                if (renderScaledSky) { camMask = camMask | scaledSpaceMask; }
-                if (renderScenerySky) { camMask = camMask | sceneryMask; }
-                reflectionCamera.cullingMask = camMask;
-                reflectionCamera.enabled = true;
-                reflectionCamera.gameObject.transform.position = FlightIntegrator.ActiveVesselFI.Vessel.transform.position;
-                reflectionCamera.RenderToCubemap(skyboxTexture);
-                reflectionCamera.enabled = false;
-                skyboxMaterial.SetTexture("_Tex", skyboxTexture);
-                RenderSettings.skybox = skyboxMaterial;
+                else
+                {
+                    singlePassSkyboxRender();
+                }
+                //really shouldn't be needed
+                //skyboxMaterial.SetTexture("_Tex", skyboxTexture);
                 
-                probe.gameObject.transform.position = FlightIntegrator.ActiveVesselFI.Vessel.transform.position;
-                camMask = 0;
+                int camMask = 0;
                 if (renderGalaxyProbe) { camMask = camMask | galaxyMask; }
                 if (renderAtmoProbe) { camMask = camMask | atmosphereMask; }
                 if (renderScaledProbe) { camMask = camMask | scaledSpaceMask; }
                 if (renderSceneryProbe) { camMask = camMask | sceneryMask; }
                 probe.cullingMask = camMask;
 
-                probe.enabled = reflectionsEnabled;
-
+                stopwatch.Stop();
+                //MonoBehaviour.print("SW Elapsed: " + stopwatch.ElapsedMilliseconds);
+                stopwatch.Reset();
             }
             else //space center, main menu, others
             {
                 //TODO -- handle reflective setups for space center, main menu, map view?
             }
-            if (debugSphere)
+        }
+
+        private void multiPassSkyboxRender()
+        {
+            CameraClearFlags flags = reflectionCamera.clearFlags;
+            Color cColor = reflectionCamera.backgroundColor;
+            reflectionCamera.backgroundColor = new Color(0, 0, 0, 0);
+            //complete clear for first pass, black it out for next layer
+            reflectionCamera.clearFlags = CameraClearFlags.SolidColor;
+            reflectionCamera.enabled = true;
+            bool firstPassRendered = false;
+            if (renderGalaxySky)
             {
+                cameraSetup(GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
+                reflectionCamera.RenderToCubemap(skyboxTexture);
+                firstPassRendered = true;
+            }
+            if (renderAtmoSky)
+            {
+                cameraSetup(ScaledSpace.Instance.transform.position, atmosphereMask, 1f, 3.0e7f);
+                if (firstPassRendered)
+                {
+                    reflectionCamera.RenderToCubemap(capTex);
+                    Graphics.Blit(capTex, skyboxTexture);
+                }
+                else
+                {
+                    firstPassRendered = true;
+                    reflectionCamera.RenderToCubemap(skyboxTexture);
+                }                
+            }
+            if (renderScaledSky)
+            {
+                cameraSetup(ScaledSpace.Instance.transform.position, scaledSpaceMask, 0.5f, 750000f);
+                if (firstPassRendered)
+                {
+                    reflectionCamera.RenderToCubemap(capTex);
+                    Graphics.Blit(capTex, skyboxTexture);
+                }
+                else
+                {
+                    firstPassRendered = true;
+                    reflectionCamera.RenderToCubemap(skyboxTexture);
+                }
+            }
+            if (renderScenerySky)
+            {
+                cameraSetup(ScaledSpace.Instance.transform.position, sceneryMask, 0.5f, 750000f);
+                if (firstPassRendered)
+                {
+                    reflectionCamera.RenderToCubemap(capTex);
+                    Graphics.Blit(capTex, skyboxTexture);
+                }
+                else
+                {
+                    firstPassRendered = true;
+                    reflectionCamera.RenderToCubemap(skyboxTexture);
+                }
+            }
+            if (renderStandardSky)
+            {
+                cameraSetup(ScaledSpace.Instance.transform.position, partsMask, 3, 200f);
+                if (firstPassRendered)
+                {
+                    reflectionCamera.RenderToCubemap(capTex);
+                    Graphics.Blit(capTex, skyboxTexture);
+                }
+                else
+                {
+                    firstPassRendered = true;
+                    reflectionCamera.RenderToCubemap(skyboxTexture);
+                }
+            }
+            //refl probe is also on this object, so put it back at the vessel pos
+            reflectionCamera.gameObject.transform.position = FlightIntegrator.ActiveVesselFI.Vessel.transform.position;
+            reflectionCamera.enabled = false;
+            reflectionCamera.clearFlags = flags;
+            reflectionCamera.backgroundColor = cColor;
+        }
+
+        private void singlePassSkyboxRender()
+        {
+            int camMask = 0;
+            if (renderGalaxySky) { camMask = camMask | galaxyMask; }
+            if (renderAtmoSky) { camMask = camMask | atmosphereMask; }
+            if (renderScaledSky) { camMask = camMask | scaledSpaceMask; }
+            if (renderScenerySky) { camMask = camMask | sceneryMask; }
+            if (renderStandardSky) { camMask = camMask | partsMask; }
+            reflectionCamera.clearFlags = CameraClearFlags.SolidColor;
+            reflectionCamera.enabled = true;
+            cameraSetup(FlightIntegrator.ActiveVesselFI.Vessel.transform.position, camMask, 1, 3.0e7f);
+            reflectionCamera.RenderToCubemap(skyboxTexture);
+            reflectionCamera.enabled = false;
+        }
+
+        public void toggleDebugSphere(bool active)
+        {
+            if(debug && debugSphere!=null && active!=debugSphereActive)            
+            {
+                debugSphereActive = active;
+                debugSphere.SetActive(debugSphereActive);
+            }
+        }
+
+        public void toggleDebugSphereMaterial(bool useSkybox)
+        {
+            if (useSkybox != sphereShowsSkybox)
+            {
+                sphereShowsSkybox = useSkybox;
                 if (sphereShowsSkybox)
                 {
                     debugMaterialSky.SetTexture("_Tex", skyboxTexture);
                     debugSphere.GetComponent<MeshRenderer>().material = debugMaterialSky;
                 }
                 else
-                {                    
+                {
                     debugSphere.GetComponent<MeshRenderer>().material = debugMaterialStd;
-
                 }
+            }
+        }
+
+        public void setReflectionsEnabled(bool val)
+        {
+            if (val != reflectionsEnabled)
+            {
+                reflectionsEnabled = val;
+                probe.enabled = val;
             }
         }
 
         #endregion
 
         #region UPDATE UTILITY METHODS
-
-        private void renderCubeFace(RenderTexture envMap, Vector3 cameraPos, int layerMask, float nearClip, float farClip)
-        {
-            cameraSetup(cameraPos, layerMask, nearClip, farClip);
-            reflectionCamera.RenderToCubemap(envMap);
-        }
-
+        
         private void cameraSetup(Vector3 pos, int mask, float near, float far)
         {
             reflectionCamera.transform.position = pos;
@@ -302,33 +462,7 @@ namespace KSPShaderTools
             reflectionCamera.nearClipPlane = near;
             reflectionCamera.farClipPlane = far;
         }
-
-        private ReflectionProbe createReflectionProbe(GameObject host)
-        {
-            ReflectionProbe probe = host.AddComponent<ReflectionProbe>();
-            probe.mode = UnityEngine.Rendering.ReflectionProbeMode.Realtime;
-            probe.refreshMode = UnityEngine.Rendering.ReflectionProbeRefreshMode.EveryFrame;
-            probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
-            probe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
-            probe.hdr = false;
-            probe.size = new Vector3(2000, 2000, 2000);
-            probe.resolution = envMapSize;
-            probe.enabled = true;
-            probe.cullingMask = 0;//nothing -- only skybox
-            return probe;
-        }
-
-        private RenderTexture createTexture(int size)
-        {
-            RenderTexture tex = new RenderTexture(size, size, 24);
-            tex.dimension = UnityEngine.Rendering.TextureDimension.Cube;
-            tex.format = RenderTextureFormat.ARGB32;
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Trilinear;
-            tex.autoGenerateMips = false;
-            return tex;
-        }
-
+        
         #endregion
 
         #region DEBUG CUBE RENDERING
@@ -350,122 +484,61 @@ namespace KSPShaderTools
             }
         }
 
-        public void renderDebugLayers()
+        public void dumpGalaxyAndAtmoData()
         {
-            int size = envMapSize * 4;
-            Cubemap map = new Cubemap(size, TextureFormat.RGB24, false);
-            Texture2D exportTex = new Texture2D(size, size, TextureFormat.RGB24, false);
-            Vector3 pos = HighLogic.LoadedSceneIsEditor ? new Vector3(0, 10, 0) : FlightIntegrator.ActiveVesselFI.Vessel.transform.position;
-
-            reflectionCamera.enabled = true;
-            float nearClip = reflectionCamera.nearClipPlane;
-            float farClip = 3.0e7f;
-
-            reflectionCamera.clearFlags = CameraClearFlags.SolidColor;
-            Color bg = reflectionCamera.backgroundColor;
-            reflectionCamera.backgroundColor = Color.clear;
-
-            int len = 32;
-            int mask = 0;
+            MonoBehaviour.print("Galaxy Data...");
+            Renderer[] galaxyRenderers = GalaxyCubeControl.Instance.GetComponentsInChildren<Renderer>();
+            int len = galaxyRenderers.Length;
             for (int i = 0; i < len; i++)
             {
-                mask = 1 << i;
-                renderCube(map, pos, mask, nearClip, farClip);
-                Utils.exportCubemap(map, "layer"+i);
+                Material mat = galaxyRenderers[i].material;
+                MonoBehaviour.print("Galaxy renderer: "+mat);
+                MonoBehaviour.print("Galaxy rend q: " + mat.renderQueue);
+                MonoBehaviour.print("Galaxy shader: " + mat.shader);                
             }
-            reflectionCamera.clearFlags = CameraClearFlags.Depth;
-            reflectionCamera.enabled = false;
-        }
-
-        private void exportCubes(Cubemap debugCube, Vector3 pos)
-        {
-            reflectionCamera.enabled = true;
-            float nearClip = reflectionCamera.nearClipPlane;
-            float farClip = 3.0e7f;
-
-            reflectionCamera.clearFlags = CameraClearFlags.SolidColor;
-            Color bg = reflectionCamera.backgroundColor;
-            reflectionCamera.backgroundColor = Color.clear;
-
-            renderCube(debugCube, GalaxyCubeControl.Instance.transform.position, galaxyMask, nearClip, farClip);
-            Utils.exportCubemap(debugCube, "galaxy");
-            renderCube(debugCube, ScaledSpace.Instance.transform.position, scaledSpaceMask, nearClip, farClip);
-            Utils.exportCubemap(debugCube, "scaled");
-            renderCube(debugCube, pos, sceneryMask, nearClip, farClip);
-            Utils.exportCubemap(debugCube, "scene");
-            renderCube(debugCube, pos, atmosphereMask, nearClip, farClip);
-            Utils.exportCubemap(debugCube, "skybox");
-            renderCube(debugCube, pos, fullSceneMask, nearClip, farClip);
-            Utils.exportCubemap(debugCube, "full");
-            reflectionCamera.backgroundColor = bg;
-
-            //export the same as the active reflection setup
-            reflectionCamera.clearFlags = CameraClearFlags.Depth;
-            for (int i = 0; i < 6; i++)
+            MonoBehaviour.print("Atmo data");
+            AtmosphereFromGround atmo = GameObject.FindObjectOfType<AtmosphereFromGround>();
+            if (atmo != null)
             {
-                CubemapFace face = (CubemapFace)i;
-
-                if (renderGalaxyProbe)
-                {
-                    //galaxy
-                    renderCubeFace(debugCube, face, GalaxyCubeControl.Instance.transform.position, galaxyMask, nearClip, farClip);
-                }
-                if (renderScaledProbe)
-                {
-                    //scaled space
-                    renderCubeFace(debugCube, face, ScaledSpace.Instance.transform.position, scaledSpaceMask, nearClip, farClip);
-                }
-                if (renderAtmoProbe)
-                {
-                    //atmo
-                    renderCubeFace(debugCube, face, pos, atmosphereMask, nearClip, farClip);
-                }
-                if (renderSceneryProbe)
-                {
-                    //scene
-                    renderCubeFace(debugCube, face, pos, sceneryMask, nearClip, farClip);
-                }
+                Renderer atmoRend = atmo.gameObject.GetComponentInChildren<Renderer>();
+                MonoBehaviour.print("Atmo mat: " + atmoRend.material);
+                MonoBehaviour.print("Atmo rend q: " + atmoRend.material.renderQueue);
+                MonoBehaviour.print("Atmo shader: " + atmoRend.material.shader);
             }
-            Utils.exportCubemap(debugCube, "reflect");
-            reflectionCamera.enabled = false;
         }
 
-        private void renderCubeFace(Cubemap envMap, CubemapFace face, Vector3 cameraPos, int layerMask, float nearClip, float farClip)
+        public void fixGalaxyAndAtmo()
         {
-            cameraSetup(cameraPos, layerMask, nearClip, farClip);
-            int faceMask = 1 << (int)face;
-            reflectionCamera.RenderToCubemap(envMap, faceMask);
-        }
-
-        private void renderCube(Cubemap envMap, Vector3 cameraPos, int layerMask, float nearClip, float farClip)
-        {
-            cameraSetup(cameraPos, layerMask, nearClip, farClip);
-            reflectionCamera.RenderToCubemap(envMap);
+            MonoBehaviour.print("Galaxy Data...");
+            Renderer[] galaxyRenderers = GalaxyCubeControl.Instance.GetComponentsInChildren<Renderer>();
+            int len = galaxyRenderers.Length;
+            for (int i = 0; i < len; i++)
+            {
+                Material mat = galaxyRenderers[i].material;
+                mat.renderQueue = 10;//geo - 2
+                mat.SetOverrideTag("RenderType", "BackGround");
+                MonoBehaviour.print("Galaxy renderer: " + mat);
+                MonoBehaviour.print("Galaxy rend q: " + mat.renderQueue);
+                MonoBehaviour.print("Galaxy shader: " + mat.shader);
+            }
+            MonoBehaviour.print("Atmo data");
+            AtmosphereFromGround atmo = GameObject.FindObjectOfType<AtmosphereFromGround>();
+            if (atmo != null)
+            {
+                Renderer atmoRend = atmo.gameObject.GetComponentInChildren<Renderer>();
+                Material mat = atmoRend.material;
+                mat.renderQueue = 20;//geo - 1
+                mat.SetOverrideTag("RenderType", "BackGround");
+                atmoRend.gameObject.transform.localScale = Vector3.one * 100;//push it outwards?
+                
+                MonoBehaviour.print("Atmo mat: " + atmoRend.material);
+                MonoBehaviour.print("Atmo rend q: " + atmoRend.material.renderQueue);
+                MonoBehaviour.print("Atmo shader: " + atmoRend.material.shader);
+            }
         }
 
         #endregion DEBUG RENDERING
-
-        #region DEBUG SPHERE
-
-        public void toggleDebugSphere()
-        {
-            if (debugSphere != null)
-            {
-                GameObject.Destroy(debugSphere);
-                debugSphere = null;
-            }
-            else
-            {
-                debugSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                debugSphere.name = "ReflectionDebugSphere";
-                GameObject.DestroyImmediate(debugSphere.GetComponent<Collider>());
-                debugSphere.transform.localScale = Vector3.one * 10f;
-                debugSphere.GetComponent<MeshRenderer>().material = debugMaterialStd;
-            }
-        }
-
-        #endregion DEBUG SPHERE
-
+        
     }
     
     public class ReflectionDebugGUI2 : MonoBehaviour
@@ -501,30 +574,34 @@ namespace KSPShaderTools
             bool scaled = manager.renderScaledProbe;
             bool scenery = manager.renderSceneryProbe;
             GUILayout.BeginVertical();
-            manager.reflectionsEnabled = addButtonRowToggle("Reflections Enabled", manager.reflectionsEnabled);
-            manager.sphereShowsSkybox = addButtonRowToggle("Debug Use Skybox", manager.sphereShowsSkybox);
-
+            manager.setReflectionsEnabled(addButtonRowToggle("Reflections Enabled", manager.reflectionsEnabled));
+            manager.multiPassRender = addButtonRowToggle("Multi-Pass Reflection Capture", manager.multiPassRender);
+            manager.toggleDebugSphere(addButtonRowToggle("Debug Sphere Active", manager.debugSphereActive));
+            manager.toggleDebugSphereMaterial(addButtonRowToggle("Sphere Use Skybox", manager.sphereShowsSkybox));
+            
             manager.renderGalaxySky = addButtonRowToggle("Render Galaxy Skybox", manager.renderGalaxySky);
             manager.renderAtmoSky = addButtonRowToggle("Render Atmo Skybox", manager.renderAtmoSky);
             manager.renderScaledSky = addButtonRowToggle("Render Scaled Skybox", manager.renderScaledSky);
             manager.renderScenerySky = addButtonRowToggle("Render Scenery Skybox", manager.renderScenerySky);
+            manager.renderStandardSky = addButtonRowToggle("Render Parts Skybox", manager.renderStandardSky);
 
             manager.renderGalaxyProbe = addButtonRowToggle("Render Galaxy Probe", galaxy);
             manager.renderAtmoProbe = addButtonRowToggle("Render Atmo Probe", atmo);
             manager.renderScaledProbe = addButtonRowToggle("Render Scaled Probe", scaled);
             manager.renderSceneryProbe = addButtonRowToggle("Render Scenery Probe", scenery);
+            manager.renderStandardProbe = addButtonRowToggle("Render Parts Probe", manager.renderStandardProbe);
 
-            if (GUILayout.Button("Toggle Debug Sphere"))
-            {
-                manager.toggleDebugSphere();
-            }
             if (GUILayout.Button("Export Debug Cube Maps"))
             {
                 manager.renderDebugCubes();
             }
-            if (GUILayout.Button("Export Debug Cube Layer"))
+            if (GUILayout.Button("Dump Galaxy Data"))
             {
-                manager.renderDebugLayers();
+                manager.dumpGalaxyAndAtmoData();
+            }
+            if (GUILayout.Button("Fix Galaxy/Atmo"))
+            {
+                manager.fixGalaxyAndAtmo();
             }
             if (GUILayout.Button("Dump world data"))
             {
@@ -548,7 +625,7 @@ namespace KSPShaderTools
         private bool addButtonRowToggle(string text, bool value)
         {
             GUILayout.BeginHorizontal();
-            GUILayoutOption width = GUILayout.Width(100);
+            GUILayoutOption width = GUILayout.Width(160);
             GUILayout.Label(text, width);
             GUILayout.Label(value.ToString(), width);
             if (GUILayout.Button("Toggle", width))

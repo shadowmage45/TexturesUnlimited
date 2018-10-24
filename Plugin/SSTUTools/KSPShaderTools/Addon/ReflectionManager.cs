@@ -2,6 +2,7 @@
 using UnityEngine;
 using KSP.UI.Screens;
 using System.IO;
+using System.Diagnostics;
 
 namespace KSPShaderTools
 {
@@ -77,6 +78,7 @@ namespace KSPShaderTools
         private static ApplicationLauncherButton debugAppButton;
         private ReflectionDebugGUI gui;
         private GameObject debugSphere;
+        private Stopwatch stopwatch = new Stopwatch();
 
         //debug/prototype stuff
 
@@ -210,10 +212,10 @@ namespace KSPShaderTools
             }
             if (skyboxShader == null)
             {
-                skyboxShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("SSTU/Skybox/Cubemap");
+                skyboxShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("TU/Skybox");
                 if (skyboxShader == null)
                 {
-                    MonoBehaviour.print("ERROR: SSTUReflectionManager - Could not find skybox shader.");
+                    MonoBehaviour.print("ERROR: TUReflectionManager - Could not find skybox shader.");
                 }
             }
             probeData = createProbe();
@@ -229,7 +231,7 @@ namespace KSPShaderTools
 
         public void forceReflectionUpdate()
         {
-
+            //noop at the moment
         }
 
         public void updateReflections()
@@ -262,6 +264,7 @@ namespace KSPShaderTools
                     probeData.updateTime++;
                     if (probeData.updateTime >= mapUpdateSpacing)
                     {
+                        stopwatch.Start();
                         reflectionCamera.gameObject.SetActive(true);
                         if (TexturesUnlimitedLoader.alternateRender)
                         {
@@ -272,7 +275,10 @@ namespace KSPShaderTools
                             renderFace(probeData.renderedCube, probeData.updateFace, vessel.transform.position, probeData.updatePass);
                         }
                         reflectionCamera.gameObject.SetActive(false);
+                        stopwatch.Stop();
                         probeData.updatePass++;
+                        probeData.updateElapsedTime += stopwatch.ElapsedMilliseconds;
+                        stopwatch.Reset();
                         if (probeData.updatePass >= 3)
                         {
                             probeData.updateFace++;
@@ -284,6 +290,8 @@ namespace KSPShaderTools
                             probeData.updatePass = 0;
                             probeData.updateTime = 0;
                             probeData.updateFace = 0;
+                            MonoBehaviour.print("Probe update, elapsed time: " + probeData.updateElapsedTime);
+                            probeData.updateElapsedTime = 0;
                         }
                     }
                 }
@@ -714,6 +722,7 @@ namespace KSPShaderTools
             public int updateFace = 0;
             public int updatePass = 0;
             public int updateTime = 0;
+            public long updateElapsedTime;
             public ReflectionProbeData(GameObject sphere, MeshRenderer rend, Material mat, ReflectionProbe probe, RenderTexture envMap)
             {
                 this.reflectionSphere = sphere;
