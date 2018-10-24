@@ -99,20 +99,15 @@ namespace KSPShaderTools
             MonoBehaviour.print("ReflectionManager Awake()");
             instance = this;
 
-            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("REFLECTION_CONFIG");
-            if (nodes == null || nodes.Length < 1)
-            {
-                reflectionsEnabled = false;
-                return;
-            }
-            ConfigNode node = nodes[0];
+            debug = TexturesUnlimitedLoader.configurationNode.GetBoolValue("debug", false);
+
+            ConfigNode node = TexturesUnlimitedLoader.configurationNode.GetNode("REFLECTION_CONFIG");
             MonoBehaviour.print("TU-Reflection Manager - Loading reflection configuration: \n" + node.ToString());
             MonoBehaviour.print("TU-Reflection Manager - Alternate Render Enabled (DX9/DX11 Fix): " + TexturesUnlimitedLoader.alternateRender);
             reflectionsEnabled = node.GetBoolValue("enabled", false);
             envMapSize = node.GetIntValue("resolution", envMapSize);
             mapUpdateSpacing = node.GetIntValue("interval", mapUpdateSpacing);
             eveInstalled = node.GetBoolValue("eveInstalled", false);
-            debug = node.GetBoolValue("debug", false);
             export = node.GetBoolValue("exportDebugCubes", false);
 
             init();

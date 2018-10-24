@@ -69,6 +69,8 @@ namespace KSPShaderTools
 
         public static bool alternateRender = false;
 
+        public static ConfigNode configurationNode;
+
         #endregion ENDREGION - Config Values loaded from disk
 
         public static TexturesUnlimitedLoader INSTANCE;
@@ -90,6 +92,55 @@ namespace KSPShaderTools
                 GameEvents.OnPartLoaderLoaded.Add(partListLoadedEvent);
             }
 
+        }
+
+        public void OnDestroy()
+        {
+            GameEvents.OnPartLoaderLoaded.Remove(partListLoadedEvent);
+        }
+
+        public void ModuleManagerPostLoad()
+        {
+            load();
+        }
+
+        internal void removeAPICheckGUI()
+        {
+            if (apiCheckGUI != null)
+            {
+                Component.Destroy(apiCheckGUI);
+            }
+        }
+
+        private void load()
+        {
+            MonoBehaviour.print("TexturesUnlimited - Initializing shader and texture set data.");
+            ConfigNode[] allTUNodes = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED");
+            ConfigNode config = Array.Find(allTUNodes, m=> m.name=="default");
+            configurationNode = config;
+
+            logReplacements = config.GetBoolValue("logReplacements", logReplacements);
+            logErrors = config.GetBoolValue("logErrors", logErrors);
+            recolorGUIWidth = config.GetIntValue("recolorGUIWidth");
+            recolorGUITotalHeight = config.GetIntValue("recolorGUITotalHeight");
+            recolorGUISectionHeight = config.GetIntValue("recolorGUISectionHeight");
+            if (config.GetBoolValue("displayDX9Warning", true))
+            {
+                doAPICheck();
+            }
+            loadBundles();
+            buildShaderSets();
+            PresetColor.loadColors();
+            loadTextureSets();
+            //NormMaskCreation.processBatch();
+            applyToModelDatabase();
+            MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
+            foreach (Action act in postLoadCallbacks) { act.Invoke(); }
+            dumpUVMaps();
+        }
+
+        private void doAPICheck()
+        {
             //check the graphics API, popup warning if using unsupported gfx (dx9/11/12/legacy-openGL)
             UnityEngine.Rendering.GraphicsDeviceType graphicsAPI = SystemInfo.graphicsDeviceType;
             if (graphicsAPI == UnityEngine.Rendering.GraphicsDeviceType.OpenGLCore)
@@ -122,62 +173,20 @@ namespace KSPShaderTools
             }
         }
 
-        public void OnDestroy()
-        {
-            GameEvents.OnPartLoaderLoaded.Remove(partListLoadedEvent);
-        }
-
-        public void ModuleManagerPostLoad()
-        {
-            load();
-        }
-
-        internal void removeAPICheckGUI()
-        {
-            if (apiCheckGUI != null)
-            {
-                Component.Destroy(apiCheckGUI);
-            }
-        }
-
-        private static void load()
-        {
-            MonoBehaviour.print("TexturesUnlimited - Initializing shader and texture set data.");
-            ConfigNode config = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED")[0];
-            logReplacements = config.GetBoolValue("logReplacements", logReplacements);
-            logErrors = config.GetBoolValue("logErrors", logErrors);
-            recolorGUIWidth = config.GetIntValue("recolorGUIWidth");
-            recolorGUITotalHeight = config.GetIntValue("recolorGUITotalHeight");
-            recolorGUISectionHeight = config.GetIntValue("recolorGUISectionHeight");
-            loadBundles(loadedShaders);
-            buildShaderSets();
-            PresetColor.loadColors();
-            loadTextureSets();
-            //NormMaskCreation.processBatch();
-            applyToModelDatabase();
-            MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
-            foreach (Action act in postLoadCallbacks) { act.Invoke(); }
-            dumpUVMaps();
-        }
-
         private void onPartListLoaded()
         {
             MonoBehaviour.print("TexturesUnlimited - Updating Part Icon shaders.");
             applyToPartIcons();
         }
 
-        private static void loadBundles(Dictionary<string, Shader> dict)
+        private static void loadBundles()
         {
+            loadedShaders.Clear();
             ConfigNode[] shaderNodes = GameDatabase.Instance.GetConfigNodes("KSP_SHADER_BUNDLE");
             int len = shaderNodes.Length;
             for (int i = 0; i < len; i++)
             {
-                loadBundle(shaderNodes[i], dict);
-            }
-            len = dict.Count;
-            foreach (Shader shader in dict.Values)
-            {
-                if (!loadedShaders.ContainsKey(shader.name)) { loadedShaders.Add(shader.name, shader); }
+                loadBundle(shaderNodes[i], loadedShaders);
             }
         }
 
@@ -457,24 +466,21 @@ namespace KSPShaderTools
         /// <summary>
         /// Utility method to dump UV maps from every model currently in the model database.
         /// TODO -- has issues/errors on some models/meshes/renderers (might be a skinned-mesh-renderer problem...)
+        /// TODO -- has issues with part names that have invalid characters for file-system use -- should sanitize the names
         /// </summary>
         public static void dumpUVMaps(bool force = false)
         {
-            ConfigNode[] nodes = GameDatabase.Instance.GetConfigNodes("UV_EXPORT");
-            if (nodes.Length > 0)
+            UVMapExporter exporter = new UVMapExporter();
+            ConfigNode node = TexturesUnlimitedLoader.configurationNode.GetNode("UV_EXPORT");
+            bool export = node.GetBoolValue("exportUVs", false);
+            if (!export && !force) { return; }
+            string path = node.GetStringValue("exportPath", "exportedUVs");
+            exporter.width = node.GetIntValue("width", 1024);
+            exporter.height = node.GetIntValue("height", 1024);
+            exporter.stroke = node.GetIntValue("thickness", 1);
+            foreach (GameObject go in GameDatabase.Instance.databaseModel)
             {
-                UVMapExporter exporter = new UVMapExporter();
-                ConfigNode node = nodes[0];
-                bool export = node.GetBoolValue("exportUVs", false);
-                if (!export && !force) { return; }
-                string path = node.GetStringValue("exportPath", "exportedUVs");
-                exporter.width = node.GetIntValue("width", 1024);
-                exporter.height = node.GetIntValue("height", 1024);
-                exporter.stroke = node.GetIntValue("thickness", 1);
-                foreach (GameObject go in GameDatabase.Instance.databaseModel)
-                {
-                    exporter.exportModel(go, path);
-                }
+                exporter.exportModel(go, path);
             }
         }
 
