@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace KSPShaderTools
 {
-    [KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
+    //[KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
     public class ReflectionManager : MonoBehaviour
     {
 

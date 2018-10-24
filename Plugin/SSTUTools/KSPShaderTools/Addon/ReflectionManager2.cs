@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace KSPShaderTools
 {
-    //[KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
+    [KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
     public class ReflectionManager2 : MonoBehaviour
     {
 
@@ -65,13 +65,13 @@ namespace KSPShaderTools
 
         public ReflectionProbe probe;
         public GameObject cameraObject;
+        public GameObject cameraObject2;
         public Camera reflectionCamera;
+        public Camera reflectionCamera2;
         public RenderTexture skyboxTexture;
         public RenderTexture capTex;
         public Material skyboxMaterial;
-        public Material copyMaterial;
         private static Shader skyboxShader;
-        private static Shader copyShader;
 
         //Mod interop stuff
 
@@ -193,6 +193,14 @@ namespace KSPShaderTools
                 reflectionCamera.nearClipPlane = 0.01f;
                 reflectionCamera.farClipPlane = 3.0e7f;
                 reflectionCamera.cullingMask = 0;
+
+                cameraObject2 = new GameObject("TRReflectionCamera");
+                reflectionCamera2 = cameraObject2.AddComponent<Camera>();
+                reflectionCamera2.enabled = false;
+                reflectionCamera2.clearFlags = CameraClearFlags.SolidColor;
+                reflectionCamera2.nearClipPlane = 0.01f;
+                reflectionCamera2.farClipPlane = 3.0e7f;
+                reflectionCamera2.cullingMask = 0;
                 MonoBehaviour.print("TUREFMAN2 - created camera");
             }
             if (skyboxTexture == null)
@@ -224,9 +232,6 @@ namespace KSPShaderTools
                 MonoBehaviour.print("TUREFMAN2 - created skybox material and assigned tex");
                 RenderSettings.skybox = skyboxMaterial;
                 MonoBehaviour.print("TUREFMAN2 - assigned skybox material to RenderSettings.skybox");
-
-                copyShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("Hidden/CubeCopy");
-                copyMaterial = new Material(copyShader);
             }
             if (probe == null)
             {
@@ -332,6 +337,7 @@ namespace KSPShaderTools
             reflectionCamera.clearFlags = CameraClearFlags.SolidColor;
             reflectionCamera.enabled = true;
             bool firstPassRendered = false;
+            MonoBehaviour.print("skybox tex: " + skyboxTexture);
             if (renderGalaxySky)
             {
                 cameraSetup(GalaxyCubeControl.Instance.transform.position, galaxyMask, 0.1f, 20f);
@@ -343,8 +349,8 @@ namespace KSPShaderTools
                 cameraSetup(ScaledSpace.Instance.transform.position, atmosphereMask, 1f, 3.0e7f);
                 if (firstPassRendered)
                 {
-                    reflectionCamera.RenderToCubemap(capTex);
-                    Graphics.Blit(capTex, skyboxTexture);
+                    reflectionCamera2.clearFlags = CameraClearFlags.Depth;
+                    reflectionCamera2.RenderToCubemap(skyboxTexture);
                 }
                 else
                 {
@@ -357,8 +363,8 @@ namespace KSPShaderTools
                 cameraSetup(ScaledSpace.Instance.transform.position, scaledSpaceMask, 0.5f, 750000f);
                 if (firstPassRendered)
                 {
-                    reflectionCamera.RenderToCubemap(capTex);
-                    Graphics.Blit(capTex, skyboxTexture);
+                    reflectionCamera2.clearFlags = CameraClearFlags.Depth;
+                    reflectionCamera2.RenderToCubemap(skyboxTexture);
                 }
                 else
                 {
@@ -371,8 +377,8 @@ namespace KSPShaderTools
                 cameraSetup(ScaledSpace.Instance.transform.position, sceneryMask, 0.5f, 750000f);
                 if (firstPassRendered)
                 {
-                    reflectionCamera.RenderToCubemap(capTex);
-                    Graphics.Blit(capTex, skyboxTexture);
+                    reflectionCamera2.clearFlags = CameraClearFlags.Depth;
+                    reflectionCamera2.RenderToCubemap(skyboxTexture);
                 }
                 else
                 {
@@ -385,8 +391,8 @@ namespace KSPShaderTools
                 cameraSetup(ScaledSpace.Instance.transform.position, partsMask, 3, 200f);
                 if (firstPassRendered)
                 {
-                    reflectionCamera.RenderToCubemap(capTex);
-                    Graphics.Blit(capTex, skyboxTexture);
+                    reflectionCamera2.clearFlags = CameraClearFlags.Depth;
+                    reflectionCamera2.RenderToCubemap(skyboxTexture);
                 }
                 else
                 {
@@ -461,6 +467,11 @@ namespace KSPShaderTools
             reflectionCamera.cullingMask = mask;
             reflectionCamera.nearClipPlane = near;
             reflectionCamera.farClipPlane = far;
+
+            reflectionCamera2.transform.position = pos;
+            reflectionCamera2.cullingMask = mask;
+            reflectionCamera2.nearClipPlane = near;
+            reflectionCamera2.farClipPlane = far;
         }
         
         #endregion
@@ -505,6 +516,7 @@ namespace KSPShaderTools
                 MonoBehaviour.print("Atmo rend q: " + atmoRend.material.renderQueue);
                 MonoBehaviour.print("Atmo shader: " + atmoRend.material.shader);
             }
+
         }
 
         public void fixGalaxyAndAtmo()
@@ -515,8 +527,8 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 Material mat = galaxyRenderers[i].material;
-                mat.renderQueue = 10;//geo - 2
-                mat.SetOverrideTag("RenderType", "BackGround");
+                mat.renderQueue = 1000;//geo - 2
+                mat.SetOverrideTag("RenderType", "Background");
                 MonoBehaviour.print("Galaxy renderer: " + mat);
                 MonoBehaviour.print("Galaxy rend q: " + mat.renderQueue);
                 MonoBehaviour.print("Galaxy shader: " + mat.shader);
@@ -527,13 +539,35 @@ namespace KSPShaderTools
             {
                 Renderer atmoRend = atmo.gameObject.GetComponentInChildren<Renderer>();
                 Material mat = atmoRend.material;
-                mat.renderQueue = 20;//geo - 1
-                mat.SetOverrideTag("RenderType", "BackGround");
+                mat.renderQueue = 1001;//geo - 1
+                mat.SetOverrideTag("RenderType", "Background");
                 atmoRend.gameObject.transform.localScale = Vector3.one * 100;//push it outwards?
                 
                 MonoBehaviour.print("Atmo mat: " + atmoRend.material);
                 MonoBehaviour.print("Atmo rend q: " + atmoRend.material.renderQueue);
                 MonoBehaviour.print("Atmo shader: " + atmoRend.material.shader);
+            }
+
+            GameObject[] objects = GameObject.FindObjectsOfType<GameObject>();
+            len = objects.Length;
+            for (int i = 0; i < len; i++)
+            {
+                if (objects[i].layer == 9)
+                {
+                    MonoBehaviour.print("Found layer 9 object: " + objects[i]);
+                    Renderer[] rends = objects[i].GetComponentsInChildren<Renderer>();
+                    int len2 = rends.Length;
+                    for (int k = 0; k < len2; k++)
+                    {
+                        Material mat = rends[k].material;
+                        if (mat != null)
+                        {
+                            mat.renderQueue = 1000;
+                            mat.SetOverrideTag("RenderType", "Background");
+                        }
+                        MonoBehaviour.print("Set layer 9 GO to RQ=1000, type=Background");
+                    }
+                }
             }
         }
 
