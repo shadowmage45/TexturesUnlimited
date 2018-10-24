@@ -343,7 +343,7 @@ namespace KSPShaderTools
             string value = node.GetValue(name);
             if (string.IsNullOrEmpty (value))
             {
-                MonoBehaviour.print("ERROR parsing values for Vector2 from input: " + value + ". found less than 2 values, cannot create Vector2");
+                //MonoBehaviour.print("ERROR parsing values for Vector2 from input: " + value + ". found less than 2 values, cannot create Vector2");
                 return defaultValue;
             }
             string[] vals = value.Split(',');
