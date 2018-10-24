@@ -116,7 +116,7 @@ namespace KSPShaderTools
         {
             MonoBehaviour.print("TexturesUnlimited - Initializing shader and texture set data.");
             ConfigNode[] allTUNodes = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED");
-            ConfigNode config = Array.Find(allTUNodes, m => m.GetStringValue("name")=="default");
+            ConfigNode config = Array.Find(allTUNodes, m => m.GetStringValue("name") == "default");
             configurationNode = config;
 
             logReplacements = config.GetBoolValue("logReplacements", logReplacements);
