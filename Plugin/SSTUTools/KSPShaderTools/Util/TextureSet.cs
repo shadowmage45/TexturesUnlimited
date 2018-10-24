@@ -372,6 +372,8 @@ namespace KSPShaderTools
         public readonly String[] inheritedTex;
         public readonly String[] inheritedFloat;
         public readonly String[] inheritedColor;
+        public readonly Vector2 textureScale;
+        public readonly Vector2 textureOffset;
         public readonly int renderQueue = (int)RenderQueue.Geometry;
         public readonly string mode;//ghetto enum - 'update' or 'create' are the only valid values
 
@@ -386,6 +388,8 @@ namespace KSPShaderTools
             inheritedColor = node.GetStringValues("inheritColor");
             mode = node.GetStringValue("mode", "update");
             renderQueue = node.GetIntValue("renderQueue", (TexturesUnlimitedLoader.isTransparentShader(shader)? (int)RenderQueue.Transparent : (int)RenderQueue.Geometry));
+            textureScale = node.GetVector2("textureScale", Vector2.one);
+            textureOffset = node.GetVector2("textureOffset", Vector2.zero);
         }
 
         /// <summary>
@@ -452,6 +456,8 @@ namespace KSPShaderTools
             TextureSet.updateMaterialProperties(material, shaderProperties);
             TextureSet.fillEmptyStockTextureSlots(material);
             material.renderQueue = renderQueue;
+            material.mainTextureOffset = textureOffset;
+            material.mainTextureScale = textureScale;
         }
 
         /// <summary>
