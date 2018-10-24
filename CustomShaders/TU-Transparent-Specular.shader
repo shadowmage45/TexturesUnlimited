@@ -11,7 +11,7 @@ Shader "TU/Transparent/Specular"
 		_Thickness("_Thickness (RGB Subsurf Thickness) ", 2D) = "white" {}
 		
 		//recoloring texture input slots
-		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
+		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "red" {}
 		_SpecGlossNormMask("_SpecGlossNormMask", 2D) = "black" {}
 		_SpecGlossInputMask("_SpecGlossInputMask", 2D) = "white" {}
 		

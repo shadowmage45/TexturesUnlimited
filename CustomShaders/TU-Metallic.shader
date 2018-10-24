@@ -10,7 +10,7 @@ Shader "TU/Metallic"
 		_Emissive("_Emission (RGB Emissive Map)", 2D) = "black" {}
 		_Thickness("_Thickness (RGB Subsurf Thickness) ", 2D) = "white" {}				
         [Header(Recoloring Texture Maps)]
-		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "black" {}
+		_MaskTex("_MaskTex (RGB Color Mask)", 2D) = "red" {}
 		_MetalGlossNormMask("_MetalGlossNormMask (R/A Normalization)", 2D) = "black" {}
 		_MetalGlossInputMask("_MetalGlossInputMask (R/A Input Masking)", 2D) = "white" {}
 		
