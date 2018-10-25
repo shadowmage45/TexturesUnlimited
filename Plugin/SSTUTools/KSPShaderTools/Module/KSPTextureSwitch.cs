@@ -105,6 +105,11 @@ namespace KSPShaderTools
             }
             TextureSet[] sets = TexturesUnlimitedLoader.getTextureSets(setNames);
             for (int i = 0; i < sets.Length; i++) { allSets.Add(sets[i]); }
+            ConfigNode[] fullNodeSets = node.GetNodes("KSP_TEXTURE_SET");
+            for (int i = 0; i < fullNodeSets.Length; i++)
+            {
+                allSets.Add(new TextureSet(fullNodeSets[i]));
+            }
 
             textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], allSets);
             if (string.IsNullOrEmpty(currentTextureSet))
