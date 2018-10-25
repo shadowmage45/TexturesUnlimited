@@ -33,6 +33,10 @@ namespace KSPShaderTools
                 {
                     props.Add(new ShaderPropertyColor(propNodes[i]));
                 }
+                else if (propNodes[i].HasValue("vector"))
+                {
+                    props.Add(new ShaderPropertyVector(propNodes[i]));
+                }
                 else if (propNodes[i].HasValue("float"))
                 {
                     props.Add(new ShaderPropertyFloat(propNodes[i]));
@@ -56,10 +60,11 @@ namespace KSPShaderTools
             }
 
             //shorthand single-line property definition loading
-            props.AddRange(parseKeywordProperties(node));
             props.AddRange(parseTextureProperties(node));
             props.AddRange(parseColorProperties(node));
             props.AddRange(parseFloatProperties(node));
+            props.AddRange(parseVectorProperties(node));
+            props.AddRange(parseKeywordProperties(node));
             props.AddRange(parseTextureColorProperties(node));
             props.AddRange(parseTextureScaleProperties(node));
             props.AddRange(parseTextureOffsetProperties(node));
@@ -108,6 +113,18 @@ namespace KSPShaderTools
             for (int i = 0; i < len; i++)
             {
                 props[i] = new ShaderPropertyFloat(floatProps[i]);
+            }
+            return props;
+        }
+
+        private static ShaderPropertyVector[] parseVectorProperties(ConfigNode node)
+        {
+            string[] vecProps = node.GetStringValues("vector");
+            int len = vecProps.Length;
+            ShaderPropertyVector[] props = new ShaderPropertyVector[len];
+            for (int i = 0; i < len; i++)
+            {
+                props[i] = new ShaderPropertyVector(vecProps[i]);
             }
             return props;
         }
@@ -422,4 +439,37 @@ namespace KSPShaderTools
             }
         }
     }
+
+    public class ShaderPropertyVector : ShaderProperty
+    {
+
+        public Vector4 vector;
+
+        public ShaderPropertyVector(ConfigNode node) : base(node)
+        {
+            vector = node.GetVector4("vector");
+        }
+
+        public ShaderPropertyVector(string singleLinePropertyDef) : base(singleLinePropertyDef)
+        {
+            string[] splitVals = singleLinePropertyDef.Split(',');
+            //name should be 0
+            //vector vals should be 1,2,3,4
+
+            float x = 0, y = 0, z = 0, w = 0;
+            if (splitVals.Length > 1) { x = Utils.safeParseFloat(splitVals[1]); }
+            if (splitVals.Length > 2) { y = Utils.safeParseFloat(splitVals[2]); }
+            if (splitVals.Length > 3) { z = Utils.safeParseFloat(splitVals[3]); }
+            if (splitVals.Length > 4) { w = Utils.safeParseFloat(splitVals[4]); }
+        }
+
+        protected override void applyInternal(Material mat)
+        {
+            if (checkApply(mat))
+            {
+                mat.SetVector(name, vector);
+            }
+        }
+    }
+
 }

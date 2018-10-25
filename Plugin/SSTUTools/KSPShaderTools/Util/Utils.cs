@@ -305,6 +305,22 @@ namespace KSPShaderTools
             return values;
         }
 
+        public static Vector4 GetVector4(this ConfigNode node, string name)
+        {
+            String value = node.GetValue(name);
+            if (value == null)
+            {
+                return Vector4.zero;
+            }
+            String[] vals = value.Split(',');
+            float x = 0, y = 0, z = 0, w = 0;
+            if (vals.Length > 0) { x = Utils.safeParseFloat(vals[0].Trim()); }
+            if (vals.Length > 1) { y = Utils.safeParseFloat(vals[1].Trim()); }
+            if (vals.Length > 2) { z = Utils.safeParseFloat(vals[2].Trim()); }
+            if (vals.Length > 3) { w = Utils.safeParseFloat(vals[3].Trim()); }
+            return new Vector4(x,y,z,w);
+        }
+
         public static Vector3 GetVector3(this ConfigNode node, String name, Vector3 defaultValue)
         {
             String value = node.GetValue(name);
@@ -313,12 +329,11 @@ namespace KSPShaderTools
                 return defaultValue;
             }
             String[] vals = value.Split(',');
-            if (vals.Length < 3)
-            {
-                MonoBehaviour.print("ERROR parsing values for Vector3 from input: " + value + ". found less than 3 values, cannot create Vector3");
-                return defaultValue;
-            }
-            return new Vector3((float)Utils.safeParseDouble(vals[0]), (float)Utils.safeParseDouble(vals[1]), (float)Utils.safeParseDouble(vals[2]));
+            float x = 0, y = 0, z = 0;
+            if (vals.Length > 0) { x = Utils.safeParseFloat(vals[0].Trim()); }
+            if (vals.Length > 1) { y = Utils.safeParseFloat(vals[1].Trim()); }
+            if (vals.Length > 2) { z = Utils.safeParseFloat(vals[2].Trim()); }
+            return new Vector3(x, y, z);
         }
 
         public static Vector3 GetVector3(this ConfigNode node, String name)
@@ -330,12 +345,11 @@ namespace KSPShaderTools
                 return Vector3.zero;
             }
             String[] vals = value.Split(',');
-            if (vals.Length < 3)
-            {
-                MonoBehaviour.print("ERROR parsing values for Vector3 from input: " + value + ". found less than 3 values, cannot create Vector3");
-                return Vector3.zero;
-            }
-            return new Vector3((float)Utils.safeParseDouble(vals[0]), (float)Utils.safeParseDouble(vals[1]), (float)Utils.safeParseDouble(vals[2]));
+            float x = 0, y = 0, z = 0;
+            if (vals.Length > 0) { x = Utils.safeParseFloat(vals[0].Trim()); }
+            if (vals.Length > 1) { y = Utils.safeParseFloat(vals[1].Trim()); }
+            if (vals.Length > 2) { z = Utils.safeParseFloat(vals[2].Trim()); }
+            return new Vector3(x, y, z);
         }
 
         public static Vector2 GetVector2(this ConfigNode node, string name, Vector2 defaultValue)
