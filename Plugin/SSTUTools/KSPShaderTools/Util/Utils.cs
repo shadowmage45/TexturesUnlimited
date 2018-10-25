@@ -983,7 +983,23 @@ namespace KSPShaderTools
                 GameObject go = allGos[i];
                 if (go != null)
                 {
-                    MonoBehaviour.print("GO: " + go.name + "," + go.layer + "," + go.transform.position.x + "," + go.transform.position.y + "," + go.transform.position.z + "," + go.transform.localScale);
+                    string output = 
+                          "Game Object: " + go.name +
+                        "\n   position: " + go.transform.position +
+                        "\n   scale   : " + go.transform.localScale +
+                        "\n   rotation: " + go.transform.rotation +
+                        "\n   layer   : " + go.layer +
+                        "\n   active  : " + go.activeSelf;
+                    Renderer rend = go.GetComponent<Renderer>();
+                    Material mat;
+                    if(rend!=null && (mat = rend.material)!= null)
+                    {
+                        output += "\n   Material Data: " + mat.name + 
+                                  "\n         shader : " + mat.shader.name + 
+                                  "\n         mainTex: " + mat.mainTexture.name+
+                                  "\n         bumpTex: " + mat.GetTexture("_BumpMap");
+                    }
+                    MonoBehaviour.print(output);
                 }
             }
         }
