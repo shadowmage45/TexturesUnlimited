@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KSPShaderTools
@@ -17,6 +18,9 @@ namespace KSPShaderTools
         /// </summary>
         [KSPField]
         public string transformName = string.Empty;
+
+        [KSPField]
+        public int transformIndex = -1;
 
         /// <summary>
         /// The section label to display in the Recoloring GUI.  Only used if the part is recolorable.
@@ -91,10 +95,21 @@ namespace KSPShaderTools
             }
             ConfigNode node = Utils.parseConfigNode(configNodeData);
             string[] setNames = node.GetStringValues("textureSet", false);
-            textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], setNames);
+            string modelShaderName = node.GetStringValue("modelShader");
+
+            List<TextureSet> allSets = new List<TextureSet>();
+            if (!string.IsNullOrEmpty(modelShaderName))
+            {
+                TextureSet set = TexturesUnlimitedLoader.getModelShaderTextureSet(modelShaderName);
+                if (set != null) { allSets.Add(set); }
+            }
+            TextureSet[] sets = TexturesUnlimitedLoader.getTextureSets(setNames);
+            for (int i = 0; i < sets.Length; i++) { allSets.Add(sets[i]); }
+
+            textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], allSets);
             if (string.IsNullOrEmpty(currentTextureSet))
             {
-                currentTextureSet = setNames[0];
+                currentTextureSet = allSets[0].name;
             }
             this.updateUIChooseOptionControl(nameof(currentTextureSet), textureSets.getTextureSetNames(), textureSets.getTextureSetTitles(), true, currentTextureSet);
             textureSets.enableCurrentSet(getModelTransforms());
@@ -107,7 +122,22 @@ namespace KSPShaderTools
         /// <returns></returns>
         protected Transform[] getModelTransforms()
         {
-            return string.IsNullOrEmpty(transformName) ? new Transform[] { part.transform.FindRecursive("model") } : part.transform.FindRecursive("model").FindChildren(transformName);
+            if (!string.IsNullOrEmpty(transformName))
+            {
+                Transform[] trs = part.transform.FindRecursive("model").FindChildren(transformName);
+                if (transformIndex >= 0)
+                {
+                    return new Transform[] { trs[transformIndex] };
+                }
+                else
+                {
+                    return trs;
+                }
+            }
+            else
+            {
+                return new Transform[] { part.transform.FindRecursive("model") };
+            }
         }
 
         /// <summary>
@@ -198,21 +228,13 @@ namespace KSPShaderTools
             set { persistentDataField.SetValue(value, pm); }
         }
 
-        public TextureSetContainer(PartModule pm, BaseField textureSetField, BaseField persistentDataField, string[] textureSetNames)
+        public TextureSetContainer(PartModule pm, BaseField textureSetField, BaseField persistentDataField, List<TextureSet> sets)
         {
             this.pm = pm;
             this.textureSetField = textureSetField;
             this.persistentDataField = persistentDataField;
             loadPersistentData(persistentData);
-            this.textureSets = TexturesUnlimitedLoader.getTextureSets(textureSetNames);
-            int len = textureSets.Length;
-            for (int i = 0; i < len; i++)
-            {
-                if (textureSets[i] == null)
-                {
-                    MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + textureSetNames[i] + " on part: " + pm.part.name);
-                }
-            }
+            this.textureSets = sets.ToArray();
         }
 
         /// <summary>

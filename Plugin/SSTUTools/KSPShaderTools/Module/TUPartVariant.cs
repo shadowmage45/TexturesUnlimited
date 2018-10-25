@@ -18,9 +18,16 @@ namespace KSPShaderTools
         [KSPField(isPersistant = true)]
         public string textureSet = string.Empty;
 
+        [KSPField(isPersistant = true)]
+        public string modelShaderSet = string.Empty;
+
         //persistent color data
         [KSPField(isPersistant = true)]
         public string persistentData = string.Empty;
+
+        //if setup to interact with stock fairing module
+        [KSPField(isPersistant = true)]
+        public bool stockFairing = false;
 
         private RecoloringData[] customColors;
 
@@ -56,6 +63,7 @@ namespace KSPShaderTools
                 GameEvents.onEditorVariantApplied.Add(editorApplied = new EventData<Part, PartVariant>.OnEvent(editorVariantApplied));
                 GameEvents.onEditorDefaultVariantChanged.Add(editorDefaultApplied = new EventData<AvailablePart, PartVariant>.OnEvent(editorDefaultVariantApplied));
             }
+            //application of the initial/default texture set should be handled by onVariantApplied being called when the base variant is applied?
         }
 
         public void OnDestroy()
@@ -69,50 +77,114 @@ namespace KSPShaderTools
         private void variantApplied(Part part, PartVariant variant)
         {
             MonoBehaviour.print("Variant applied: " + variant.Name);
-            string setName = variant.GetExtraInfoValue("TU-TextureSet");
-            if (!string.IsNullOrEmpty(setName))
+            TextureSet set = getSet(variant);
+            if (set != null)
             {
-                applyConfig(part.transform.FindRecursive("model"), setName);
-                textureSet = setName;
+                applyConfig(part.transform.FindRecursive("model"), set, true);
             }
         }
 
         private void editorVariantApplied(Part part, PartVariant variant)
         {
             MonoBehaviour.print("EditorVariant applied: " + variant.Name);
-            string setName = variant.GetExtraInfoValue("TU-TextureSet");
-            if (!string.IsNullOrEmpty(setName))
+            TextureSet set = getSet(variant);
+            if (set != null)
             {
-                applyConfig(part.transform.FindRecursive("model"), setName);
-                textureSet = setName;
+                applyConfig(part.transform.FindRecursive("model"), set, true);
             }
         }
 
         private void editorDefaultVariantApplied(AvailablePart part, PartVariant variant)
         {
             MonoBehaviour.print("EditorDefaultVariant applied: " + variant.Name);
-            string setName = variant.GetExtraInfoValue("TU-TextureSet");
-            if (!string.IsNullOrEmpty(setName))
+            TextureSet set = getSet(variant);
+            if (set != null)
             {
-                applyConfig(part.partPrefab.transform.FindRecursive("model"), setName);
-                applyConfig(part.iconPrefab.transform.FindRecursive("model"), setName, true);
-                textureSet = setName;
+                applyConfig(part.partPrefab.transform.FindRecursive("model"), set, true);
+                applyConfig(part.iconPrefab.transform.FindRecursive("model"), set, true, true);
             }
         }
 
-        private void applyConfig(Transform root, string textureSetName, bool useIconShaders = false)
+        private TextureSet getSet(PartVariant variant)
         {
-            //TODO -- run-time dynamic swapping to icon shaders
-            //  will require some additional support in the back-end code somewhere
-            TextureSet set = TexturesUnlimitedLoader.getTextureSet(textureSetName);
-            if (set == null)
+            string setName = variant.GetExtraInfoValue("TU-TextureSet");
+            TextureSet set = null;
+            if (!string.IsNullOrEmpty(setName))
             {
-                MonoBehaviour.print("ERROR: Could not locate texture set for name: " + textureSetName);
-                return;
+                set = TexturesUnlimitedLoader.getTextureSet(setName);
+                textureSet = setName;
+                modelShaderSet = string.Empty;
+                return set;
             }
-            customColors = set.maskColors;
-            saveColors(customColors);
-            set.enable(root, customColors, useIconShaders);
+            setName = variant.GetExtraInfoValue("TU-ModelShader");
+            if (!string.IsNullOrEmpty(setName))
+            {
+                set = TexturesUnlimitedLoader.getModelShaderTextureSet(setName);
+                modelShaderSet = setName;
+                textureSet = string.Empty;
+                return set;
+            }
+            return null;
+        }
+
+        private TextureSet getSet()
+        {
+            TextureSet set = null;
+            if (!string.IsNullOrEmpty(textureSet) && (set = TexturesUnlimitedLoader.getTextureSet(textureSet))!=null)
+            {
+                modelShaderSet = string.Empty;
+                return set;
+            }
+            if (!string.IsNullOrEmpty(modelShaderSet) && (set = TexturesUnlimitedLoader.getModelShaderTextureSet(modelShaderSet)) !=null)
+            {                
+                textureSet = string.Empty;
+                return set;
+            }
+            return null;
+        }
+
+        private void applyConfig(Transform root, TextureSet set, bool useSetColors, bool useIconShaders = false)
+        {            
+            RecoloringData[] colors = useSetColors? set.maskColors : customColors;
+            if (useSetColors)
+            {
+                customColors = set.maskColors;
+                saveColors(customColors);
+            }
+            //apply the texture set to the base model (and trusses?)
+            set.enable(root, colors, useIconShaders);
+            if (stockFairing)
+            {
+                TextureSetMaterialData tsmd = set.textureData[0];                
+                //adjust the already existing fairing materials and fairing panels
+                ModuleProceduralFairing mpf = part.GetComponent<ModuleProceduralFairing>();
+                if (mpf != null)
+                {
+                    Material mat;
+                    if (mpf.FairingMaterial != null && mpf.FairingConeMaterial != null)
+                    {
+                        mat = mpf.FairingMaterial;
+                        tsmd.apply(mat, useIconShaders);
+                        tsmd.applyRecoloring(mat, colors);
+                        mat = mpf.FairingConeMaterial;
+                        tsmd.apply(mat, useIconShaders);
+                        tsmd.applyRecoloring(mat, colors);
+                    }
+                    if (mpf.Panels != null && mpf.Panels.Count > 0)//cones are included in regular panels
+                    {
+                        int len = mpf.Panels.Count;
+                        for (int i = 0; i < len; i++)
+                        {
+                            mat = mpf.Panels[i].mat;
+                            tsmd.apply(mat, useIconShaders);
+                            tsmd.applyRecoloring(mat, colors);
+                            mat = mpf.Panels[i].go.GetComponent<Renderer>().material;
+                            tsmd.apply(mat, useIconShaders);
+                            tsmd.applyRecoloring(mat, colors);
+                        }
+                    }
+                }                
+            }
         }
 
         public string[] getSectionNames()
@@ -134,6 +206,7 @@ namespace KSPShaderTools
         {
             customColors = colors;
             saveColors(customColors);
+            applyConfig(part.transform.FindRecursive("model"), getSet(), false, false);            
         }
         
         private void loadPersistentData(string data)

@@ -42,6 +42,9 @@ namespace KSPShaderTools
         /// </summary>
         public static Dictionary<string, TextureSet> loadedTextureSets = new Dictionary<string, TextureSet>();
 
+
+        public static Dictionary<string, TextureSet> loadedModelShaderSets = new Dictionary<string, TextureSet>();
+
         /// <summary>
         /// List of procedurally created 'solid color' textures to use for filling in empty texture slots in materials.
         /// </summary>
@@ -347,7 +350,7 @@ namespace KSPShaderTools
             ConfigNode[] modelShaderNodes = GameDatabase.Instance.GetConfigNodes("KSP_MODEL_SHADER");
             TextureSet set = null;
             ConfigNode textureNode;
-            string setName;
+            string setName="";
             int len = modelShaderNodes.Length;
             string[] modelNames;
             GameObject model;
@@ -373,6 +376,10 @@ namespace KSPShaderTools
                         MonoBehaviour.print("ERROR: Did not locate texture set from global cache for input name: " + setName+" while applying KSP_MODEL_SHADER with name of: "+modelShaderNodes[i].GetStringValue("name","UNKNOWN"));
                         continue;
                     }
+                }
+                if (!string.IsNullOrEmpty(setName) && !loadedModelShaderSets.ContainsKey(setName))
+                {
+                    loadedModelShaderSets.Add(setName, set);
                 }
                 modelNames = textureNode.GetStringValues("model");
                 int len2 = modelNames.Length;
@@ -501,6 +508,22 @@ namespace KSPShaderTools
                 return s;
             }
             return Shader.Find(name);
+        }
+
+        /// <summary>
+        /// Find a global texture set from model shader set cache with a name that matches the input name.  Returns null if not found.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static TextureSet getModelShaderTextureSet(string name)
+        {
+            TextureSet s = null;
+            if (loadedModelShaderSets.TryGetValue(name, out s))
+            {
+                return s;
+            }
+            MonoBehaviour.print("ERROR: Could not locate TextureSet from global cache for the input name of: " + name);
+            return null;
         }
 
         /// <summary>
