@@ -89,7 +89,7 @@ inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glo
 	
 	//luminance of the original texture -- used for details in masked portions
 	fixed luminance = Luminance(diffuseSample);
-	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;	
+	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;
 	detailColor += 1;
 	return saturate(userSelectedColor * detailColor + diffuseSample * mixFactor);
 }
