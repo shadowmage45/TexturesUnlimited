@@ -30,6 +30,7 @@ namespace KSPShaderTools
         public bool stockFairing = false;
 
         private RecoloringData[] customColors;
+        private bool initialized = false;
 
         public override void OnLoad(ConfigNode node)
         {
@@ -52,6 +53,8 @@ namespace KSPShaderTools
 
         private void init()
         {
+            if (initialized) { return; }
+            initialized = true;
             if (customColors == null)
             {
                 customColors = new RecoloringData[3];
@@ -63,7 +66,32 @@ namespace KSPShaderTools
                 GameEvents.onEditorVariantApplied.Add(editorApplied = new EventData<Part, PartVariant>.OnEvent(editorVariantApplied));
                 GameEvents.onEditorDefaultVariantChanged.Add(editorDefaultApplied = new EventData<AvailablePart, PartVariant>.OnEvent(editorDefaultVariantApplied));
             }
+
             //application of the initial/default texture set should be handled by onVariantApplied being called when the base variant is applied?
+            //.... but apparently is not
+            //so find the last used or default set and apply it
+            TextureSet set = null;
+
+            //check 'last used set' names
+            if (string.IsNullOrEmpty(textureSet) && string.IsNullOrEmpty(modelShaderSet))
+            {
+                //if both are empty, module is uninitialized; query part for base variant, find extra-info, and find texture set from there
+                set = getSet(part.baseVariant);
+            }
+            else
+            {
+                //else module previously had a texture set used, restore the texture-set instance from that value
+                set = getSet();
+            }
+            if (set != null)
+            {
+                //TODO -- will icon shaders ever be needed here?
+                applyConfig(part.transform.FindRecursive("model"), set, false, false);
+            }
+            else
+            {
+                MonoBehaviour.print("ERROR: TUPartVariant could not locate default or stored texture set data");
+            }
         }
 
         public void OnDestroy()
@@ -76,26 +104,37 @@ namespace KSPShaderTools
 
         private void variantApplied(Part part, PartVariant variant)
         {
+            if (part != this.part) { return; }
             MonoBehaviour.print("Variant applied: " + variant.Name);
             TextureSet set = getSet(variant);
             if (set != null)
             {
                 applyConfig(part.transform.FindRecursive("model"), set, true);
             }
+            else
+            {
+                MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
+            }
         }
 
         private void editorVariantApplied(Part part, PartVariant variant)
         {
+            if (part != this.part) { return; }
             MonoBehaviour.print("EditorVariant applied: " + variant.Name);
             TextureSet set = getSet(variant);
             if (set != null)
             {
                 applyConfig(part.transform.FindRecursive("model"), set, true);
             }
+            else
+            {
+                MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
+            }
         }
 
         private void editorDefaultVariantApplied(AvailablePart part, PartVariant variant)
         {
+            //TODO -- how to tell if it was -this- part?
             MonoBehaviour.print("EditorDefaultVariant applied: " + variant.Name);
             TextureSet set = getSet(variant);
             if (set != null)
@@ -103,11 +142,15 @@ namespace KSPShaderTools
                 applyConfig(part.partPrefab.transform.FindRecursive("model"), set, true);
                 applyConfig(part.iconPrefab.transform.FindRecursive("model"), set, true, true);
             }
+            else
+            {
+                MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
+            }
         }
 
         private TextureSet getSet(PartVariant variant)
         {
-            string setName = variant.GetExtraInfoValue("TU-TextureSet");
+            string setName = variant.GetExtraInfoValue("textureSet");
             TextureSet set = null;
             if (!string.IsNullOrEmpty(setName))
             {
@@ -116,7 +159,7 @@ namespace KSPShaderTools
                 modelShaderSet = string.Empty;
                 return set;
             }
-            setName = variant.GetExtraInfoValue("TU-ModelShader");
+            setName = variant.GetExtraInfoValue("modelShader");
             if (!string.IsNullOrEmpty(setName))
             {
                 set = TexturesUnlimitedLoader.getModelShaderTextureSet(setName);
