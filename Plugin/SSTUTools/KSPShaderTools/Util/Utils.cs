@@ -115,6 +115,47 @@ namespace KSPShaderTools
             return color;
         }
 
+        /// <summary>
+        /// Will parse a value from the input formats of:<para/>
+        /// 255,255,255,255 (byte notation)<para/>
+        /// 1.0,1.0,1.0,1.0 (float notation)<para/>
+        /// #FFFFFFFF (hex notation)<para/>
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static Color parseColor(string input)
+        {
+            Color color = Color.white;
+            input = input.Trim();
+            //check for occurance of ','
+            //if present, it is in CSV notation and assume it is either float or byte notation
+            if (input.Contains(","))
+            {
+                //if it contains periods, parse as float values
+                if (input.Contains("."))
+                {
+                    return parseColorFromFloats(input);
+                }
+                else //else assume it is byte notation, parse as byte values
+                {
+                    return parseColorFromBytes(input);
+                }
+            }
+            else if (input.Contains("#"))
+            {
+                //check length -- if it is 7 chars it should be RGB, 9 chars = RGBA
+                if (!ColorUtility.TryParseHtmlString(input, out color))
+                {
+                    MonoBehaviour.print("ERROR: Could not parse HTML color value from the input string of: " + input);
+                }
+            }
+            else
+            {
+                MonoBehaviour.print("ERROR: Could not determine color format from input: "+input+" , returning Color.white");
+            }
+            return color;
+        }
+
         public static ConfigNode parseConfigNode(String input)
         {
             ConfigNode baseCfn = ConfigNode.Parse(input);
@@ -421,14 +462,33 @@ namespace KSPShaderTools
             return curve;
         }
 
-        public static Color GetColorFromFloatCSV(this ConfigNode node, String name)
+        public static Color GetColorFromFloatCSV(this ConfigNode node, string name)
         {
             return parseColorFromFloats(node.GetStringValue(name));
         }
 
-        public static Color GetColorFromByteCSV(this ConfigNode node, String name)
+        public static Color GetColorFromByteCSV(this ConfigNode node, string name)
         {
             return parseColorFromBytes(node.GetStringValue(name));
+        }
+
+        public static Color GetColor(this ConfigNode node, string name)
+        {
+            return parseColor(node.GetStringValue(name));
+        }
+
+        /// <summary>
+        /// Returns a floating point color channel value
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static float GetColorChannelValue(this ConfigNode node, string name)
+        {
+            string value = node.GetStringValue(name).Trim();
+            float floatValue = safeParseFloat(value);
+            if (value.Contains(".")) { return floatValue; }
+            return floatValue / 255f;
         }
 
         public static string ToStringFixedOrder(this ConfigNode node)

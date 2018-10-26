@@ -212,7 +212,7 @@ namespace KSPShaderTools
 
         public ShaderPropertyColor(ConfigNode node) : base(node)
         {
-            color = node.GetColorFromFloatCSV("color");
+            color = node.GetColor("color");
         }
 
         public ShaderPropertyColor(string line) : base(line)

@@ -582,7 +582,7 @@ namespace KSPShaderTools
         public static Texture2D getTextureColor(string stringColor)
         {
             string rgbaString;
-            Color c = Utils.parseColorFromBytes(stringColor);
+            Color c = Utils.parseColor(stringColor);
             //just smash the entire thing together to create a unique key for the color
             rgbaString = "" + c.r +":"+ c.g + ":" + c.b + ":" + c.a;
             Texture2D tex = null;
@@ -672,9 +672,9 @@ namespace KSPShaderTools
         {
             name = node.GetStringValue("name");
             title = node.GetStringValue("title");
-            color = Utils.parseColorFromBytes(node.GetStringValue("color"));
-            specular = node.GetFloatValue("specular") / 255f;//specified in byte, stored/used as float
-            metallic = node.GetFloatValue("metallic") / 255f;//specified in byte, stored/used as float
+            color = node.GetColor("color");
+            specular = node.GetColorChannelValue("specular");
+            metallic = node.GetColorChannelValue("metallic");
         }
 
         public RecoloringData getRecoloringData()
