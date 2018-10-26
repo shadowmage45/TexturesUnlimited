@@ -431,6 +431,7 @@ namespace KSPShaderTools
                         if (origMaterial == null)
                         {
                             origMaterial = render.sharedMaterial;
+                            newMaterial.name = origMaterial.name;
                             inheritProperties(newMaterial, origMaterial);
                         }
                         render.sharedMaterial = newMaterial;

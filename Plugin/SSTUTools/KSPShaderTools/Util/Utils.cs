@@ -1008,12 +1008,14 @@ namespace KSPShaderTools
 
         public static void exportModelHierarchy(GameObject current)
         {
-            exportModelHierarchy(current, 0);
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine();//add carriage return to fix timestamp formatting stuff in log
+            exportModelHierarchy(current, builder, 0);
+            MonoBehaviour.print(builder.ToString());
         }
 
-        private static void exportModelHierarchy(GameObject current, int indent)
+        private static void exportModelHierarchy(GameObject current, StringBuilder builder, int indent)
         {
-            StringBuilder builder = new StringBuilder();
             builder.Append(' ', indent);
             builder.AppendLine("Game Object: " + current.name);
             builder.Append(' ', indent + 3);
@@ -1039,10 +1041,9 @@ namespace KSPShaderTools
                 builder.Append(' ', indent + 9);
                 builder.AppendLine("mainTex: " + mat.mainTexture.name);
             }
-            MonoBehaviour.print(builder.ToString());
             foreach (Transform tr in current.transform)
             {
-                exportModelHierarchy(tr.gameObject, indent + 4);
+                exportModelHierarchy(tr.gameObject, builder, indent + 4);
             }
         }
 

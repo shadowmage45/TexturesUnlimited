@@ -458,7 +458,7 @@ namespace KSPShaderTools
                             Material mat2 = itr.material;//use .material to force non-shared material instances
                             if (mat2 == null) { continue; }
                             mat2.shader = iconShader;
-                            itr.material = mat2;
+                            itr.material = mat2;//probably un-needed, but whatever
                             //TODO -- since these parts have already been mangled and had the stock icon shader applied
                             //  do any properties not present on stock parts need to be re-seated, or do they stay resident in
                             //  the material even if the current shader lacks the property?
