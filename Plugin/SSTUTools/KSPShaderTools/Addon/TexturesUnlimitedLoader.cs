@@ -431,15 +431,15 @@ namespace KSPShaderTools
                 Renderer[] ptrs = pt.GetComponentsInChildren<Renderer>();
                 foreach (Renderer partRenderer in ptrs)
                 {
-                    Material mat = partRenderer.sharedMaterial;
-                    if (mat == null || partRenderer.sharedMaterial.shader == null)
+                    Material originalMeshMaterial = partRenderer.sharedMaterial;
+                    if (originalMeshMaterial == null || partRenderer.sharedMaterial.shader == null)
                     {
-                        if (mat == null) { MonoBehaviour.print("ERROR: Null material found on renderer: " + partRenderer.gameObject.name); }
-                        else if (mat.shader == null) { MonoBehaviour.print("ERROR: Null shader found on renderer: " + partRenderer.gameObject.name); }
+                        if (originalMeshMaterial == null) { MonoBehaviour.print("ERROR: Null material found on renderer: " + partRenderer.gameObject.name); }
+                        else if (originalMeshMaterial.shader == null) { MonoBehaviour.print("ERROR: Null shader found on renderer: " + partRenderer.gameObject.name); }
                         continue;
                     }
                     //part transform shader name
-                    string materialShaderName = mat.shader.name;
+                    string materialShaderName = originalMeshMaterial.shader.name;
                     if (!string.IsNullOrEmpty(materialShaderName) && iconShaders.ContainsKey(materialShaderName))//is a shader that we care about
                     {
                         iconShader = iconShaders[materialShaderName].iconShader;
@@ -450,15 +450,15 @@ namespace KSPShaderTools
                         }
                         //transforms in the icon prefab
                         //adjust the materials on these to use the specified shader from config
-                        Transform[] ictrs = p.iconPrefab.gameObject.transform.FindChildren(partRenderer.name);//find transforms from icon with same name
-                        foreach (Transform ictr in ictrs)
+                        Transform[] iconPrefabTransforms = p.iconPrefab.gameObject.transform.FindChildren(partRenderer.name);//find transforms from icon with same name
+                        foreach (Transform ictr in iconPrefabTransforms)
                         {
                             Renderer itr = ictr.GetComponent<Renderer>();
                             if (itr == null) { continue; }
-                            Material mat2 = itr.sharedMaterial;
+                            Material mat2 = itr.material;//use .material to force non-shared material instances
                             if (mat2 == null) { continue; }
                             mat2.shader = iconShader;
-                            itr.sharedMaterial = mat2;
+                            itr.material = mat2;
                             //TODO -- since these parts have already been mangled and had the stock icon shader applied
                             //  do any properties not present on stock parts need to be re-seated, or do they stay resident in
                             //  the material even if the current shader lacks the property?
