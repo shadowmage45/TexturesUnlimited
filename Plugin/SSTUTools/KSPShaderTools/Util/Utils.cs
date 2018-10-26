@@ -994,27 +994,55 @@ namespace KSPShaderTools
             int len = allGos.Length;
             for (int i = 0; i < len; i++)
             {
-                GameObject go = allGos[i];
+                GameObject go = allGos[i];                
                 if (go != null)
                 {
-                    string output = 
-                          "Game Object: " + go.name +
-                        "\n   position: " + go.transform.position +
-                        "\n   scale   : " + go.transform.localScale +
-                        "\n   rotation: " + go.transform.rotation +
-                        "\n   layer   : " + go.layer +
-                        "\n   active  : " + go.activeSelf;
-                    Renderer rend = go.GetComponent<Renderer>();
-                    Material mat;
-                    if(rend!=null && (mat = rend.material)!= null)
+                    if (go.transform.parent != null)//skip any non-root game-objects in this iteration
                     {
-                        output += "\n   Material Data: " + mat.name + 
-                                  "\n         shader : " + mat.shader.name + 
-                                  "\n         mainTex: " + mat.mainTexture.name+
-                                  "\n         bumpTex: " + mat.GetTexture("_BumpMap");
+                        continue;
                     }
-                    MonoBehaviour.print(output);
+                    exportModelHierarchy(go);
                 }
+            }
+        }
+
+        public static void exportModelHierarchy(GameObject current)
+        {
+            exportModelHierarchy(current, 0);
+        }
+
+        private static void exportModelHierarchy(GameObject current, int indent)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append(' ', indent);
+            builder.AppendLine("Game Object: " + current.name);
+            builder.Append(' ', indent + 3);
+            builder.AppendLine("parent  : " + current.transform.parent);
+            builder.Append(' ', indent+3);
+            builder.AppendLine("position: " + current.transform.position);
+            builder.Append(' ', indent+3);
+            builder.AppendLine("scale   : " + current.transform.localScale);
+            builder.Append(' ', indent+3);
+            builder.AppendLine("rotation: " + current.transform.rotation);
+            builder.Append(' ', indent+3);
+            builder.AppendLine("layer   : " + current.layer);
+            builder.Append(' ', indent+3);
+            builder.AppendLine("active  : " + current.activeSelf);
+            Renderer rend = current.GetComponent<Renderer>();
+            Material mat;
+            if (rend != null && (mat = rend.material) != null)
+            {
+                builder.Append(' ', indent + 3);
+                builder.AppendLine("Material Data: " + mat.name);
+                builder.Append(' ', indent + 9);
+                builder.AppendLine("shader : " + mat.shader.name);
+                builder.Append(' ', indent + 9);
+                builder.AppendLine("mainTex: " + mat.mainTexture.name);
+            }
+            MonoBehaviour.print(builder.ToString());
+            foreach (Transform tr in current.transform)
+            {
+                exportModelHierarchy(tr.gameObject, indent + 4);
             }
         }
 
