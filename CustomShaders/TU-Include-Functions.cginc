@@ -90,7 +90,8 @@ inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glo
 	//luminance of the original texture -- used for details in masked portions
 	fixed luminance = Luminance(diffuseSample);
 	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;	
-	return saturate(userSelectedColor + diffuseSample * mixFactor + detailColor);
+	detailColor += 1;
+	return saturate(userSelectedColor * detailColor + diffuseSample * mixFactor);
 }
 
 inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed user1, fixed user2, fixed user3)
@@ -98,7 +99,8 @@ inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed
 	fixed mixFactor = getMaskMix(maskSample);
 	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
 	fixed detail = (sample1 - norm) * (1 - mixFactor);
-	return saturate(userSelectedValue + detail + sample1 * mixFactor);
+	detail += 1;
+	return saturate(userSelectedValue * detail + sample1 * mixFactor);
 }
 
 inline fixed3 recolorTinting(fixed3 diffuseSample, fixed3 maskSample, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
