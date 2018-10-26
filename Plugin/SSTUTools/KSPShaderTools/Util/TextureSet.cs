@@ -339,8 +339,10 @@ namespace KSPShaderTools
         internal static void fillEmptyStockTextureSlots(Material material)
         {
             fillEmptyTextureSlot(material, "_MainTex", "0,0,0,255");
-            fillEmptyTextureSlot(material, "_BumpMap", "127, 127, 127, 127");
+            fillEmptyTextureSlot(material, "_BumpMap", "128, 128, 128, 128");
             fillEmptyTextureSlot(material, "_Emissive", "0,0,0,0");
+            fillEmptyTextureSlot(material, "_MetallicGlossMap", "255,255,255,255");
+            fillEmptyTextureSlot(material, "_SpecGlossMap", "255,255,255,255");
         }
 
         internal static void fillEmptyTextureSlot(Material mat, string slot, string textureColor)

@@ -1035,16 +1035,40 @@ namespace KSPShaderTools
             if (rend != null && (mat = rend.material) != null)
             {
                 builder.Append(' ', indent + 3);
-                builder.AppendLine("Material Data: " + mat.name);
-                builder.Append(' ', indent + 9);
-                builder.AppendLine("shader : " + mat.shader.name);
-                builder.Append(' ', indent + 9);
-                builder.AppendLine("mainTex: " + mat.mainTexture.name);
+                builder.AppendLine("Material Data : " + mat.name);
+                Shader s = mat.shader;
+                if (s != null)
+                {
+                    builder.Append(' ', indent + 7);
+                    builder.AppendLine("shader  : " + mat.shader.name);
+                    builder.Append(' ', indent + 7);
+                    builder.AppendLine("_MainTex: " + getTexShaderProperty(mat, "_MainTex"));
+                    builder.Append(' ', indent + 7);
+                    builder.AppendLine("_BumpMap: " + getTexShaderProperty(mat, "_BumpMap"));
+                    builder.Append(' ', indent + 7);
+                    builder.AppendLine("_Smooth.: " + getFloatShaderProperty(mat, "_Smoothness"));
+                    builder.Append(' ', indent + 7);
+                    builder.AppendLine("_Shinin.: " + getFloatShaderProperty(mat, "_Shininess"));
+                    builder.Append(' ', indent + 7);
+                    builder.AppendLine("_Metal  : " + getFloatShaderProperty(mat, "_Metal"));
+                }
             }
             foreach (Transform tr in current.transform)
             {
-                exportModelHierarchy(tr.gameObject, builder, indent + 4);
+                exportModelHierarchy(tr.gameObject, builder, indent + 3);
             }
+        }
+
+        private static string getFloatShaderProperty(Material m, string prop)
+        {
+            if (m.HasProperty(prop)) { return m.GetFloat(prop).ToString(); }
+            return string.Empty;
+        }
+
+        private static string getTexShaderProperty(Material m, string prop)
+        {
+            if (m.HasProperty(prop)) { return "" + m.GetTexture(prop); }
+            return string.Empty;
         }
 
         public static void dumpCameraData()

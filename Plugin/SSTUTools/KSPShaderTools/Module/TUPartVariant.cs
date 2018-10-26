@@ -187,7 +187,7 @@ namespace KSPShaderTools
         }
 
         private void applyConfig(Transform root, TextureSet set, bool useSetColors, bool useIconShaders = false)
-        {            
+        {
             RecoloringData[] colors = useSetColors? set.maskColors : customColors;
             if (useSetColors)
             {
