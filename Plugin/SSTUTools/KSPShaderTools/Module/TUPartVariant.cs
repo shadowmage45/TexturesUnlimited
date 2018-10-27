@@ -37,6 +37,7 @@ namespace KSPShaderTools
             base.OnLoad(node);
             loadPersistentData(persistentData);
             init();
+            MonoBehaviour.print("TUPartVariant OnLoad");
         }
 
         public override void OnSave(ConfigNode node)
@@ -49,6 +50,13 @@ namespace KSPShaderTools
         {
             base.OnStart(state);
             init();
+            MonoBehaviour.print("TUPartVariant OnStart");
+        }
+
+        public override string GetInfo()
+        {
+            MonoBehaviour.print("TUPartVariant GetInfo()");
+            return base.GetInfo();
         }
 
         private void init()
@@ -92,6 +100,12 @@ namespace KSPShaderTools
             {
                 MonoBehaviour.print("ERROR: TUPartVariant could not locate default or stored texture set data");
             }
+            ModulePartVariants mpv = part.GetComponent<ModulePartVariants>();
+            if (mpv != null)
+            {
+                MonoBehaviour.print("Clearing stock PartVariant materials list");
+                mpv.variantList.ForEach(m => m.Materials.Clear());//too lazy, using linq for prototype
+            }
         }
 
         public void OnDestroy()
@@ -110,6 +124,7 @@ namespace KSPShaderTools
             if (set != null)
             {
                 applyConfig(part.transform.FindRecursive("model"), set, true);
+                variant.Materials.Clear();//don't let variants manage materials, at all
             }
             else
             {
@@ -125,6 +140,7 @@ namespace KSPShaderTools
             if (set != null)
             {
                 applyConfig(part.transform.FindRecursive("model"), set, true);
+                variant.Materials.Clear();//don't let variants manage materials, at all
             }
             else
             {
@@ -141,6 +157,7 @@ namespace KSPShaderTools
             {
                 applyConfig(part.partPrefab.transform.FindRecursive("model"), set, true);
                 applyConfig(part.iconPrefab.transform.FindRecursive("model"), set, true, true);
+                variant.Materials.Clear();//don't let variants manage materials, at all
             }
             else
             {
