@@ -217,13 +217,8 @@ namespace KSPShaderTools
 
         public ShaderPropertyColor(string line) : base(line)
         {
-            string[] vals = line.Split(',');
-            float r, g, b, a;
-            r = Utils.safeParseFloat(vals[1]);
-            g = Utils.safeParseFloat(vals[2]);
-            b = Utils.safeParseFloat(vals[3]);
-            a = vals.Length >= 5 ? Utils.safeParseFloat(vals[4]) : 1f;
-            this.color = new Color(r, g, b, a);
+            string val = line.Substring(line.IndexOf(',') + 1);
+            this.color = Utils.parseColor(val);
         }
 
         public ShaderPropertyColor(string name, Color color) : base(name)

@@ -463,9 +463,13 @@ namespace KSPShaderTools
                             }
                             //can't just swap shaders, does some weird stuff with properties??
                             mat2.shader = iconShader;
-                            mat2.CopyPropertiesFromMaterial(originalMeshMaterial);
+                            //mat2.CopyPropertiesFromMaterial(originalMeshMaterial);
                             //mat2.CopyKeywordsFrom(originalMeshMaterial);
                             itr.material = mat2;//probably un-needed, but whatever
+                            if (originalMeshMaterial.HasProperty("_Shininess") && mat2.HasProperty("_Smoothness"))
+                            {
+                                mat2.SetFloat("_Smoothness", originalMeshMaterial.GetFloat("_Shininess"));
+                            }
                             if (logReplacements)
                             {
                                 MonoBehaviour.print("POST:\n"+ Debug.getMaterialPropertiesDebug(mat2));
