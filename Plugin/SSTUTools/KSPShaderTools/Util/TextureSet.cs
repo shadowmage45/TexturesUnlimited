@@ -449,10 +449,6 @@ namespace KSPShaderTools
         /// <param name="material"></param>
         public void apply(Material material, bool isIcon = false)
         {
-            if (TexturesUnlimitedLoader.logReplacements)
-            {
-                MonoBehaviour.print("Updating Material: " + material+"--------------------------------");
-            }
             if (isIcon)
             {
                 material.shader = TexturesUnlimitedLoader.iconShaders[shader].iconShader;

@@ -220,7 +220,7 @@ namespace BaseMapCreation
                         if (maskColor.R > 0 || maskColor.G > 0 || maskColor.B > 0)
                         {
                             imageColor = inputTexture.GetPixel(x, y);
-                            luminosity = (int)(imageColor.GetBrightness() * 255);
+                            luminosity = getLuminosity(imageColor);// (int)(imageColor.GetBrightness() * 255);
                             if (maskColor.R > 0)
                             {
                                 sampleCountR++;
@@ -245,6 +245,14 @@ namespace BaseMapCreation
                         }
                     }
                 }
+            }
+
+            private int getLuminosity(Color color)
+            {
+                float r = color.R * 255;
+                float g = color.G * 255;
+                float b = color.B * 255;
+                return (int)((r * 0.22f + g * 0.707f + b * 0.071f)/255);
             }
 
             public void writeOutputs(DirectBitmap map)

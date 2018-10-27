@@ -39,10 +39,10 @@ namespace KSPShaderTools
                 getPropertyVector(mat, "_MaskColor2", builder, indent);
                 getPropertyVector(mat, "_MaskColor3", builder, indent);
                 getPropertyVector(mat, "_MaskMetallic", builder, indent);
-                getPropertyVector(mat, "_DiffuseMask", builder, indent);
-                getPropertyVector(mat, "_SmoothnessMask", builder, indent);
-                getPropertyVector(mat, "_MetalMask", builder, indent);
-                getPropertyVector(mat, "_SpecularMask", builder, indent);
+                getPropertyVector(mat, "_DiffuseNorm", builder, indent);
+                getPropertyVector(mat, "_SmoothnessNorm", builder, indent);
+                getPropertyVector(mat, "_MetalNorm", builder, indent);
+                getPropertyVector(mat, "_SpecularNorm", builder, indent);
                 foreach (string keyword in mat.shaderKeywords)
                 {
                     getPropertyKeyword(mat, keyword, builder, indent);

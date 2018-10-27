@@ -26,9 +26,11 @@ namespace KSPShaderTools
         public string persistentData = string.Empty;
 
         //if setup to interact with stock fairing module
-        [KSPField(isPersistant = true)]
+        [KSPField]
         public bool stockFairing = false;
-
+        
+        //might work.. its a basic struct...
+        [SerializeField]
         private RecoloringData[] customColors;
         private bool initialized = false;
 
@@ -44,6 +46,7 @@ namespace KSPShaderTools
         {
             base.OnSave(node);
             saveColors(customColors);
+            node.SetValue(nameof(persistentData), persistentData, true);
         }
 
         public override void OnStart(StartState state)
@@ -51,6 +54,15 @@ namespace KSPShaderTools
             base.OnStart(state);
             init();
             MonoBehaviour.print("TUPartVariant OnStart");
+        }
+
+        public void Start()
+        {
+            //if fairing..apply texture-set?
+            if (stockFairing)
+            {
+
+            }
         }
 
         public override string GetInfo()
@@ -264,9 +276,12 @@ namespace KSPShaderTools
 
         public void setSectionColors(string name, RecoloringData[] colors)
         {
-            customColors = colors;
-            saveColors(customColors);
-            applyConfig(part.transform.FindRecursive("model"), getSet(), false, false);            
+            this.actionWithSymmetry(m =>
+            {
+                m.customColors = colors;
+                m.saveColors(customColors);
+                m.applyConfig(part.transform.FindRecursive("model"), getSet(), false, false);
+            });
         }
         
         private void loadPersistentData(string data)

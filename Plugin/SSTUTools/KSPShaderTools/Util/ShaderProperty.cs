@@ -456,6 +456,7 @@ namespace KSPShaderTools
             if (splitVals.Length > 2) { y = Utils.safeParseFloat(splitVals[2]); }
             if (splitVals.Length > 3) { z = Utils.safeParseFloat(splitVals[3]); }
             if (splitVals.Length > 4) { w = Utils.safeParseFloat(splitVals[4]); }
+            vector = new Vector4(x, y, z, w);
         }
 
         protected override void applyInternal(Material mat)
