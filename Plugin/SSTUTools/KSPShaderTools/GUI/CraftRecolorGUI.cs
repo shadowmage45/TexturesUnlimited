@@ -28,6 +28,8 @@ namespace KSPShaderTools
         private static RecoloringData[] storedPattern;
         private static RecoloringData storedColor;
 
+        private static bool scrollLock = false;
+
         public static Part openPart;
 
         public void Awake()
@@ -76,6 +78,7 @@ namespace KSPShaderTools
             sectionData = null;
             openPart = null;
             InputLockManager.RemoveControlLock("SSTURecolorGUILock");
+            InputLockManager.RemoveControlLock("SSTURecolorGUILock2");
             colorIndex = -1;
             moduleIndex = -1;
             sectionIndex = -1;
@@ -182,6 +185,13 @@ namespace KSPShaderTools
 
         private void drawWindow(int id)
         {
+            bool lockedScroll = false;
+            if (windowRect.Contains(new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y)))
+            {
+                lockedScroll = true;
+                scrollLock = true;
+                InputLockManager.SetControlLock(ControlTypes.CAMERACONTROLS, "SSTURecolorGUILock2");
+            }
             GUILayout.BeginVertical();
             drawSectionSelectionArea();
             drawSectionRecoloringArea();
@@ -192,6 +202,10 @@ namespace KSPShaderTools
             }
             GUILayout.EndVertical();
             GUI.DragWindow();
+            if (!lockedScroll && scrollLock)
+            {
+                InputLockManager.RemoveControlLock("SSTURecolorGUILock2");
+            }
         }
 
         private void setupSectionData(SectionRecolorData section, int colorIndex)
