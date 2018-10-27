@@ -456,8 +456,20 @@ namespace KSPShaderTools
                             if (itr == null) { continue; }
                             Material mat2 = itr.material;//use .material to force non-shared material instances
                             if (mat2 == null) { continue; }
+                            if (logReplacements)
+                            {
+                                MonoBehaviour.print("BASE:\n" + Debug.getMaterialPropertiesDebug(originalMeshMaterial));
+                                MonoBehaviour.print("PRE :\n" + Debug.getMaterialPropertiesDebug(mat2));
+                            }
+                            //can't just swap shaders, does some weird stuff with properties??
                             mat2.shader = iconShader;
+                            mat2.CopyPropertiesFromMaterial(originalMeshMaterial);
+                            //mat2.CopyKeywordsFrom(originalMeshMaterial);
                             itr.material = mat2;//probably un-needed, but whatever
+                            if (logReplacements)
+                            {
+                                MonoBehaviour.print("POST:\n"+ Debug.getMaterialPropertiesDebug(mat2));
+                            }
                             //TODO -- since these parts have already been mangled and had the stock icon shader applied
                             //  do any properties not present on stock parts need to be re-seated, or do they stay resident in
                             //  the material even if the current shader lacks the property?

@@ -19,6 +19,8 @@ namespace KSPShaderTools
             {
                 builder.Append(' ', indent + 7);
                 builder.AppendLine("shader  : " + mat.shader.name);
+                builder.Append(' ', indent + 7);
+                builder.AppendLine("renderQ : " + mat.renderQueue);
                 getPropertyTexture(mat, "_MainTex", builder, indent);
                 getPropertyTexture(mat, "_BumpMap", builder, indent);
                 getPropertyTexture(mat, "_MetallicGlossMap", builder, indent);
@@ -41,6 +43,10 @@ namespace KSPShaderTools
                 getPropertyVector(mat, "_SmoothnessMask", builder, indent);
                 getPropertyVector(mat, "_MetalMask", builder, indent);
                 getPropertyVector(mat, "_SpecularMask", builder, indent);
+                foreach (string keyword in mat.shaderKeywords)
+                {
+                    getPropertyKeyword(mat, keyword, builder, indent);
+                }
             }
             return builder.ToString();
         }
@@ -71,6 +77,15 @@ namespace KSPShaderTools
                 builder.AppendLine(prop + " : " + m.GetVector(prop));
             }
         }
-        
+
+        private static void getPropertyKeyword(Material m, string prop, StringBuilder builder, int indent)
+        {
+            if (m.shaderKeywords.Contains(prop))
+            {
+                builder.Append(' ', indent + 7);
+                builder.AppendLine(prop + " : " + m.IsKeywordEnabled(prop));
+            }
+        }
+
     }
 }
