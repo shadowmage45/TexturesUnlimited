@@ -115,8 +115,18 @@ namespace KSPShaderTools
             ModulePartVariants mpv = part.GetComponent<ModulePartVariants>();
             if (mpv != null)
             {
-                MonoBehaviour.print("Clearing stock PartVariant materials list");
-                mpv.variantList.ForEach(m => m.Materials.Clear());//too lazy, using linq for prototype
+                mpv.variantList.ForEach(m => 
+                {
+                    if (string.IsNullOrEmpty(m.GetExtraInfoValue("textureSet")) && string.IsNullOrEmpty(m.GetExtraInfoValue("modelShader")))
+                    {
+                        //noop   
+                    }
+                    else
+                    {
+                        MonoBehaviour.print("Clearing stock PartVariant materials list");
+                        m.Materials.Clear();
+                    }
+                });
             }
         }
 
@@ -140,6 +150,8 @@ namespace KSPShaderTools
             }
             else
             {
+                textureSet = string.Empty;
+                modelShaderSet = string.Empty;
                 MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
             }
         }
@@ -156,6 +168,8 @@ namespace KSPShaderTools
             }
             else
             {
+                textureSet = string.Empty;
+                modelShaderSet = string.Empty;
                 MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
             }
         }
@@ -173,6 +187,8 @@ namespace KSPShaderTools
             }
             else
             {
+                textureSet = string.Empty;
+                modelShaderSet = string.Empty;
                 MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
             }
         }
