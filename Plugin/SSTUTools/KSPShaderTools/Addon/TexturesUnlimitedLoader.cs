@@ -242,7 +242,6 @@ namespace KSPShaderTools
                     }
                     else
                     {
-                        MonoBehaviour.print("Adding shader to shader map: " + shader.name);
                         shaderDict.Add(shader.name, shader);
                     }
                     GameDatabase.Instance.databaseShaders.AddUnique(shader);
@@ -599,6 +598,7 @@ namespace KSPShaderTools
                     pixelData[i] = c;
                 }
                 tex = new Texture2D(64, 64, TextureFormat.ARGB32, false);
+                tex.name = "TUTextureColor:" + rgbaString;
                 tex.SetPixels(pixelData);
                 tex.Apply(false, true);
                 textureColors.Add(rgbaString, tex);

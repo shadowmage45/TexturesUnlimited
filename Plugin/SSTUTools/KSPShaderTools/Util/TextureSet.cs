@@ -343,6 +343,7 @@ namespace KSPShaderTools
             fillEmptyTextureSlot(material, "_Emissive", "0,0,0,0");
             fillEmptyTextureSlot(material, "_MetallicGlossMap", "255,255,255,255");
             fillEmptyTextureSlot(material, "_SpecGlossMap", "255,255,255,255");
+            fillEmptyTextureSlot(material, "_MaskTex", "255,0,0,255");
         }
 
         internal static void fillEmptyTextureSlot(Material mat, string slot, string textureColor)
@@ -448,6 +449,10 @@ namespace KSPShaderTools
         /// <param name="material"></param>
         public void apply(Material material, bool isIcon = false)
         {
+            if (TexturesUnlimitedLoader.logReplacements)
+            {
+                MonoBehaviour.print("Updating Material: " + material+"--------------------------------");
+            }
             if (isIcon)
             {
                 material.shader = TexturesUnlimitedLoader.iconShaders[shader].iconShader;
@@ -455,12 +460,16 @@ namespace KSPShaderTools
             else
             {
                 material.shader = TexturesUnlimitedLoader.getShader(shader);
-            }            
+            }
             TextureSet.updateMaterialProperties(material, shaderProperties);
             TextureSet.fillEmptyStockTextureSlots(material);
             material.renderQueue = renderQueue;
             material.mainTextureOffset = textureOffset;
             material.mainTextureScale = textureScale;
+            if (TexturesUnlimitedLoader.logReplacements)
+            {
+                MonoBehaviour.print("Updated material properties\n" + Debug.getMaterialPropertiesDebug(material));
+            }
         }
 
         /// <summary>
