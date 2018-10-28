@@ -112,22 +112,22 @@ namespace KSPShaderTools
             {
                 MonoBehaviour.print("ERROR: TUPartVariant could not locate default or stored texture set data");
             }
-            ModulePartVariants mpv = part.GetComponent<ModulePartVariants>();
-            if (mpv != null)
-            {
-                mpv.variantList.ForEach(m => 
-                {
-                    if (string.IsNullOrEmpty(m.GetExtraInfoValue("textureSet")) && string.IsNullOrEmpty(m.GetExtraInfoValue("modelShader")))
-                    {
-                        //noop   
-                    }
-                    else
-                    {
-                        MonoBehaviour.print("Clearing stock PartVariant materials list");
-                        m.Materials.Clear();
-                    }
-                });
-            }
+            //ModulePartVariants mpv = part.GetComponent<ModulePartVariants>();
+            //if (mpv != null)
+            //{
+            //    mpv.variantList.ForEach(m => 
+            //    {
+            //        if (string.IsNullOrEmpty(m.GetExtraInfoValue("textureSet")) && string.IsNullOrEmpty(m.GetExtraInfoValue("modelShader")))
+            //        {
+            //            //noop   
+            //        }
+            //        else
+            //        {
+            //            MonoBehaviour.print("Clearing stock PartVariant materials list");
+            //            m.Materials.Clear();
+            //        }
+            //    });
+            //}
         }
 
         public void OnDestroy()
