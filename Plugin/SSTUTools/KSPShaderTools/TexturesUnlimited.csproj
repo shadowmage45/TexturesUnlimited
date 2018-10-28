@@ -81,10 +81,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Addon\ReflectionManager2.cs" />
     <Compile Include="GUI\CraftRecolorGUI.cs" />
     <Compile Include="GUI\GraphicsAPIGUI.cs" />
-    <Compile Include="Module\KSPFairingShader.cs" />
     <Compile Include="Module\TUPartVariant.cs" />
     <Compile Include="Util\Debug.cs" />
     <Compile Include="Util\IRecolorable.cs" />

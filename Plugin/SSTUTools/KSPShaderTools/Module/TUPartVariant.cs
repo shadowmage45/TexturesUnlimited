@@ -29,8 +29,6 @@ namespace KSPShaderTools
         [KSPField]
         public bool stockFairing = false;
         
-        //might work.. its a basic struct...
-        [SerializeField]
         private RecoloringData[] customColors;
         private bool initialized = false;
 
@@ -177,20 +175,20 @@ namespace KSPShaderTools
         private void editorDefaultVariantApplied(AvailablePart part, PartVariant variant)
         {
             //TODO -- how to tell if it was -this- part?
-            MonoBehaviour.print("EditorDefaultVariant applied: " + variant.Name);
-            TextureSet set = getSet(variant);
-            if (set != null)
-            {
-                applyConfig(part.partPrefab.transform.FindRecursive("model"), set, true);
-                applyConfig(part.iconPrefab.transform.FindRecursive("model"), set, true, true);
-                variant.Materials.Clear();//don't let variants manage materials, at all
-            }
-            else
-            {
-                textureSet = string.Empty;
-                modelShaderSet = string.Empty;
-                MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
-            }
+            //MonoBehaviour.print("EditorDefaultVariant applied: " + variant.Name);
+            //TextureSet set = getSet(variant);
+            //if (set != null)
+            //{
+            //    applyConfig(part.partPrefab.transform.FindRecursive("model"), set, true);
+            //    applyConfig(part.iconPrefab.transform.FindRecursive("model"), set, true, true);
+            //    variant.Materials.Clear();//don't let variants manage materials, at all
+            //}
+            //else
+            //{
+            //    textureSet = string.Empty;
+            //    modelShaderSet = string.Empty;
+            //    MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
+            //}
         }
 
         private TextureSet getSet(PartVariant variant)
