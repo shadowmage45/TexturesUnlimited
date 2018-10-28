@@ -8,9 +8,11 @@ using System.IO;
 
 namespace SSTUTools
 {
+
     [DatabaseLoaderAttrib((new string[] { "kbm" }))]
-    public class SMFBundleDefinitionReader : DatabaseLoader<GameObject>
+    public class AssetBundleModelLoader : DatabaseLoader<GameObject>
     {
+
         public override IEnumerator Load(UrlDir.UrlFile urlFile, FileInfo file)
         {
             // KSP-PartTools built AssetBunldes are in the Web format, 
