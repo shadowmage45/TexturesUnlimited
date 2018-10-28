@@ -21,6 +21,9 @@ namespace KSPShaderTools
         [KSPField(isPersistant = true)]
         public string modelShaderSet = string.Empty;
 
+        [KSPField(isPersistant = true)]
+        public string variantName = string.Empty;
+
         //persistent color data
         [KSPField(isPersistant = true)]
         public string persistentData = string.Empty;
@@ -30,12 +33,12 @@ namespace KSPShaderTools
         public bool stockFairing = false;
         
         private RecoloringData[] customColors;
+
         private bool initialized = false;
 
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
-            loadPersistentData(persistentData);
             init();
             MonoBehaviour.print("TUPartVariant OnLoad");
         }
@@ -73,10 +76,7 @@ namespace KSPShaderTools
         {
             if (initialized) { return; }
             initialized = true;
-            if (customColors == null)
-            {
-                customColors = new RecoloringData[3];
-            }
+            loadPersistentData(persistentData);
             if (applied == null)
             {
                 //TODO only subscribe based on scene?
@@ -110,22 +110,6 @@ namespace KSPShaderTools
             {
                 MonoBehaviour.print("ERROR: TUPartVariant could not locate default or stored texture set data");
             }
-            //ModulePartVariants mpv = part.GetComponent<ModulePartVariants>();
-            //if (mpv != null)
-            //{
-            //    mpv.variantList.ForEach(m => 
-            //    {
-            //        if (string.IsNullOrEmpty(m.GetExtraInfoValue("textureSet")) && string.IsNullOrEmpty(m.GetExtraInfoValue("modelShader")))
-            //        {
-            //            //noop   
-            //        }
-            //        else
-            //        {
-            //            MonoBehaviour.print("Clearing stock PartVariant materials list");
-            //            m.Materials.Clear();
-            //        }
-            //    });
-            //}
         }
 
         public void OnDestroy()
@@ -139,17 +123,16 @@ namespace KSPShaderTools
         private void variantApplied(Part part, PartVariant variant)
         {
             if (part != this.part) { return; }
+            bool resetColors = variant.Name!=variantName;
+            variantName = variant.Name;            
             MonoBehaviour.print("Variant applied: " + variant.Name);
             TextureSet set = getSet(variant);
             if (set != null)
             {
-                applyConfig(part.transform.FindRecursive("model"), set, true);
-                variant.Materials.Clear();//don't let variants manage materials, at all
+                applyConfig(part.transform.FindRecursive("model"), set, resetColors);
             }
             else
             {
-                textureSet = string.Empty;
-                modelShaderSet = string.Empty;
                 MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
             }
         }
@@ -157,17 +140,16 @@ namespace KSPShaderTools
         private void editorVariantApplied(Part part, PartVariant variant)
         {
             if (part != this.part) { return; }
+            bool resetColors = variant.Name != variantName;
+            variantName = variant.Name;
             MonoBehaviour.print("EditorVariant applied: " + variant.Name);
             TextureSet set = getSet(variant);
             if (set != null)
             {
-                applyConfig(part.transform.FindRecursive("model"), set, true);
-                variant.Materials.Clear();//don't let variants manage materials, at all
+                applyConfig(part.transform.FindRecursive("model"), set, resetColors);
             }
             else
             {
-                textureSet = string.Empty;
-                modelShaderSet = string.Empty;
                 MonoBehaviour.print("ERROR: Set was null for variant: " + variant.Name);
             }
         }
@@ -210,27 +192,36 @@ namespace KSPShaderTools
                 textureSet = string.Empty;
                 return set;
             }
+            //if nothing found, clear out references
+            modelShaderSet = textureSet = string.Empty;
             return null;
         }
 
         private TextureSet getSet()
         {
             TextureSet set = null;
-            if (!string.IsNullOrEmpty(textureSet) && (set = TexturesUnlimitedLoader.getTextureSet(textureSet))!=null)
+            if (!string.IsNullOrEmpty(textureSet) && (set = TexturesUnlimitedLoader.getTextureSet(textureSet)) != null)
             {
                 modelShaderSet = string.Empty;
                 return set;
             }
-            if (!string.IsNullOrEmpty(modelShaderSet) && (set = TexturesUnlimitedLoader.getModelShaderTextureSet(modelShaderSet)) !=null)
-            {                
+            else if (!string.IsNullOrEmpty(modelShaderSet) && (set = TexturesUnlimitedLoader.getModelShaderTextureSet(modelShaderSet)) != null)
+            {
                 textureSet = string.Empty;
                 return set;
             }
+            else if ((set=getSet(part.baseVariant))!=null)
+            {
+                return set;
+            }
+            //if nothing found, clear out references
+            modelShaderSet = textureSet = string.Empty;
             return null;
         }
 
         private void applyConfig(Transform root, TextureSet set, bool useSetColors, bool useIconShaders = false)
         {
+            if (set == null) { return; }
             RecoloringData[] colors = useSetColors? set.maskColors : customColors;
             if (useSetColors)
             {
@@ -290,11 +281,12 @@ namespace KSPShaderTools
 
         public void setSectionColors(string name, RecoloringData[] colors)
         {
+            MonoBehaviour.print("Set section colors: " + name);
             this.actionWithSymmetry(m =>
             {
                 m.customColors = colors;
-                m.saveColors(customColors);
-                m.applyConfig(part.transform.FindRecursive("model"), getSet(), false, false);
+                m.saveColors(m.customColors);
+                m.applyConfig(m.part.transform.FindRecursive("model"), m.getSet(), false, false);
             });
         }
         
@@ -327,7 +319,8 @@ namespace KSPShaderTools
                 data = data + colors[i].getPersistentData();
             }
             persistentData = data;
+            MonoBehaviour.print("Saving custom color data: " + persistentData);
         }
-
+        
     }
 }
