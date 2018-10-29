@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 
 namespace TexturesUnlimitedTools
 {
+
     public static class ImageTools
     {
+
         public static Bitmap loadImage(string fileName)
         {
             Image image = Image.FromFile(fileName);
@@ -103,5 +108,58 @@ namespace TexturesUnlimitedTools
             return (byte)0;
         }
 
+        public static BitmapImage BitmapToBitmapImage(Bitmap bitmap)
+        {
+            if (bitmap == null) { return null; }
+            MemoryStream ms = new MemoryStream();
+            bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            System.Windows.Media.Imaging.BitmapImage bitmapImage = new System.Windows.Media.Imaging.BitmapImage();
+            bitmapImage.BeginInit();
+            bitmapImage.StreamSource = new MemoryStream(ms.ToArray());
+            bitmapImage.EndInit();
+            return bitmapImage;
+        }
+
+        public static void startWorker(DoWorkEventHandler work, ProgressChangedEventHandler update, RunWorkerCompletedEventHandler complete)
+        {
+            BackgroundWorker worker = new BackgroundWorker();            
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += work;
+            worker.ProgressChanged += update;
+            worker.RunWorkerCompleted += complete;
+            worker.RunWorkerAsync();
+        }
+
     }
+
+    public enum ImagePreviewSelection
+    {
+        SOURCE,
+        MASK,
+        NORM,
+        DIFF,
+        COLDIFF
+    }
+
+    public enum ImageChannelSelection
+    {
+        Image1_R,
+        Image1_B,
+        Image1_G,
+        Image1_A,
+        Image1_RGB,
+        Image2_R,
+        Image2_G,
+        Image2_B,
+        Image2_A,
+        Image2_RGB
+    }
+
+    public enum DDSFormat
+    {
+        DXT1 = 1,
+        DXT5 = 5,
+        DXT5nm = 6
+    }
+
 }

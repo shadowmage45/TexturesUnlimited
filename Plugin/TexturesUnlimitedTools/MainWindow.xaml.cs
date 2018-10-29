@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 
 namespace TexturesUnlimitedTools
 {
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -78,7 +79,8 @@ namespace TexturesUnlimitedTools
 
         private void TextureNormClick(object sender, RoutedEventArgs e)
         {
-
+            TextureBaseMapCreation window = new TextureBaseMapCreation();
+            window.ShowDialog();
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -94,27 +96,6 @@ namespace TexturesUnlimitedTools
             Application.Current.Shutdown();
         }
 
-    }
-
-    public enum ImageChannelSelection
-    {
-        Image1_R,
-        Image1_B,
-        Image1_G,
-        Image1_A,
-        Image1_RGB,
-        Image2_R,
-        Image2_G,
-        Image2_B,
-        Image2_A,
-        Image2_RGB
-    }
-
-    public enum DDSFormat
-    {
-        DXT1 = 1,
-        DXT5 = 5,
-        DXT5nm = 6
     }
 
     public class TextureConversionEntry : INotifyPropertyChanged

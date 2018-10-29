@@ -1,0 +1,14 @@
+﻿<Window x:Class="TexturesUnlimitedTools.ProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TexturesUnlimitedTools"
+        mc:Ignorable="d"
+        Title="Operation Progress" Height="110" Width="300"
+        >
+    <Grid>
+        <ProgressBar x:Name="ProgressBar" HorizontalAlignment="Stretch" Height="23" Margin="10,10,10,10" VerticalAlignment="Top" Width="Auto"/>
+        <Label x:Name="ProgressLabel" Content="Label" HorizontalAlignment="Stretch" Margin="10,38,10,10" VerticalAlignment="Top" Width="Auto" HorizontalContentAlignment="Center"/>
+    </Grid>
+</Window>
