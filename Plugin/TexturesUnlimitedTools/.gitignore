@@ -4,3 +4,5 @@ bin
 obj
 libs
 Properties
+!extTools/*.exe
+!nvdxt.exe

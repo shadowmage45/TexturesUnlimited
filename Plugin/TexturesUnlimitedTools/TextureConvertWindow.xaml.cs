@@ -1,5 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,12 +23,7 @@ namespace TexturesUnlimitedTools
 
         private void SelectImagesClick(object sender, RoutedEventArgs e)
         {
-            string img1 = ImageTools.openFileSelectDialog("Select a DDS image");
-            if (!img1.EndsWith(".dds", true, System.Globalization.CultureInfo.InvariantCulture))
-            {
-                System.Windows.MessageBox.Show("You must select a DDS texture");
-                return;
-            }
+            string img1 = ImageTools.openFileSelectDialog("Select a PNG image");
             TextureConversionEntry entry = new TextureConversionEntry();
             entry.ImageName = img1;
             MainWindow.instance.ConvertRecords.Add(entry);
@@ -38,12 +36,16 @@ namespace TexturesUnlimitedTools
             foreach (TextureConversionEntry entry in MainWindow.instance.ConvertRecords)
             {
                 string inputName = entry.ImageName;
-                string outputName = "output/" + inputName.Substring(inputName.LastIndexOf("/") + 1);//output/xxx.png
+                MessageBox.Show("Input name: " + inputName);
                 
+                string outputName = "output/" + inputName.Substring(inputName.LastIndexOf("\\") + 1);//output/xxx.png
+                MessageBox.Show("Output name: " + outputName);
+
+
                 outputName = outputName.Substring(0, outputName.Length - 3) + ".dds";
                 Process process = new Process();
-                process.StartInfo.FileName = "SSTUUtilDDS.exe";
-                process.StartInfo.Arguments = "\""+inputName+"\" \""+outputName+"\" 5";
+                process.StartInfo.FileName = "nvdxt.exe";
+                process.StartInfo.Arguments = getDDSCommand(inputName, outputName, 5);
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardOutput = false;
                 process.Start();
@@ -53,7 +55,21 @@ namespace TexturesUnlimitedTools
 
             MainWindow.instance.ConvertRecords.Clear();
         }
-               
+
+        private string getDDSCommand(string inputFile, string outputFile, int format)
+        {
+            StringBuilder builder = new StringBuilder();
+            //input file
+            builder.Append("-file \"").Append(inputFile + "\" ");
+            //output dir
+            builder.Append("-output \"").Append(outputFile+"\" ");
+            //filter mode
+            builder.Append("-Triangle ");
+            //output format
+            builder.Append("-dxt").Append(format);
+            MessageBox.Show("Command: " + builder.ToString());
+            return builder.ToString();
+        }
 
     }
 }
