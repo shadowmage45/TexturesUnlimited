@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-using Microsoft.WindowsAPICodePack.Dialogs;
+//using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace TexturesUnlimitedTools
 {
@@ -51,16 +51,16 @@ namespace TexturesUnlimitedTools
 
         public static string openDirectorySelectDialog(string title)
         {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.IsFolderPicker = true;
-            dialog.EnsurePathExists = true;
-            dialog.EnsureFileExists = true;
-            dialog.Multiselect = false;
-            dialog.Title = title;
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                return dialog.FileName;
-            }
+            //CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            //dialog.IsFolderPicker = true;
+            //dialog.EnsurePathExists = true;
+            //dialog.EnsureFileExists = true;
+            //dialog.Multiselect = false;
+            //dialog.Title = title;
+            //if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            //{
+            //    return dialog.FileName;
+            //}
             return "";
         }
 
