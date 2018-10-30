@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace TexturesUnlimitedTools
 {
@@ -19,6 +20,7 @@ namespace TexturesUnlimitedTools
             InitializeComponent();
             DataGridComboBoxColumn column = RecordGrid.Columns[1] as DataGridComboBoxColumn;
             column.ItemsSource = MainWindow.instance.DDSOptions;
+            column.SelectedValueBinding = new Binding("Format");
         }
 
         private void SelectImagesClick(object sender, RoutedEventArgs e)
@@ -31,12 +33,16 @@ namespace TexturesUnlimitedTools
 
         private void ConvertImagesClick(object sender, RoutedEventArgs e)
         {
-            Directory.CreateDirectory("output");
-            System.Windows.MessageBox.Show("All textures will be output to the /output folder");
+            string outputPath = "output/";
+            outputPath = ImageTools.openDirectorySelectDialog("Conversion Export Folder");
+            if (string.IsNullOrEmpty(outputPath) || !Directory.Exists(outputPath))
+            {
+                return;
+            }            
             foreach (TextureConversionEntry entry in MainWindow.instance.ConvertRecords)
             {
                 string inputName = entry.ImageName;                
-                string outputName = "output/" + inputName.Substring(inputName.LastIndexOf("\\") + 1);//output/xxx.png
+                string outputName = outputPath + "/" + inputName.Substring(inputName.LastIndexOf("\\") + 1);//output/xxx.png
                 outputName = outputName.Substring(0, outputName.Length - 3) + ".dds";
                 Process process = new Process();
                 process.StartInfo.FileName = "nvdxt.exe";

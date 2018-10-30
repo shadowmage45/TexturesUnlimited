@@ -102,7 +102,7 @@ namespace TexturesUnlimitedTools
     {
         public event PropertyChangedEventHandler PropertyChanged;
         string imageName;
-        DDSFormat format;
+        DDSFormat format = DDSFormat.DXT1;
 
         public string ImageName { get { return imageName; } set { imageName = value; propChanged(); } }
         public DDSFormat Format { get { return format; } set { format = value; propChanged(); } }

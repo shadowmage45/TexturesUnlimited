@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace TexturesUnlimitedTools
 {
@@ -46,6 +47,21 @@ namespace TexturesUnlimitedTools
             dialog.CheckFileExists = false;
             dialog.ShowDialog();
             return dialog.FileName;
+        }
+
+        public static string openDirectorySelectDialog(string title)
+        {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            dialog.EnsurePathExists = true;
+            dialog.EnsureFileExists = true;
+            dialog.Multiselect = false;
+            dialog.Title = title;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                return dialog.FileName;
+            }
+            return "";
         }
 
         public static byte getChannelSelection(Color color1, Color color2, ImageChannelSelection selection)
@@ -103,9 +119,60 @@ namespace TexturesUnlimitedTools
                 case ImageChannelSelection.Image2_RGB:
                     return (byte)((color1.R + color1.G + color1.B) / 3f);
                 default:
-                    break;
+                    return (byte)0;
             }
-            return (byte)0;
+        }
+
+        public static byte getChannelSelectionByte(Color color1, ChannelSelection selection)
+        {
+            switch (selection)
+            {
+                case ChannelSelection.R:
+                    return color1.R;
+                case ChannelSelection.G:
+                    return color1.G;
+                case ChannelSelection.B:
+                    return color1.B;
+                case ChannelSelection.A:
+                    return color1.A;
+                case ChannelSelection.RGB:
+                    {
+                        double r = color1.R, g = color1.G, b = color1.B;
+                        r /= 255;
+                        g /= 255;
+                        b /= 255;
+                        double lum = r * 0.22 + g * 0.707 + b * 0.071;
+                        return (byte)(lum * 255);
+                    }
+                default:
+                    return 0;
+            }
+        }
+
+        public static double getChannelSelection(Color color1, ChannelSelection selection)
+        {
+            switch (selection)
+            {
+                case ChannelSelection.R:
+                    return (double)color1.R / 255;
+                case ChannelSelection.G:
+                    return (double)color1.G / 255;
+                case ChannelSelection.B:
+                    return (double)color1.B / 255;
+                case ChannelSelection.A:
+                    return (double)color1.A / 255;
+                case ChannelSelection.RGB:
+                    {
+                        double r = color1.R, g = color1.G, b = color1.B;
+                        r /= 255;
+                        g /= 255;
+                        b /= 255;
+                        double lum = r * 0.22 + g * 0.707 + b * 0.071;
+                        return lum;
+                    }
+                default:
+                    return 0;
+            }
         }
 
         public static BitmapImage BitmapToBitmapImage(Bitmap bitmap)
@@ -134,11 +201,19 @@ namespace TexturesUnlimitedTools
 
     public enum ImagePreviewSelection
     {
-        SOURCE,
+        DIFFUSE,
+        AUX,
+        SMOOTH,
         MASK,
-        NORM,
-        DIFF,
-        COLDIFF
+        DIFFUSE_NORM,
+        AUX_NORM,
+        SMOOTH_NORM,
+        DIFFUSE_DIFFERENCE,
+        DIFFUSE_COLOR_DIFFERENCE,
+        AUX_DIFFERENCE,
+        AUX_COLOR_DIFFERENCE,
+        SMOOTH_DIFFERENCE,
+        SMOOTH_COLOR_DIFFERENCE
     }
 
     public enum ImageChannelSelection
@@ -153,6 +228,15 @@ namespace TexturesUnlimitedTools
         Image2_B,
         Image2_A,
         Image2_RGB
+    }
+
+    public enum ChannelSelection
+    {
+        R,
+        G,
+        B,
+        A,
+        RGB
     }
 
     public enum DDSFormat

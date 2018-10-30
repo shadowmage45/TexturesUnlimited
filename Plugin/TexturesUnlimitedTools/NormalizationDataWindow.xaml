@@ -1,0 +1,13 @@
+﻿<Window x:Class="TexturesUnlimitedTools.NormalizationDataWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TexturesUnlimitedTools"
+        mc:Ignorable="d"
+        Title="NormalizationDataWindow" Height="200" Width="640">
+    <Grid>
+        <Label Content="Normalization Data - Copy/paste into the MATERIAL block in your config file." Margin="10,10,10,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="NormTextBlock" Margin="10,41,10,10" TextWrapping="Wrap" Text="" IsReadOnly="True"/>
+    </Grid>
+</Window>
