@@ -35,24 +35,18 @@ namespace TexturesUnlimitedTools
             System.Windows.MessageBox.Show("All textures will be output to the /output folder");
             foreach (TextureConversionEntry entry in MainWindow.instance.ConvertRecords)
             {
-                string inputName = entry.ImageName;
-                MessageBox.Show("Input name: " + inputName);
-                
+                string inputName = entry.ImageName;                
                 string outputName = "output/" + inputName.Substring(inputName.LastIndexOf("\\") + 1);//output/xxx.png
-                MessageBox.Show("Output name: " + outputName);
-
-
                 outputName = outputName.Substring(0, outputName.Length - 3) + ".dds";
                 Process process = new Process();
                 process.StartInfo.FileName = "nvdxt.exe";
-                process.StartInfo.Arguments = getDDSCommand(inputName, outputName, 5);
+                process.StartInfo.Arguments = getDDSCommand(inputName, outputName, (int)entry.Format);
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardOutput = false;
                 process.Start();
                 process.WaitForExit();
                 process.Close();
             }
-
             MainWindow.instance.ConvertRecords.Clear();
         }
 
@@ -63,11 +57,16 @@ namespace TexturesUnlimitedTools
             builder.Append("-file \"").Append(inputFile + "\" ");
             //output dir
             builder.Append("-output \"").Append(outputFile+"\" ");
-            //filter mode
+            //filter mode - triangle; same as used by other ksp-related dds conversion utils; unsure what it does?
             builder.Append("-Triangle ");
+            //specify to flip images (hopefully this is on Y?)
+            builder.Append("-flip ");
+            //specify highest quality
+            builder.Append("-quality_highest ");
+            string formatString = format == 6 ? "5nm" : format.ToString();
             //output format
-            builder.Append("-dxt").Append(format);
-            MessageBox.Show("Command: " + builder.ToString());
+            builder.Append("-dxt").Append(formatString);
+            MessageBox.Show("NVDXT Command: " + builder.ToString());
             return builder.ToString();
         }
 
