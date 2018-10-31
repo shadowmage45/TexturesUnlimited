@@ -25,23 +25,23 @@ namespace TexturesUnlimitedTools
     {
 
         //raw bitmaps of input textures
-        Bitmap diffuseMap;//diffuse input
-        Bitmap auxMap;//metal/specular input
-        Bitmap smoothMap;//metal/specular input
-        Bitmap maskMap;//mask
+        DirectBitmap diffuseMap;//diffuse input
+        DirectBitmap auxMap;//metal/specular input
+        DirectBitmap smoothMap;//metal/specular input
+        DirectBitmap maskMap;//mask
 
         //raw bitmaps of generated/output textures
-        Bitmap diffuseNormMap;//diffuse normalization output
-        Bitmap diffuseDiffMap;//difference texture between input and output
-        Bitmap diffuseColDiffMap;//difference texture between input and output -- green = negative diff, red = positive diff
+        DirectBitmap diffuseNormMap;//diffuse normalization output
+        DirectBitmap diffuseDiffMap;//difference texture between input and output
+        DirectBitmap diffuseColDiffMap;//difference texture between input and output -- green = negative diff, red = positive diff
 
-        Bitmap auxNormMap;//diffuse normalization output
-        Bitmap auxDiffMap;//difference texture between input and output
-        Bitmap auxColDiffMap;//difference texture between input and output -- green = negative diff, red = positive diff
+        DirectBitmap auxNormMap;//diffuse normalization output
+        DirectBitmap auxDiffMap;//difference texture between input and output
+        DirectBitmap auxColDiffMap;//difference texture between input and output -- green = negative diff, red = positive diff
 
-        Bitmap smoothNormMap;//diffuse normalization output
-        Bitmap smoothDiffMap;//difference texture between input and output
-        Bitmap smoothColDiffMap;//difference texture between input and output -- green = negative diff, red = positive diff
+        DirectBitmap smoothNormMap;//diffuse normalization output
+        DirectBitmap smoothDiffMap;//difference texture between input and output
+        DirectBitmap smoothColDiffMap;//difference texture between input and output -- green = negative diff, red = positive diff
 
         //WPF BitmapImage equivalent Bitmap's that are above
         BitmapImage diffuseImage;
@@ -119,8 +119,8 @@ namespace TexturesUnlimitedTools
         {
             string img1 = ImageTools.openFileSelectDialog("Select a PNG base image");
             DiffFileBox.Text = img1;
-            diffuseMap = new Bitmap(System.Drawing.Image.FromFile(img1));
-            diffuseImage = ImageTools.BitmapToBitmapImage(diffuseMap);
+            diffuseMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img1)));
+            diffuseImage = ImageTools.BitmapToBitmapImage(diffuseMap.Bitmap);
             updatePreview();
         }
 
@@ -128,8 +128,8 @@ namespace TexturesUnlimitedTools
         {
             string img2 = ImageTools.openFileSelectDialog("Select a PNG base image");
             SpecFileBox.Text = img2;
-            auxMap = new Bitmap(System.Drawing.Image.FromFile(img2));
-            auxImage = ImageTools.BitmapToBitmapImage(auxMap);
+            auxMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img2)));
+            auxImage = ImageTools.BitmapToBitmapImage(auxMap.Bitmap);
             updatePreview();
         }
 
@@ -137,8 +137,8 @@ namespace TexturesUnlimitedTools
         {
             string img3 = ImageTools.openFileSelectDialog("Select a PNG base image");
             SmoothFileBox.Text = img3;
-            smoothMap = new Bitmap(System.Drawing.Image.FromFile(img3));
-            smoothImage = ImageTools.BitmapToBitmapImage(auxMap);
+            smoothMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img3)));
+            smoothImage = ImageTools.BitmapToBitmapImage(auxMap.Bitmap);
             updatePreview();
         }
 
@@ -146,8 +146,8 @@ namespace TexturesUnlimitedTools
         {
             string img4 = ImageTools.openFileSelectDialog("Select a PNG mask image");
             MaskFileBox.Text = img4;
-            maskMap = new Bitmap(System.Drawing.Image.FromFile(img4));
-            maskImage = ImageTools.BitmapToBitmapImage(maskMap);
+            maskMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img4)));
+            maskImage = ImageTools.BitmapToBitmapImage(maskMap.Bitmap);
             updatePreview();
         }
 
@@ -225,9 +225,9 @@ namespace TexturesUnlimitedTools
                 diffuseNormMap = generatorDiff.dest;
                 diffuseDiffMap = generatorDiff.difference;
                 diffuseColDiffMap = generatorDiff.coloredDiff;
-                diffuseNormImage = ImageTools.BitmapToBitmapImage(diffuseNormMap);
-                diffuseDiffImage = ImageTools.BitmapToBitmapImage(diffuseDiffMap);
-                diffuseColDiffImage = ImageTools.BitmapToBitmapImage(diffuseColDiffMap);
+                diffuseNormImage = ImageTools.BitmapToBitmapImage(diffuseNormMap.Bitmap);
+                diffuseDiffImage = ImageTools.BitmapToBitmapImage(diffuseDiffMap.Bitmap);
+                diffuseColDiffImage = ImageTools.BitmapToBitmapImage(diffuseColDiffMap.Bitmap);
                 diffText = generatorDiff.outText;
             }
 
@@ -236,9 +236,9 @@ namespace TexturesUnlimitedTools
                 auxNormMap = generatorAux.dest;
                 auxDiffMap = generatorAux.difference;
                 auxColDiffMap = generatorAux.coloredDiff;
-                auxNormImage = ImageTools.BitmapToBitmapImage(auxNormMap);
-                auxDiffImage = ImageTools.BitmapToBitmapImage(auxDiffMap);
-                auxColDiffImage = ImageTools.BitmapToBitmapImage(auxColDiffMap);
+                auxNormImage = ImageTools.BitmapToBitmapImage(auxNormMap.Bitmap);
+                auxDiffImage = ImageTools.BitmapToBitmapImage(auxDiffMap.Bitmap);
+                auxColDiffImage = ImageTools.BitmapToBitmapImage(auxColDiffMap.Bitmap);
                 auxText = generatorAux.outText;
             }
 
@@ -247,9 +247,9 @@ namespace TexturesUnlimitedTools
                 smoothNormMap = generatorSmooth.dest;
                 smoothDiffMap = generatorSmooth.difference;
                 smoothColDiffMap = generatorSmooth.coloredDiff;
-                smoothNormImage = ImageTools.BitmapToBitmapImage(smoothNormMap);
-                smoothDiffImage = ImageTools.BitmapToBitmapImage(smoothDiffMap);
-                smoothColDiffImage = ImageTools.BitmapToBitmapImage(smoothColDiffMap);
+                smoothNormImage = ImageTools.BitmapToBitmapImage(smoothNormMap.Bitmap);
+                smoothDiffImage = ImageTools.BitmapToBitmapImage(smoothDiffMap.Bitmap);
+                smoothColDiffImage = ImageTools.BitmapToBitmapImage(smoothColDiffMap.Bitmap);
                 smoothText = generatorSmooth.outText;
             }
 
@@ -323,7 +323,7 @@ namespace TexturesUnlimitedTools
             string dest = ImageTools.openFileSaveDialog("Save Image");
             if (!string.IsNullOrEmpty(dest))
             {
-                diffuseNormMap.Save(dest);
+                diffuseNormMap.Bitmap.Save(dest);
             }
         }
 
@@ -332,11 +332,11 @@ namespace TexturesUnlimitedTools
     public class NormGenerator
     {
 
-        private Bitmap src;
-        private Bitmap mask;
-        public Bitmap dest;
-        public Bitmap difference;
-        public Bitmap coloredDiff;
+        private DirectBitmap src;
+        private DirectBitmap mask;
+        public DirectBitmap dest;
+        public DirectBitmap difference;
+        public DirectBitmap coloredDiff;
         private NormParams parameters;
         ChannelSelection sourceChannel;
         private double workDiv;
@@ -351,7 +351,7 @@ namespace TexturesUnlimitedTools
 
         public string outText;
 
-        public NormGenerator(Bitmap source, Bitmap mask, ChannelSelection sourceChannel, NormParams opts, double workStart, double workDivisor)
+        public NormGenerator(DirectBitmap source, DirectBitmap mask, ChannelSelection sourceChannel, NormParams opts, double workStart, double workDivisor)
         {
             Debug.WriteLine("Worker constructor enter");
             this.src = source;
@@ -426,9 +426,9 @@ namespace TexturesUnlimitedTools
 
             Debug.WriteLine("Worker second loop start");
             //third pass -- write output
-            dest = new Bitmap(src.Width, src.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            difference = new Bitmap(src.Width, src.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            coloredDiff = new Bitmap(src.Width, src.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            dest = new DirectBitmap(src.Width, src.Height);
+            difference = new DirectBitmap(src.Width, src.Height);
+            coloredDiff = new DirectBitmap(src.Width, src.Height);
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
