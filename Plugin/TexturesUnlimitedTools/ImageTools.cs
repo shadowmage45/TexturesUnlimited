@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -7,7 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
-//using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace TexturesUnlimitedTools
 {
@@ -51,16 +51,16 @@ namespace TexturesUnlimitedTools
 
         public static string openDirectorySelectDialog(string title)
         {
-            //CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            //dialog.IsFolderPicker = true;
-            //dialog.EnsurePathExists = true;
-            //dialog.EnsureFileExists = true;
-            //dialog.Multiselect = false;
-            //dialog.Title = title;
-            //if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            //{
-            //    return dialog.FileName;
-            //}
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            dialog.EnsurePathExists = true;
+            dialog.EnsureFileExists = true;
+            dialog.Multiselect = false;
+            dialog.Title = title;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                return dialog.FileName;
+            }
             return "";
         }
 
@@ -180,7 +180,7 @@ namespace TexturesUnlimitedTools
             if (bitmap == null) { return null; }
             MemoryStream ms = new MemoryStream();
             bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-            System.Windows.Media.Imaging.BitmapImage bitmapImage = new System.Windows.Media.Imaging.BitmapImage();
+            BitmapImage bitmapImage = new BitmapImage();
             bitmapImage.BeginInit();
             bitmapImage.StreamSource = new MemoryStream(ms.ToArray());
             bitmapImage.EndInit();

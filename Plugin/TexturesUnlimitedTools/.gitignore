@@ -2,7 +2,7 @@ bin/*
 obj/*
 bin
 obj
-libs
+!libs
 Properties
 !extTools/*.exe
 !nvdxt.exe

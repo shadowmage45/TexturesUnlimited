@@ -137,6 +137,7 @@ namespace BaseMapCreation
         {
             //code from: https://stackoverflow.com/questions/24701703/c-sharp-faster-alternatives-to-setpixel-and-getpixel-for-bitmaps-for-windows-f
             // with so far no modification.  Used for both inputs and output textures.
+            // for this use it results in about a 2x improvement in speed
             public Bitmap Bitmap { get; private set; }
             public Int32[] Bits { get; private set; }
             public bool Disposed { get; private set; }
