@@ -30,7 +30,7 @@ namespace TexturesUnlimitedFX
         public EffectManager()
         {
             bloom = new BloomEffect();
-            finishMat = new Material(KSPShaderTools.TexturesUnlimitedLoader.getShader("Hidden/TU-EffectsCombine"));
+            finishMat = new Material(KSPShaderTools.TexturesUnlimitedLoader.getShader("TUFX/EffectsCombine"));
         }
 
         public void OnRenderImage(RenderTexture source, RenderTexture dest)
