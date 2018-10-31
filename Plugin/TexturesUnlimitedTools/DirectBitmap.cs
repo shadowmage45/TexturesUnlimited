@@ -31,7 +31,7 @@ namespace TexturesUnlimitedTools
 
         public DirectBitmap(Bitmap source)
         {
-            BitmapData lockD =  source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            //BitmapData lockD =  source.LockBits(new Rectangle(0, 0, source.Width, source.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             Width = source.Width;
             Height = source.Height;
             Bits = new Int32[Width * Height];
@@ -44,7 +44,7 @@ namespace TexturesUnlimitedTools
                     SetPixel(x,y, source.GetPixel(x, y));
                 }
             }
-            source.UnlockBits(lockD);
+            //source.UnlockBits(lockD);
             source.Dispose();
         }
 
