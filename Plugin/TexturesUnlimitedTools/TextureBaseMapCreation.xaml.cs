@@ -110,6 +110,53 @@ namespace TexturesUnlimitedTools
             SmoothChannelComboBox.SelectedIndex = 3;
         }
 
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            //release any resources that might be hanging out
+            generatorDiff = null;
+            generatorAux = null;
+            generatorSmooth = null;
+
+            //dispose of all of the Bitmaps used for processing
+            diffuseNormMap?.Dispose();
+            diffuseNormMap = null;
+            diffuseDiffMap?.Dispose();
+            diffuseDiffMap = null;
+            diffuseColDiffMap?.Dispose();
+            diffuseColDiffMap = null;
+
+            auxNormMap?.Dispose();
+            auxNormMap = null;
+            auxDiffMap?.Dispose();
+            auxDiffMap = null;
+            auxColDiffMap?.Dispose();
+            auxColDiffMap = null;
+
+            smoothNormMap?.Dispose();
+            smoothNormMap = null;
+            smoothDiffMap?.Dispose();
+            smoothDiffMap = null;
+            smoothColDiffMap?.Dispose();
+            smoothColDiffMap = null;
+            
+            //and all of the bitmaps used for loading
+            diffuseMap?.Dispose();//diffuse input
+            auxMap?.Dispose();//metal/specular input
+            smoothMap?.Dispose();//metal/specular input
+            maskMap?.Dispose();//mask
+
+            diffuseMap = null;//diffuse input
+            auxMap = null;//metal/specular input
+            smoothMap = null;//metal/specular input
+            maskMap = null;//mask
+
+            //WPF image controls have no dispose method...
+
+            //trigger GC just to clean up as much as possible
+            System.GC.Collect();
+        }
+
         private void PreviewTypeSelected(object sender, SelectionChangedEventArgs e)
         {
             updatePreview();
@@ -171,11 +218,11 @@ namespace TexturesUnlimitedTools
             window.start(generatationSequence, generateFinished);
         }
 
+        //accessed by worker thread; don't mess with these while workers are active
         ChannelSelection a, b, c;
 
         private void generatationSequence(object sender, DoWorkEventArgs doWork)
         {
-            Debug.WriteLine("Starting workers!");
             int valid = 0;
             valid += diffuseMap == null ? 0 : 1;
             valid += auxMap == null ? 0 : 1;
@@ -188,16 +235,13 @@ namespace TexturesUnlimitedTools
             valid = 0;
             if (diffuseMap != null)
             {
-                Debug.WriteLine("Constructing diffuse worker!");
                 generatorDiff = new NormGenerator(diffuseMap, maskMap, a, new NormParams(), valid * offset, div);
-                Debug.WriteLine("Starting diffuse worker!");
                 generatorDiff.generate(sender, doWork);
                 valid++;
             }            
 
             if (auxMap != null)
             {
-                Debug.WriteLine("Starting aux worker!");
                 generatorAux = new NormGenerator(auxMap, maskMap, b, new NormParams(), valid * offset, div);
                 generatorAux.generate(sender, doWork);
                 valid++;
@@ -205,7 +249,6 @@ namespace TexturesUnlimitedTools
 
             if (smoothMap != null)
             {
-                Debug.WriteLine("Starting smooth worker!");
                 generatorSmooth = new NormGenerator(smoothMap, maskMap, c, new NormParams(), valid * offset, div);
                 generatorSmooth.generate(sender, doWork);
                 valid++;
@@ -214,17 +257,15 @@ namespace TexturesUnlimitedTools
 
         private void generateFinished()
         {
-            Debug.WriteLine("Generation finished!");
-
             diffText = string.Empty;
             auxText = string.Empty;
             smoothText = string.Empty;
 
             if (generatorDiff != null)
             {
-                diffuseNormMap = generatorDiff.dest;
-                diffuseDiffMap = generatorDiff.difference;
-                diffuseColDiffMap = generatorDiff.coloredDiff;
+                diffuseNormMap = (DirectBitmap)generatorDiff.dest;
+                diffuseDiffMap = (DirectBitmap)generatorDiff.difference;
+                diffuseColDiffMap = (DirectBitmap)generatorDiff.coloredDiff;
                 diffuseNormImage = ImageTools.BitmapToBitmapImage(diffuseNormMap.Bitmap);
                 diffuseDiffImage = ImageTools.BitmapToBitmapImage(diffuseDiffMap.Bitmap);
                 diffuseColDiffImage = ImageTools.BitmapToBitmapImage(diffuseColDiffMap.Bitmap);
@@ -233,9 +274,9 @@ namespace TexturesUnlimitedTools
 
             if (generatorAux != null)
             {
-                auxNormMap = generatorAux.dest;
-                auxDiffMap = generatorAux.difference;
-                auxColDiffMap = generatorAux.coloredDiff;
+                auxNormMap = (DirectBitmap)generatorAux.dest;
+                auxDiffMap = (DirectBitmap)generatorAux.difference;
+                auxColDiffMap = (DirectBitmap)generatorAux.coloredDiff;
                 auxNormImage = ImageTools.BitmapToBitmapImage(auxNormMap.Bitmap);
                 auxDiffImage = ImageTools.BitmapToBitmapImage(auxDiffMap.Bitmap);
                 auxColDiffImage = ImageTools.BitmapToBitmapImage(auxColDiffMap.Bitmap);
@@ -244,9 +285,9 @@ namespace TexturesUnlimitedTools
 
             if (generatorSmooth != null)
             {
-                smoothNormMap = generatorSmooth.dest;
-                smoothDiffMap = generatorSmooth.difference;
-                smoothColDiffMap = generatorSmooth.coloredDiff;
+                smoothNormMap = (DirectBitmap)generatorSmooth.dest;
+                smoothDiffMap = (DirectBitmap)generatorSmooth.difference;
+                smoothColDiffMap = (DirectBitmap)generatorSmooth.coloredDiff;
                 smoothNormImage = ImageTools.BitmapToBitmapImage(smoothNormMap.Bitmap);
                 smoothDiffImage = ImageTools.BitmapToBitmapImage(smoothDiffMap.Bitmap);
                 smoothColDiffImage = ImageTools.BitmapToBitmapImage(smoothColDiffMap.Bitmap);
@@ -256,6 +297,29 @@ namespace TexturesUnlimitedTools
             generatorDiff = null;
             generatorAux = null;
             generatorSmooth = null;
+
+            //dispose of all of the Bitmaps used for processing
+            diffuseNormMap?.Dispose();
+            diffuseNormMap = null;
+            diffuseDiffMap?.Dispose();
+            diffuseDiffMap = null;
+            diffuseColDiffMap?.Dispose();
+            diffuseColDiffMap = null;
+
+            auxNormMap?.Dispose();
+            auxNormMap = null;
+            auxDiffMap?.Dispose();
+            auxDiffMap = null;
+            auxColDiffMap?.Dispose();
+            auxColDiffMap = null;
+
+            smoothNormMap?.Dispose();
+            smoothNormMap = null;
+            smoothDiffMap?.Dispose();
+            smoothDiffMap = null;
+            smoothColDiffMap?.Dispose();
+            smoothColDiffMap = null;
+
             updatePreview();
         }
 
@@ -332,11 +396,11 @@ namespace TexturesUnlimitedTools
     public class NormGenerator
     {
 
-        private DirectBitmap src;
-        private DirectBitmap mask;
-        public DirectBitmap dest;
-        public DirectBitmap difference;
-        public DirectBitmap coloredDiff;
+        private IBitmap src;
+        private IBitmap mask;
+        public IBitmap dest;
+        public IBitmap difference;
+        public IBitmap coloredDiff;
         private NormParams parameters;
         ChannelSelection sourceChannel;
         private double workDiv;
@@ -351,7 +415,7 @@ namespace TexturesUnlimitedTools
 
         public string outText;
 
-        public NormGenerator(DirectBitmap source, DirectBitmap mask, ChannelSelection sourceChannel, NormParams opts, double workStart, double workDivisor)
+        public NormGenerator(IBitmap source, IBitmap mask, ChannelSelection sourceChannel, NormParams opts, double workStart, double workDivisor)
         {
             Debug.WriteLine("Worker constructor enter");
             this.src = source;
@@ -365,7 +429,6 @@ namespace TexturesUnlimitedTools
 
         public void generate(object sender, DoWorkEventArgs work)
         {
-            Debug.WriteLine("Worker function enter");
             System.Drawing.Color srcColor, maskColor;
             int width = src.Width;
             int height = src.Height;
@@ -378,12 +441,11 @@ namespace TexturesUnlimitedTools
             double prevProg = 0;
 
             //difference mask vars
-
-            Debug.WriteLine("Worker first loop start");
+            
             //first pass -- get min/max bounds
-            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
             {
-                for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
                 {
                     maskColor = mask.GetPixel(x, y);
                     if (maskColor.R == 0 && maskColor.G == 0 && maskColor.B == 0) { continue; }//unmasked pixel, skip
@@ -423,15 +485,15 @@ namespace TexturesUnlimitedTools
             outR = sumR / countR;
             outG = sumG / countG;
             outB = sumB / countB;
-
-            Debug.WriteLine("Worker second loop start");
+                        
             //third pass -- write output
             dest = new DirectBitmap(src.Width, src.Height);
             difference = new DirectBitmap(src.Width, src.Height);
             coloredDiff = new DirectBitmap(src.Width, src.Height);
-            for (int x = 0; x < width; x++)
+
+            for (int y = 0; y < height; y++)
             {
-                for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
                 {
                     maskColor = mask.GetPixel(x, y);
                     if (maskColor.R == 0 && maskColor.G == 0 && maskColor.B == 0) { continue; }//unmasked pixel, skip
@@ -440,10 +502,10 @@ namespace TexturesUnlimitedTools
                     double pix = outR * mr + outG * mg + outB * mb;
                     pix = Math.Min(pix, 1);
                     dest.SetPixel(x, y, setPixelColors(pix, pix, pix));
-                    
+
                     srcColor = src.GetPixel(x, y);
                     lum = getChannelLuminance(srcColor);
-                    
+
                     difference.SetPixel(x, y, getDiffColor(pix, lum, false));
                     coloredDiff.SetPixel(x, y, getDiffColor(pix, lum, true));
 
@@ -459,7 +521,6 @@ namespace TexturesUnlimitedTools
                 }
             }
             outText = outR + "," + outG + "," + outB;
-            Debug.WriteLine("Worker function exit");
         }
 
         private void getPixelColors(System.Drawing.Color color, out double r, out double g, out double b)
