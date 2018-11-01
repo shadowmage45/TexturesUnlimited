@@ -349,8 +349,7 @@ namespace KSPShaderTools
 
         public ShaderPropertyTextureColor(string line) : base(line)
         {
-            string[] vals = line.Split(',');
-            colorString = vals[1];
+            colorString = line.Substring(line.IndexOf(',') + 1);
         }
 
         protected override void applyInternal(Material mat)
