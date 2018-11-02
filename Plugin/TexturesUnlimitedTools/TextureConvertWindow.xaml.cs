@@ -1,7 +1,9 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,7 +48,8 @@ namespace TexturesUnlimitedTools
                 outputName = outputName.Substring(0, outputName.Length - 3) + ".dds";
                 Process process = new Process();
                 process.StartInfo.FileName = "nvdxt.exe";
-                process.StartInfo.Arguments = getDDSCommand(inputName, outputName, (int)entry.Format);
+                int format = entry.Format == "DXT1" ? 1 : entry.Format == "DXT5" ? 5 : 6;
+                process.StartInfo.Arguments = getDDSCommand(inputName, outputName, format);
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardOutput = false;
                 process.Start();
@@ -76,5 +79,20 @@ namespace TexturesUnlimitedTools
             return builder.ToString();
         }
 
+    }
+
+    public class TextureConversionEntry : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        string imageName;
+        string format = "DXT1";
+
+        public string ImageName { get { return imageName; } set { imageName = value; propChanged(); } }
+        public string Format { get { return format; } set { format = value; propChanged(); } }
+
+        private void propChanged([CallerMemberName]string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
     }
 }

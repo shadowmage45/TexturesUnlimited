@@ -30,8 +30,7 @@
                 <DataGridTextColumn Header="Input File" Width="300" Binding="{Binding ImageName}"/>
                 <DataGridComboBoxColumn 
                     Header="Output Format" 
-                    Width="200"
-                    SelectedItemBinding="{Binding Format}"/>
+                    Width="200"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

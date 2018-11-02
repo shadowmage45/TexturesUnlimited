@@ -29,8 +29,8 @@ namespace TexturesUnlimitedTools
         private ObservableCollection<ImageChannelSelection> imageOptionsRaw = new ObservableCollection<ImageChannelSelection>();
         public ObservableCollection<ImageChannelSelection> ImageOptions { get { return imageOptionsRaw; } }
 
-        private ObservableCollection<DDSFormat> ddsOptionsRaw = new ObservableCollection<DDSFormat>();
-        public ObservableCollection<DDSFormat> DDSOptions { get { return ddsOptionsRaw; } }
+        private ObservableCollection<string> ddsOptionsRaw = new ObservableCollection<string>();
+        public ObservableCollection<string> DDSOptions { get { return ddsOptionsRaw; } }
 
         private ObservableCollection<TextureRemapEntry> recordsRaw = new ObservableCollection<TextureRemapEntry>();
         public ObservableCollection<TextureRemapEntry> RemapRecords { get { return recordsRaw; } }
@@ -53,9 +53,9 @@ namespace TexturesUnlimitedTools
             imageOptionsRaw.Add(ImageChannelSelection.Image2_G);
             imageOptionsRaw.Add(ImageChannelSelection.Image2_A);
             imageOptionsRaw.Add(ImageChannelSelection.Image2_RGB);
-            ddsOptionsRaw.Add(DDSFormat.DXT1);
-            ddsOptionsRaw.Add(DDSFormat.DXT5);
-            ddsOptionsRaw.Add(DDSFormat.DXT5nm);
+            ddsOptionsRaw.Add("DXT1");
+            ddsOptionsRaw.Add("DXT5");
+            ddsOptionsRaw.Add("DXT5nm");
             InitializeComponent();
             instance = this;
         }
@@ -96,21 +96,6 @@ namespace TexturesUnlimitedTools
             Application.Current.Shutdown();
         }
 
-    }
-
-    public class TextureConversionEntry : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-        string imageName;
-        DDSFormat format = DDSFormat.DXT1;
-
-        public string ImageName { get { return imageName; } set { imageName = value; propChanged(); } }
-        public DDSFormat Format { get { return format; } set { format = value; propChanged(); } }
-
-        private void propChanged([CallerMemberName]string name = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
     }
 
     public class TextureRemapEntry : INotifyPropertyChanged
