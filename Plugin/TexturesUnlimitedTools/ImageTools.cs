@@ -38,6 +38,18 @@ namespace TexturesUnlimitedTools
             return dialog.FileName;
         }
 
+        public static string[] openFileMultiSelectDialog(string title)
+        {
+            Microsoft.Win32.OpenFileDialog dialog = new Microsoft.Win32.OpenFileDialog();
+            dialog.Title = title;
+            dialog.DefaultExt = ".png";
+            dialog.Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tiff;*.dds";
+            dialog.CheckFileExists = true;
+            dialog.Multiselect = true;
+            dialog.ShowDialog();
+            return dialog.FileNames;
+        }
+
         public static string openFileSaveDialog(string title)
         {
             Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog();

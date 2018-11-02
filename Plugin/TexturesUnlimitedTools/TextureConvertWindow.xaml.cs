@@ -27,10 +27,14 @@ namespace TexturesUnlimitedTools
 
         private void SelectImagesClick(object sender, RoutedEventArgs e)
         {
-            string img1 = ImageTools.openFileSelectDialog("Select a PNG image");
-            TextureConversionEntry entry = new TextureConversionEntry();
-            entry.ImageName = img1;
-            MainWindow.instance.ConvertRecords.Add(entry);
+            string[] imgs = ImageTools.openFileMultiSelectDialog("Select a PNG image");
+            foreach (string img in imgs)
+            {
+                if (string.IsNullOrEmpty(img)) { continue; }
+                TextureConversionEntry entry = new TextureConversionEntry();
+                entry.ImageName = img;
+                MainWindow.instance.ConvertRecords.Add(entry);
+            }
         }
 
         private void ConvertImagesClick(object sender, RoutedEventArgs e)
@@ -45,7 +49,7 @@ namespace TexturesUnlimitedTools
             {
                 string inputName = entry.ImageName;                
                 string outputName = outputPath + "/" + inputName.Substring(inputName.LastIndexOf("\\") + 1);//output/xxx.png
-                outputName = outputName.Substring(0, outputName.Length - 3) + ".dds";
+                outputName = outputName.Substring(0, outputName.Length - 4) + ".dds";
                 Process process = new Process();
                 process.StartInfo.FileName = "nvdxt.exe";
                 int format = entry.Format == "DXT1" ? 1 : entry.Format == "DXT5" ? 5 : 6;
