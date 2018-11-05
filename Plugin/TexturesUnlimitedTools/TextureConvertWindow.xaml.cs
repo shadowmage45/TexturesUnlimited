@@ -79,7 +79,7 @@ namespace TexturesUnlimitedTools
             string formatString = format == 6 ? "5nm" : format.ToString();
             //output format
             builder.Append("-dxt").Append(formatString);
-            MessageBox.Show("NVDXT Command: " + builder.ToString());
+            //MessageBox.Show("NVDXT Command: " + builder.ToString());
             return builder.ToString();
         }
 
