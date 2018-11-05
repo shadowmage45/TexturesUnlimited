@@ -1,12 +1,7 @@
 ﻿using Microsoft.WindowsAPICodePack.Dialogs;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
 namespace TexturesUnlimitedTools
@@ -18,7 +13,10 @@ namespace TexturesUnlimitedTools
         public static Bitmap loadImage(string fileName)
         {
             Image image = Image.FromFile(fileName);
-            return new Bitmap(image);
+
+            Bitmap bmp = new Bitmap(image);
+            image.Dispose();
+            return bmp;
         }
 
         public static void saveImage(Bitmap image, string fileName)

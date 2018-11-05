@@ -60,14 +60,12 @@ namespace TexturesUnlimitedTools
 
         private void processEntry(TextureRemapEntry entry)
         {
-            MessageBox.Show("Processing entry...");
             Bitmap image1 = ImageTools.loadImage(entry.Image1Name);
             if (image1 == null)
             {
                 MessageBox.Show("Cannot process pair; first image is null");
                 return;
             }
-            MessageBox.Show("Loaded input image 1");
             int width = image1.Width;
             int height = image1.Height;
             Bitmap image2 = ImageTools.loadImage(entry.Image2Name);
@@ -81,7 +79,6 @@ namespace TexturesUnlimitedTools
                     return;
                 }
             }
-            MessageBox.Show("Loaded input image 2");
             Bitmap output = new Bitmap(width, height);
             Color color1, color2;
             byte r, g, b, a;

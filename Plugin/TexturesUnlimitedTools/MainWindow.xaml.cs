@@ -107,8 +107,8 @@ namespace TexturesUnlimitedTools
         string outputName = "";
 
         ImageChannelSelection imageR = ImageChannelSelection.Image1_R;
-        ImageChannelSelection imageG = ImageChannelSelection.Image1_B;
-        ImageChannelSelection imageB = ImageChannelSelection.Image1_G;
+        ImageChannelSelection imageG = ImageChannelSelection.Image1_G;
+        ImageChannelSelection imageB = ImageChannelSelection.Image1_B;
         ImageChannelSelection imageA = ImageChannelSelection.Image2_RGB;
 
         public ImageChannelSelection ImageR { get { return imageR; } set { imageR = value; propChanged(); } }
