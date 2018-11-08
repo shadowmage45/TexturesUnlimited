@@ -15,6 +15,7 @@ public class TUScatteringScript : MonoBehaviour
     public float atmoSize = 1.1f;
     public float scaleHeight = 1;
     public float lightScale = 1;
+    public float coeff = 1;
     // Use this for initialization
     void Start ()
     {
@@ -70,6 +71,7 @@ public class TUScatteringScript : MonoBehaviour
         mat.SetFloat("_AtmoSize", atmoSize);
         mat.SetFloat("_ScaleHeight", scaleHeight);
         mat.SetFloat("_SunPower", lightScale);
+        mat.SetFloat("_Coefficient", coeff);
         //extract pass
         Graphics.Blit(source, tex, mat, 0);
         mat.SetTexture("_SecTex", tex);
