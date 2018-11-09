@@ -4,12 +4,10 @@
 	{
 		_MainTex ("Texture", 2D) = "white" {}
 		_Color("_Color", Color) = (1,1,1)
-		_Scale("Scale", Range(0,2)) = 1
 		_PlanetPos("Planet Pos", Vector) = (0,0,0,0)
 		_SunPos("Sun Pos", Vector) = (0, 0, 15000, 0)		
 		_PlanetSize("Planet Size", Float) = 6
-		_Coefficient("Coeff", Float) = 1
-		_AtmoSize("Atmo Size", Float) = 6.6
+		_AtmoSize("Atmo Size", Float) = 6.06
 	}
 	SubShader
 	{
@@ -25,13 +23,29 @@
 			
 			#include "UnityCG.cginc"
 
+			//frustum bounding vectors, used to determine world-space view direction from inside screen space shader
 			float3 _Left;
 			float3 _Right;
 			float3 _Left2;
 			float3 _Right2;
 
-			float4x4 _frustumCorners;
+			//simulation setup params - sun and planet positions, sizes, and atmosphere stuffs
+			float4 _SunPos;
+			float4 _PlanetPos;
+			float _PlanetSize;
+			float _AtmoSize;
+			float4 _SunDir;
+			//scaling factor that handles difference between intended real size, and simulated scaled size
+			float _ScaleAdjustFactor;
 
+			//basic non-realistic atmosphere recoloring mechanism
+			float4 _Color;
+
+			//actual scattering parameters that control scattering simulation
+			float _RayScaleHeight;
+			float _MieScaleHeight;
+			
+			
 			struct appdata
 			{
 				float4 vertex : POSITION;
@@ -57,15 +71,6 @@
 
 				return o;
 			}
-
-			float4 _SunPos;
-			float4 _PlanetPos;
-			float _PlanetSize;
-			float _AtmoSize;
-			float4 _Color; 
-			float _ScaleHeight;
-			float _SunPower;
-			float _Coefficient;
 			
 			sampler2D _MainTex;
 			sampler2D _CameraDepthTexture;
@@ -95,8 +100,8 @@
 				float3 L = C - O;
 				//Tca is dot product of L and D; projection of sphere center onto ray line as a length from ray origin
 				float DT = dot(L, D);
-				//if Tca is negative, L/D point in opposite directions, so any intersection would be behind the camera
-				//if (Tca < 0) { return false; }
+				//if DT is negative, L/D point in opposite directions, so any intersection would be behind the camera
+				if (DT < 0) { return false; }
 				
 				//R2 = radius squared
 				float R2 = R * R;
@@ -121,31 +126,52 @@
 				//R2 = atmo radius squared
 				float R2 = AR * AR;
 				bool inAtmo = cDistSq < R2;
-
-				float d2 = sqDistanceFromLine(O, D, C);
-
-				//https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
-				//L is a line pointing from ray origin (O) to sphere center (C)
-				float3 L = C - O;
-				//Tca is dot product of L and D; projection of sphere center onto ray line as a length from ray origin
-				float Tca = dot(L, D);
-				//if Tca is negative, L/D point in opposite directions, so any intersection would be behind the camera
-				if (Tca < 0) { return false; }
-
-				//if distance squared is greater than radius squared, there are zero intersects
-				if (!inAtmo && d2 > R2) { return false; }
-				
-				float Thc = sqrt(R2 - d2);
-				AO = Tca - Thc;
-				BO = Tca + Thc;
-				if (inAtmo) { AO = 0; }
-
-				//check if ray hits the planet
-				float P2 = PR * PR;
-				if (d2 < P2) 
+				bool inPlanet = cDistSq < PR * PR;
+				if (inPlanet) { return false; }
+				if (inAtmo)
 				{
-					Thc = sqrt(P2 - d2);
-					BO = Tca - Thc;
+					//line segment from origin
+					float3 L = C - O;
+					float tca = dot(L, D);
+					float d2 = dot(L, L) - tca * tca;
+					float thc = sqrt(R2 - d2);
+					AO = 0;// tca - thc;
+					BO = tca + thc;
+
+					float PA, PB;
+					//check if ray intersects planet
+					if (rayIntersect(O, D, C, PR, PA, PB) && tca > 0) 
+					{
+						BO = PA;
+					}
+				}
+				else 
+				{
+					//return false;
+					float d2 = sqDistanceFromLine(O, D, C);
+
+					//https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+					//L is a line pointing from ray origin (O) to sphere center (C)
+					float3 L = C - O;
+					//Tca is dot product of L and D; projection of sphere center onto ray line as a length from ray origin
+					float Tca = dot(L, D);
+					//if Tca is negative, L/D point in opposite directions, so any intersection would be behind the camera
+					if (Tca < 0) { return false; }
+
+					//if distance squared is greater than radius squared, there are zero intersects
+					if (d2 > R2) { return false; }
+
+					float Thc = sqrt(R2 - d2);
+					AO = Tca - Thc;
+					BO = Tca + Thc;
+
+					//check if ray hits the planet
+					float P2 = PR * PR;
+					if (d2 < P2)
+					{
+						Thc = sqrt(P2 - d2);
+						BO = Tca - Thc;
+					}
 				}
 				
 				return true;
@@ -159,9 +185,7 @@
 				// (used for sun light attenuation)
 				opticalDepthRay = 0;
 				opticalDepthMie = 0;
-				int _LightSamples = 8;
-				float _RayScaleHeight = 8500;
-				float _MieScaleHeight = 1200;
+				int _LightSamples = 16;
 				float time = 0;
 				float lightSampleSize = distance(P, C2) / (float)(_LightSamples);
 
@@ -170,22 +194,23 @@
 					// Sample point on the segment PC
 					float3 Q = P + S * (time + lightSampleSize * 0.5);
 					float height = distance(_PlanetPos, Q) - _PlanetSize;
-					height *= 6310000;
+					height *= _ScaleAdjustFactor;
 					// Inside the planet
 					if (height < 0) 
 					{
+						//break;
 						return false;
 					}
 
 					// Optical depth for the secondary ray
-					opticalDepthRay += exp(-height / _RayScaleHeight) * lightSampleSize * 6310000;
-					opticalDepthMie += exp(-height / _MieScaleHeight) * lightSampleSize * 6310000;
+					opticalDepthRay += exp(-height / _RayScaleHeight) * lightSampleSize * _ScaleAdjustFactor;
+					opticalDepthMie += exp(-height / _MieScaleHeight) * lightSampleSize * _ScaleAdjustFactor;
 
 					time += lightSampleSize;
 				}
 				return true;
 			}
-
+			
 			fixed4 frag (v2f i) : SV_Target
 			{
 				//view direction
@@ -195,24 +220,26 @@
 
 				float3 cameraPos = _WorldSpaceCameraPos.xyz;
 
-				float3 S = -normalize(_SunPos - cameraPos);
+				//direction from camera to sun
+				float3 S = normalize(_SunPos - _PlanetPos);
 				
 				float3 pnt = _PlanetPos;
-				int _ViewSamples = 16;
+				int _ViewSamples = 32;
 
 				//find start and end intersects of the ray with the atmosphere
 				float tA;
 				float tB;
 				
-				if (!fullAtmoIntersect(cameraPos, D, pnt, _AtmoSize, _PlanetSize, tA, tB)) 
+				if (!fullAtmoIntersect(cameraPos, D, pnt, _AtmoSize, _PlanetSize, tA, tB))
 				{
-					return 0;
+					return fixed4(0,0,0,0);
 				}
 
-				float _RayScaleHeight = 8500 * 1.0;
-				float _MieScaleHeight = 1200 * 1.0;
-				float3 _RayScatteringCoefficient = float3(0.000005804542996261093, 0.000013562911419845635, 0.00003026590629238531)*1;
-				float _MieScatteringCoefficient = 0.0021 * 1;
+				bool inAtmo = length(cameraPos - _PlanetPos) < _AtmoSize;
+
+
+				float3 _RayScatteringCoefficient = float3(0.000005804542996261093, 0.000013562911419845635, 0.00003026590629238531);
+				float _MieScatteringCoefficient = 0.0021;
 				float _MieAnisotropy = 0.758;
 				float _SunIntensity = 20;
 
@@ -224,6 +251,14 @@
 				float3 totalRayScattering = float3(0, 0, 0); // RGB
 				float totalMieScattering = 0; // A single channel
 
+				//if (false) 
+				//{
+				//	float3 exitPos = normalize(cameraPos + D * tB);
+				//	float l = length(exitPos*1000) / _AtmoSize;
+				//	float m = (tB - tA) / _AtmoSize;
+				//	return float4(m,m,m, 1);
+				//}
+
 				float time = tA;
 				float viewSampleSize = (tB - tA) / (float)(_ViewSamples);
 				for (int i = 0; i < _ViewSamples; i++)
@@ -234,7 +269,7 @@
 
 					// Height of point
 					float height = distance(pnt, P) - _PlanetSize;
-					height *= 6310000;
+					height *= _ScaleAdjustFactor;
 
 					// This point is inside the Planet
 					//if (height <= 0)
@@ -243,8 +278,8 @@
 					// because tB is ajusted so that it never enters into the planet
 
 					// Calculate the optical depth for the current segment
-					float viewOpticalDepthRay = exp(-height / _RayScaleHeight) * viewSampleSize * 6310000;
-					float viewOpticalDepthMie = exp(-height / _MieScaleHeight) * viewSampleSize * 6310000;
+					float viewOpticalDepthRay = exp(-height / _RayScaleHeight) * viewSampleSize *_ScaleAdjustFactor;
+					float viewOpticalDepthMie = exp(-height / _MieScaleHeight) * viewSampleSize *_ScaleAdjustFactor;
 
 					// Accumulates the optical depths
 					opticalDepthRay += viewOpticalDepthRay;
@@ -266,7 +301,6 @@
 					// (used for sun light attenuation)
 					float lightOpticalDepthRay = 0;
 					float lightOpticalDepthMie = 0;
-
 					bool overground = lightSampling(P, S, lightOpticalDepthRay, lightOpticalDepthMie);
 					if (overground)
 					{
@@ -288,7 +322,7 @@
 					time += viewSampleSize;
 				}
 
-				float PI = 3.141592654;
+				float PI = 3.1415926543785;
 				float cosTheta = dot(V, S);
 				float cos2Theta = cosTheta * cosTheta;
 				float g = _MieAnisotropy;

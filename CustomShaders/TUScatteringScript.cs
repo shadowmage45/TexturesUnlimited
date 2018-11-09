@@ -6,25 +6,58 @@ using UnityEngine;
 public class TUScatteringScript : MonoBehaviour
 {
 
+    
+
+    //internal refs to the game objects/etc used by simulation
+    public GameObject sun;
+    public GameObject planet;
+
+    //params for the actual sphere that is being rendered
+    // specified in meters of radius
+    // atmo is an absolute height, and total atmo radius = planetSize + atmoHeight
+    public float planetSize = 1;
+    public float atmoHeight = 0.1f;
+    
+    //params for the planet that is being simulated
+    // specified in meters of radius
+    public float planetRealSize = 6310000;
+        
+    //rayliegh scattering constants
+    public float rayScaleHeight = 8500;
+    public float rayScatterCoefficient;
+
+    //mie scattering constants
+    public float mieScaleHeight = 1200;
+    public float mieScatterCoefficient;
+
+    //private internal vars, object caches
+    private float scaleFactor;
+    Vector3[] frustumCorners = new Vector3[4];
     Material mat;
     RenderTexture tex;
-    Camera camera;
-    public Vector3 planetPos;
-    public Vector3 sunPos;
-    public float planetSize = 1;
-    public float atmoSize = 1.1f;
-    public float scaleHeight = 1;
-    public float lightScale = 1;
-    public float coeff = 1;
+    Camera effectCam;
+
     // Use this for initialization
     void Start ()
     {
         mat = new Material(Shader.Find("Hidden/TU-Scattering"));
-        camera = GetComponent<Camera>();
-        camera.depthTextureMode = DepthTextureMode.Depth;
+        effectCam = GetComponent<Camera>();
+        effectCam.depthTextureMode = DepthTextureMode.Depth;
         tex = new RenderTexture(Screen.width, Screen.height, 0);
-        tex.autoGenerateMips = false;        
+        tex.autoGenerateMips = false;
 	}
+
+    void OnAwake()
+    {
+        if (mat == null || tex == null || effectCam == null)
+        {
+            mat = new Material(Shader.Find("Hidden/TU-Scattering"));
+            effectCam = GetComponent<Camera>();
+            effectCam.depthTextureMode = DepthTextureMode.Depth;
+            tex = new RenderTexture(Screen.width, Screen.height, 0);
+            tex.autoGenerateMips = false;
+        }
+    }
 	
 	// Update is called once per frame
 	void Update ()
@@ -44,15 +77,11 @@ public class TUScatteringScript : MonoBehaviour
 
     public void OnRenderImage(RenderTexture source, RenderTexture dest)
     {
-
-        var camera = GetComponent<Camera>();
-        Vector3[] frustumCorners = new Vector3[4];
-        camera.CalculateFrustumCorners(new Rect(0, 0, 1, 1), 1, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
+        effectCam.CalculateFrustumCorners(new Rect(0, 0, 1, 1), 1, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
         
         for (int i = 0; i < 4; i++)
         {
-            frustumCorners[i] = camera.transform.TransformVector(frustumCorners[i]);
-            //Debug.DrawRay(camera.transform.position, worldSpaceCorner, Color.blue);
+            frustumCorners[i] = effectCam.transform.TransformVector(frustumCorners[i]);
         }
 
         Vector3 botLeft = frustumCorners[0];
@@ -65,17 +94,23 @@ public class TUScatteringScript : MonoBehaviour
         mat.SetVector("_Left2", botLeft); 
         mat.SetVector("_Right2", botRight);
 
-        mat.SetVector("_SunPos", sunPos);
-        mat.SetVector("_PlanetPos", planetPos);
+        mat.SetVector("_SunPos", sun.transform.position);
+        mat.SetVector("_PlanetPos", planet.transform.position);
+        mat.SetVector("_SunDir", (sun.transform.position - effectCam.transform.position).normalized);
         mat.SetFloat("_PlanetSize", planetSize);
-        mat.SetFloat("_AtmoSize", atmoSize);
-        mat.SetFloat("_ScaleHeight", scaleHeight);
-        mat.SetFloat("_SunPower", lightScale);
-        mat.SetFloat("_Coefficient", coeff);
-        //extract pass
+        mat.SetFloat("_AtmoSize", planetSize + atmoHeight);        
+
+        mat.SetFloat("_RayScaleHeight", rayScaleHeight);
+        mat.SetFloat("_MieScaleHeight", mieScaleHeight);
+
+        float scaleAdjust = planetRealSize / planetSize;
+        mat.SetFloat("_ScaleAdjustFactor", scaleAdjust);
+
+        //extract pass, where the magic happens
         Graphics.Blit(source, tex, mat, 0);
         mat.SetTexture("_SecTex", tex);
-        //combine pass
+        
+        //combine pass, just blend it onto the original source image
         Graphics.Blit(source, dest, mat, 1);
     }
     
