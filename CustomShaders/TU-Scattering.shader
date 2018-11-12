@@ -8,6 +8,7 @@
 		_SunPos("Sun Pos", Vector) = (0, 0, 15000, 0)		
 		_PlanetSize("Planet Size", Float) = 6
 		_AtmoSize("Atmo Size", Float) = 6.06
+		_SunIntensity("Sun Intensity", Float) = 20
 	}
 	SubShader
 	{
@@ -34,17 +35,25 @@
 			float4 _PlanetPos;
 			float _PlanetSize;
 			float _AtmoSize;
-			float4 _SunDir;
+			
 			//scaling factor that handles difference between intended real size, and simulated scaled size
 			float _ScaleAdjustFactor;
 
 			//basic non-realistic atmosphere recoloring mechanism
 			float4 _Color;
 
+			//multiplier to sun output intensity -- units are in ??????
+			float _SunIntensity;
+
+			int _ViewSamples = 16;
+			int _LightSamples = 8;
+
 			//actual scattering parameters that control scattering simulation
 			float _RayScaleHeight;
-			float _MieScaleHeight;
-			
+			float3 _RayScatteringCoefficient;
+			float _MieScaleHeight;			
+			float _MieScatteringCoefficient;
+			float _MieAnisotropy;
 			
 			struct appdata
 			{
@@ -185,7 +194,6 @@
 				// (used for sun light attenuation)
 				opticalDepthRay = 0;
 				opticalDepthMie = 0;
-				int _LightSamples = 16;
 				float time = 0;
 				float lightSampleSize = distance(P, C2) / (float)(_LightSamples);
 
@@ -213,20 +221,25 @@
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
+				//float3 _RayScatteringCoefficient = float3(0.000005804542996261093, 0.000013562911419845635, 0.00003026590629238531);
+				//float _MieScatteringCoefficient = 0.0021;
+				//float _MieAnisotropy = 0.758;
+				//float _SunIntensity = 20;
+
+
 				//view direction
 				float3 V = normalize(i.viewDir);
 				//ray direction
 				float3 D = V;
-
+				//camera world space position
 				float3 cameraPos = _WorldSpaceCameraPos.xyz;
-
-				//direction from camera to sun
-				float3 S = normalize(_SunPos - _PlanetPos);
-				
+				//planet center world space position
 				float3 pnt = _PlanetPos;
-				int _ViewSamples = 32;
+				//direction from point to sun
+				float3 S = normalize(_SunPos - _PlanetPos);
 
 				//find start and end intersects of the ray with the atmosphere
+				//these are offsets along the ray with 0 = starting point
 				float tA;
 				float tB;
 				
@@ -235,13 +248,9 @@
 					return fixed4(0,0,0,0);
 				}
 
-				bool inAtmo = length(cameraPos - _PlanetPos) < _AtmoSize;
+				//bool inAtmo = length(cameraPos - _PlanetPos) < _AtmoSize;
 
 
-				float3 _RayScatteringCoefficient = float3(0.000005804542996261093, 0.000013562911419845635, 0.00003026590629238531);
-				float _MieScatteringCoefficient = 0.0021;
-				float _MieAnisotropy = 0.758;
-				float _SunIntensity = 20;
 
 				// Total optical depth
 				float opticalDepthRay = 0; // Rayleigh
@@ -250,15 +259,7 @@
 										   // Total Scattering accumulated
 				float3 totalRayScattering = float3(0, 0, 0); // RGB
 				float totalMieScattering = 0; // A single channel
-
-				//if (false) 
-				//{
-				//	float3 exitPos = normalize(cameraPos + D * tB);
-				//	float l = length(exitPos*1000) / _AtmoSize;
-				//	float m = (tB - tA) / _AtmoSize;
-				//	return float4(m,m,m, 1);
-				//}
-
+				
 				float time = tA;
 				float viewSampleSize = (tB - tA) / (float)(_ViewSamples);
 				for (int i = 0; i < _ViewSamples; i++)
@@ -285,6 +286,8 @@
 					opticalDepthRay += viewOpticalDepthRay;
 					opticalDepthMie += viewOpticalDepthMie;
 
+
+
 					// We are sampling the amount of light received at point P,
 					// from the segment AB
 					// This light comes from the sun.
@@ -307,21 +310,21 @@
 						// Calculates the attenuation of sun light
 						// after travelling through the segment PC
 						// This quantity is called T(PC)T(PA) in the tutorial
-						float3 attenuation = exp
-						(
-							-(
-								_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay) +
-								_MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)
-								)
-						);
-
+						float3 attenuation = exp (-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay) + _MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
 						// Scattering accumulation
-						totalRayScattering += viewOpticalDepthRay * attenuation;
-						totalMieScattering += viewOpticalDepthMie * attenuation;
+						//totalRayScattering += viewOpticalDepthRay * attenuation;
+						//totalMieScattering += viewOpticalDepthMie * attenuation;
+
+						float3 rayAtten = exp(-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay)));
+						float mieAtten = exp(-(_MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
+						totalRayScattering += viewOpticalDepthRay * rayAtten;
+						totalMieScattering += viewOpticalDepthMie * mieAtten;
+						
 					}
 					time += viewSampleSize;
 				}
 
+				//phase functions are in here somewhere...
 				float PI = 3.1415926543785;
 				float cosTheta = dot(V, S);
 				float cos2Theta = cosTheta * cosTheta;
@@ -329,10 +332,15 @@
 				float g2 = g * g;
 				float rayPhase = 3.0 / (16.0 * PI) * (1.0 + cos2Theta);
 				float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
-				//float miePhase = ((1-g2) / (4*PI)) / pow(1+g * cosTheta,2);
+				//float miePhase = ((1-g2) / (8*PI)) / pow(1+g * cosTheta,2);
 
-				float3 scattering = _SunIntensity *( (rayPhase * _RayScatteringCoefficient) * totalRayScattering + (miePhase * _MieScatteringCoefficient) * totalMieScattering );
-				return fixed4(scattering, 1);
+				float3 rayScatter = (rayPhase * _RayScatteringCoefficient) * totalRayScattering;
+				float ms = (miePhase * _MieScatteringCoefficient) * totalMieScattering;
+				float3 mieScatter = float3(ms,ms,ms);
+				//totalMieScattering = max(0, totalMieScattering);
+				//miePhase = max(0, miePhase);
+				float3 scattering = _SunIntensity * ( rayScatter + mieScatter );
+				return fixed4(scattering*_Color.rgb, 1);
 			}
 			ENDCG
 		}

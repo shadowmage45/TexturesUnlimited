@@ -21,15 +21,30 @@ public class TUScatteringScript : MonoBehaviour
     //params for the planet that is being simulated
     // specified in meters of radius
     public float planetRealSize = 6310000;
-        
+
+    /// <summary>
+    /// Atmosphere color, tints the light output (multiply)
+    /// </summary>
+    public Color atmoColor = Color.white;
+
+    /// <summary>
+    /// Direct IO multiplier for how much light hits the atmosphere.  Should actually use some proper quadratic scale function.
+    /// What units is this in?  1.0 == ??
+    /// </summary>
+    public float sunIntensity = 20f;
+
+    public int viewSamples = 16;
+    public int lightSamples = 8;
+
     //rayliegh scattering constants
-    public float rayScaleHeight = 8500;
-    public float rayScatterCoefficient;
+    public float rayScaleHeight = 8500f;
+    public Vector3 rayScatteringCoefficient = new Vector3(0.000005804542996261093f, 0.000013562911419845635f, 0.00003026590629238531f);
 
     //mie scattering constants
-    public float mieScaleHeight = 1200;
-    public float mieScatterCoefficient;
-
+    public float mieScaleHeight = 1200f;
+    public float mieScatteringCoefficient = 0.0021f;
+    public float mieAnisotropy = 0.758f;
+    
     //private internal vars, object caches
     private float scaleFactor;
     Vector3[] frustumCorners = new Vector3[4];
@@ -77,6 +92,7 @@ public class TUScatteringScript : MonoBehaviour
 
     public void OnRenderImage(RenderTexture source, RenderTexture dest)
     {
+        if (mat == null || tex == null || effectCam == null) { return; }
         effectCam.CalculateFrustumCorners(new Rect(0, 0, 1, 1), 1, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
         
         for (int i = 0; i < 4; i++)
@@ -89,6 +105,7 @@ public class TUScatteringScript : MonoBehaviour
         Vector3 topRight = frustumCorners[2];
         Vector3 botRight = frustumCorners[3];
 
+        //bounding box frustum corners, for world-space view direction decoding
         mat.SetVector("_Left", topLeft);
         mat.SetVector("_Right", topRight);
         mat.SetVector("_Left2", botLeft); 
@@ -96,12 +113,21 @@ public class TUScatteringScript : MonoBehaviour
 
         mat.SetVector("_SunPos", sun.transform.position);
         mat.SetVector("_PlanetPos", planet.transform.position);
-        mat.SetVector("_SunDir", (sun.transform.position - effectCam.transform.position).normalized);
         mat.SetFloat("_PlanetSize", planetSize);
-        mat.SetFloat("_AtmoSize", planetSize + atmoHeight);        
+        mat.SetFloat("_AtmoSize", planetSize + atmoHeight);
+
+        mat.SetColor("_Color", atmoColor);
+        mat.SetFloat("_SunIntensity", sunIntensity);
+
+        mat.SetInt("_ViewSamples", viewSamples);
+        mat.SetInt("_LightSamples", lightSamples);
 
         mat.SetFloat("_RayScaleHeight", rayScaleHeight);
+        mat.SetVector("_RayScatteringCoefficient", rayScatteringCoefficient);
+
         mat.SetFloat("_MieScaleHeight", mieScaleHeight);
+        mat.SetFloat("_MieScatteringCoefficient", mieScatteringCoefficient);
+        mat.SetFloat("_MieAnisotropy", mieAnisotropy);
 
         float scaleAdjust = planetRealSize / planetSize;
         mat.SetFloat("_ScaleAdjustFactor", scaleAdjust);
