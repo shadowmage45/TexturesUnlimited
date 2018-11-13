@@ -234,7 +234,8 @@
 				//camera world space position
 				float3 cameraPos = _WorldSpaceCameraPos.xyz;
 				//planet center world space position
-				float3 pnt = _PlanetPos;
+				float3 pnt = _PlanetPos;// -cameraPos;
+				//cameraPos = float3(0, 0, 0);
 				//direction from point to sun
 				float3 S = normalize(_SunPos - _PlanetPos);
 
@@ -310,16 +311,29 @@
 						// Calculates the attenuation of sun light
 						// after travelling through the segment PC
 						// This quantity is called T(PC)T(PA) in the tutorial
+						
+						//original implementation
+					#if 0
 						float3 attenuation = exp (-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay) + _MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
 						// Scattering accumulation
-						//totalRayScattering += viewOpticalDepthRay * attenuation;
-						//totalMieScattering += viewOpticalDepthMie * attenuation;
+						totalRayScattering += viewOpticalDepthRay * attenuation;
+						totalMieScattering += viewOpticalDepthMie * attenuation;
+					#else
+						//fixed up implementation
+						#if 1
+							float3 mie = max(float3(0, 0, 0), _MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie));
+							float3 attenuation = exp(-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay) + mie));
+							totalRayScattering += viewOpticalDepthRay * attenuation;
+							totalMieScattering += viewOpticalDepthMie * attenuation;
+						#else
+						//alternate attempt at fixed implementation
+							float3 rayAtten = exp(-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay)));
+							float mieAtten = exp(-(_MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
+							totalRayScattering += viewOpticalDepthRay * rayAtten;
+							totalMieScattering += viewOpticalDepthMie * mieAtten;
+						#endif
 
-						float3 rayAtten = exp(-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay)));
-						float mieAtten = exp(-(_MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
-						totalRayScattering += viewOpticalDepthRay * rayAtten;
-						totalMieScattering += viewOpticalDepthMie * mieAtten;
-						
+					#endif
 					}
 					time += viewSampleSize;
 				}
@@ -331,15 +345,28 @@
 				float g = _MieAnisotropy;
 				float g2 = g * g;
 				float rayPhase = 3.0 / (16.0 * PI) * (1.0 + cos2Theta);
+
+			#if 0
 				float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
-				//float miePhase = ((1-g2) / (8*PI)) / pow(1+g * cosTheta,2);
+				
+				//orig below
+				//float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
+			#else
+				#if 1
+					//from http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/2554/pdf/imm2554.pdf
+					// pg 27
+					float miePhase = (1 - g2) / (4.0 * PI) * pow((1 + g * cos2Theta), 3/2);
+				#else
+					float miePhase = ((1-g2) / (4.0 * PI)) / pow(1+g * cosTheta,2);
+				#endif
+			#endif
+				
+				
 
 				float3 rayScatter = (rayPhase * _RayScatteringCoefficient) * totalRayScattering;
 				float ms = (miePhase * _MieScatteringCoefficient) * totalMieScattering;
-				float3 mieScatter = float3(ms,ms,ms);
-				//totalMieScattering = max(0, totalMieScattering);
-				//miePhase = max(0, miePhase);
-				float3 scattering = _SunIntensity * ( rayScatter + mieScatter );
+				float3 mieScatter = max(float3(0,0,0), float3(ms,ms,ms));
+				float3 scattering = _SunIntensity * ( rayScatter + ms );
 				return fixed4(scattering*_Color.rgb, 1);
 			}
 			ENDCG
