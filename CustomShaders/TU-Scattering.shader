@@ -346,8 +346,8 @@
 				float g2 = g * g;
 				float rayPhase = 3.0 / (16.0 * PI) * (1.0 + cos2Theta);
 
-			#if 0
-				float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
+			#if 0w
+				float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g2 * cosTheta, 1.5) * (2.0 + g2));
 				
 				//orig below
 				//float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
@@ -355,7 +355,10 @@
 				#if 1
 					//from http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/2554/pdf/imm2554.pdf
 					// pg 27
-					float miePhase = (1 - g2) / (4.0 * PI) * pow((1 + g * cos2Theta), 3/2);
+					//float miePhase = (1 - g2) / (4.0 * PI) * pow((1 + g + 2*cosTheta), 3/2);
+					
+					//https://www.astro.umd.edu/~jph/HG_note.pdf
+					float miePhase = 1 / (4.0 * PI) * (1 - g2  / pow( (1 + g2 - 2 * g * cos2Theta) , 3/2) ) ;
 				#else
 					float miePhase = ((1-g2) / (4.0 * PI)) / pow(1+g * cosTheta,2);
 				#endif
