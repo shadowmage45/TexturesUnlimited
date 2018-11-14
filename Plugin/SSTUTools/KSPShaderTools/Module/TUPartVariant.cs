@@ -276,7 +276,7 @@ namespace KSPShaderTools
 
         public TextureSet getSectionTexture(string name)
         {
-            return TexturesUnlimitedLoader.getTextureSet(textureSet);
+            return string.IsNullOrEmpty(textureSet)? TexturesUnlimitedLoader.getModelShaderTextureSet(modelShaderSet) : TexturesUnlimitedLoader.getTextureSet(textureSet);
         }
 
         public void setSectionColors(string name, RecoloringData[] colors)
