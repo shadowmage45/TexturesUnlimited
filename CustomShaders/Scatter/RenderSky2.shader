@@ -406,7 +406,6 @@
 				float shadow_length = 0;// max(0.0, shadow_out - shadow_in) * lightshaft_fadein_hack;
 				float3 transmittance;
 				float3 radiance = GetSkyRadiance(camera - earth_center, view_direction, shadow_length, sun_direction, transmittance);
-				//float3 radiance = GetSkyRadiance(camera, view_direction, shadow_length, sun_direction, transmittance);
 
 				// If the view ray intersects the Sun, add the Sun radiance.
 				if (dot(view_direction, sun_direction) > sun_size.y) 
@@ -418,11 +417,24 @@
 				radiance = lerp(radiance, sphere_radiance, sphere_alpha);
 
 				radiance = pow(float3(1,1,1) - exp(-radiance / white_point * exposure), 1.0 / 2.2);
+				
 
-				//radiance = float3(1, 1, 1);
+				//this is a hacky fix for 'from space' atmosphere having a hard edged boundary (looks fine from in-atmo)
+				if (ray_earth_center_squared_distance > bottom_radius * bottom_radius && length(camera - earth_center) > top_radius && ray_earth_center_squared_distance< top_radius * top_radius)
+				{
+					float d1 = sqrt(ray_earth_center_squared_distance) - bottom_radius;//depth in atmo
+					float d2 = top_radius - bottom_radius;//total height of atmo
+					float d3 = d1 / d2;//percent of the way through atmo
+					d3 = max(0, d3);
+					d3 = pow(d3, 20);
+					d3 = 1 - d3;
+					radiance *= d3;
+				}
+
+
 
 				float3 col = tex2D(_MainTex, i.uv);
-				return float4(radiance+col, 1);
+				return float4(saturate(radiance+col), 1);
 			}
 
 			ENDCG
