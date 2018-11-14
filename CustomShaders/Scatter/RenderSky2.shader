@@ -204,6 +204,7 @@
 #ifdef RADIANCE_API_ENABLED
 			RadianceSpectrum GetSolarRadiance() 
 			{
+				//return 0;
 				return solar_irradiance / (PI * sun_angular_radius * sun_angular_radius);
 			}
 
@@ -211,6 +212,8 @@
 				Position camera, Direction view_ray, Length shadow_length,
 				Direction sun_direction, out DimensionlessSpectrum transmittance) 
 			{
+				//transmittance = 0;
+				//return 0;
 				return GetSkyRadiance(transmittance_texture,
 					scattering_texture, single_mie_scattering_texture,
 					camera, view_ray, shadow_length, sun_direction, transmittance);
@@ -220,6 +223,8 @@
 				Position camera, Position _point, Length shadow_length,
 				Direction sun_direction, out DimensionlessSpectrum transmittance) 
 			{
+				//transmittance = 0;
+				//return 0;
 				return GetSkyRadianceToPoint(transmittance_texture,
 					scattering_texture, single_mie_scattering_texture,
 					camera, _point, shadow_length, sun_direction, transmittance);
@@ -229,6 +234,8 @@
 				Position p, Direction normal, Direction sun_direction,
 				out IrradianceSpectrum sky_irradiance) 
 			{
+				//sky_irradiance = 0;
+				//return 0;
 				return GetSunAndSkyIrradiance(transmittance_texture,
 					irradiance_texture, p, normal, sun_direction, sky_irradiance);
 			}
@@ -240,30 +247,30 @@
 					SUN_SPECTRAL_RADIANCE_TO_LUMINANCE;
 			}
 
-			Luminance3 GetSkyRadiance(
-				Position camera, Direction view_ray, Length shadow_length,
-				Direction sun_direction, out DimensionlessSpectrum transmittance) 
+			Luminance3 GetSkyRadiance(Position camera, Direction view_ray, Length shadow_length, Direction sun_direction, out DimensionlessSpectrum transmittance) 
 			{
+				//transmittance = 0;
+				//return 0;
 				return GetSkyRadiance(transmittance_texture,
 					scattering_texture, single_mie_scattering_texture,
 					camera, view_ray, shadow_length, sun_direction, transmittance) *
 					SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 			}
 
-			Luminance3 GetSkyRadianceToPoint(
-				Position camera, Position _point, Length shadow_length,
-				Direction sun_direction, out DimensionlessSpectrum transmittance) 
+			Luminance3 GetSkyRadianceToPoint(Position camera, Position _point, Length shadow_length, Direction sun_direction, out DimensionlessSpectrum transmittance) 
 			{
+				//transmittance = 0;
+				//return 0;
 				return GetSkyRadianceToPoint(transmittance_texture,
 					scattering_texture, single_mie_scattering_texture,
 					camera, _point, shadow_length, sun_direction, transmittance) *
 					SKY_SPECTRAL_RADIANCE_TO_LUMINANCE;
 			}
 
-			Illuminance3 GetSunAndSkyIrradiance(
-				Position p, Direction normal, Direction sun_direction,
-				out IrradianceSpectrum sky_irradiance) 
+			Illuminance3 GetSunAndSkyIrradiance(Position p, Direction normal, Direction sun_direction, out IrradianceSpectrum sky_irradiance) 
 			{
+				//sky_irradiance = 0;
+				//return 0;
 				IrradianceSpectrum sun_irradiance = GetSunAndSkyIrradiance(
 					transmittance_texture, irradiance_texture, p, normal,
 					sun_direction, sky_irradiance);
@@ -277,6 +284,7 @@
 				float3 camera = _WorldSpaceCameraPos;
 				// Normalized view direction vector.
 				float3 view_direction = normalize(i.view_ray);
+				//return float4(view_direction, 1);
 				// Tangent of the angle subtended by this fragment.
 				float fragment_angular_size = length(ddx(i.view_ray) + ddy(i.view_ray)) / length(i.view_ray);
 
@@ -394,9 +402,11 @@
 				*/
 
 				// Compute the radiance of the sky.
-				float shadow_length = max(0.0, shadow_out - shadow_in) * lightshaft_fadein_hack;
+				//float shadow_length = max(0.0, shadow_out - shadow_in) * lightshaft_fadein_hack;
+				float shadow_length = 0;// max(0.0, shadow_out - shadow_in) * lightshaft_fadein_hack;
 				float3 transmittance;
 				float3 radiance = GetSkyRadiance(camera - earth_center, view_direction, shadow_length, sun_direction, transmittance);
+				//float3 radiance = GetSkyRadiance(camera, view_direction, shadow_length, sun_direction, transmittance);
 
 				// If the view ray intersects the Sun, add the Sun radiance.
 				if (dot(view_direction, sun_direction) > sun_size.y) 
@@ -408,6 +418,8 @@
 				radiance = lerp(radiance, sphere_radiance, sphere_alpha);
 
 				radiance = pow(float3(1,1,1) - exp(-radiance / white_point * exposure), 1.0 / 2.2);
+
+				//radiance = float3(1, 1, 1);
 
 				float3 col = tex2D(_MainTex, i.uv);
 				return float4(radiance+col, 1);

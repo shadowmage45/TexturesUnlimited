@@ -44,8 +44,9 @@ namespace BrunetonsImprovedAtmosphere
         /// is done in the following method. It starts with the creation of an atmosphere
         /// Model instance, with parameters corresponding to the Earth atmosphere:
         /// </summary>
-        void Awake() 
+        void Start() 
         {
+            MonoBehaviour.print("Scat script start!!  compute:  "+m_compute+" instance: "+GetHashCode());
              // Values from "Reference Solar Spectral Irradiance: ASTM G-173", ETR column
             // (see http://rredc.nrel.gov/solar/spectra/am1.5/ASTMG173/ASTMG173.html),
             // summed and averaged in each bin (e.g. the value for 360nm is the average

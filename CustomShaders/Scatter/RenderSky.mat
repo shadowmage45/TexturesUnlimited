@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: RenderSky
-  m_Shader: {fileID: 4800000, guid: 775202e8874ffc0439621133e0bc3bf5, type: 3}
+  m_Shader: {fileID: 4800000, guid: 80e71c3fa03b43b46a33152dd90ceebb, type: 3}
   m_ShaderKeywords: COMBINED_SCATTERING_TEXTURES RADIANCE_API_ENABLED
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
