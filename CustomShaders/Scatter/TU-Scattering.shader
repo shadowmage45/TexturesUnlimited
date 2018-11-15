@@ -5,6 +5,7 @@
 		_MainTex ("Texture", 2D) = "white" {}
 		_Color("_Color", Color) = (1,1,1)
 		_PlanetPos("Planet Pos", Vector) = (0,0,0,0)
+		_SunDir("Sun Dir", Vector) = (0, 0, 1)
 		_SunPos("Sun Pos", Vector) = (0, 0, 15000, 0)		
 		_PlanetSize("Planet Size", Float) = 6
 		_AtmoSize("Atmo Size", Float) = 6.06
@@ -32,6 +33,7 @@
 
 			//simulation setup params - sun and planet positions, sizes, and atmosphere stuffs
 			float4 _SunPos;
+			float3 _SunDir;
 			float4 _PlanetPos;
 			float _PlanetSize;
 			float _AtmoSize;
@@ -237,7 +239,7 @@
 				float3 pnt = _PlanetPos;// -cameraPos;
 				//cameraPos = float3(0, 0, 0);
 				//direction from point to sun
-				float3 S = normalize(_SunPos - _PlanetPos);
+				float3 S = _SunDir;// normalize(_SunPos - _PlanetPos);
 
 				//find start and end intersects of the ray with the atmosphere
 				//these are offsets along the ray with 0 = starting point

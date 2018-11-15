@@ -116,6 +116,8 @@ public class TUScatteringScript : MonoBehaviour
         mat.SetFloat("_PlanetSize", planetSize);
         mat.SetFloat("_AtmoSize", planetSize + atmoHeight);
 
+        mat.SetVector("_SunDir", -sun.transform.forward);
+
         mat.SetColor("_Color", atmoColor);
         mat.SetFloat("_SunIntensity", sunIntensity);
 

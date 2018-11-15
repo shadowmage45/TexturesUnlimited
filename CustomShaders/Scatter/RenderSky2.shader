@@ -67,6 +67,8 @@
 			float3 _Left2;
 			float3 _Right2;
 
+			float _ClipDepth;//farClip - nearClip
+
 			float exposure;
 			float3 white_point;
 			float3 earth_center;
@@ -78,6 +80,8 @@
 			sampler2D irradiance_texture;
 			sampler3D scattering_texture;
 			sampler3D single_mie_scattering_texture;
+
+			sampler2D _CameraDepthTexture;
 
 			struct appdata
 			{
@@ -104,7 +108,7 @@
 
 				float3 left = lerp(_Left2, _Left, v.uv.y);
 				float3 right = lerp(_Right2, _Right, v.uv.y);
-				o.view_ray = normalize(lerp(left, right, v.uv.x));
+				o.view_ray = lerp(left, right, v.uv.x);
 
 				return o;
 			}
@@ -367,7 +371,34 @@
 				p_dot_v = dot(p, view_direction);
 				p_dot_p = dot(p, p);
 				float ray_earth_center_squared_distance = p_dot_p - p_dot_v * p_dot_v;
-				distance_to_intersection = -p_dot_v - sqrt(earth_center.y * earth_center.y - ray_earth_center_squared_distance);
+				distance_to_intersection = -p_dot_v - sqrt(bottom_radius * bottom_radius - ray_earth_center_squared_distance);
+
+
+				//0-1 linear depth value; 0= no depth, 1 = max depth
+				float depth = Linear01Depth(UNITY_SAMPLE_DEPTH(tex2D(_CameraDepthTexture, i.uv)));
+
+				//absolute world-space hit position (or should be)
+				float3 worldPos = camera + (depth * i.view_ray);
+
+				//distance from camera to the hit
+				float dist = length(camera - worldPos);
+
+				//distance from camera to planetary boundary
+				//equals the distance to the planetary center minus distance to surface
+				float dist2 = length(earth_center - camera) - (bottom_radius);
+				float distance_to_intersection2 = -p_dot_v - sqrt(top_radius * top_radius - ray_earth_center_squared_distance);
+
+				//but this is incorrect, as we actually need the distance for -this view ray- --if it intersects the surface--
+
+				//if the distance from camera to hit is less than the distance between the camera and the atmosphere boundary
+				//then it must have hit something -else- between the camera and the target planet
+				//thus, discard the pixel / render zeros.
+
+				if (dist < distance_to_intersection2)
+				{
+					//return float4(dist.rrr / _ClipDepth, 1);
+					return float4(tex2D(_MainTex, i.uv).rgb, 1);
+				}
 
 				// Compute the radiance reflected by the ground, if the ray intersects it.
 				float ground_alpha = 0.0;
@@ -414,7 +445,7 @@
 				}
 
 				radiance = lerp(radiance, ground_radiance, ground_alpha);
-				radiance = lerp(radiance, sphere_radiance, sphere_alpha);
+				//radiance = lerp(radiance, sphere_radiance, sphere_alpha);
 
 				radiance = pow(float3(1,1,1) - exp(-radiance / white_point * exposure), 1.0 / 2.2);
 				
@@ -428,7 +459,7 @@
 					d3 = max(0, d3);
 					d3 = pow(d3, 20);
 					d3 = 1 - d3;
-					radiance *= d3;
+					//radiance *= d3;
 				}
 
 

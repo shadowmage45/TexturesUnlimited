@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace BrunetonsImprovedAtmosphere
@@ -164,6 +165,7 @@ namespace BrunetonsImprovedAtmosphere
             m_model.Init(m_compute, numScatteringOrders);
 
             m_model.BindToMaterial(m_material);
+            //dumpTextures();
         }
 
         private void OnDestroy()
@@ -176,6 +178,7 @@ namespace BrunetonsImprovedAtmosphere
         {
 
             Camera camera = Camera.current;
+            if (camera == null) { camera = GetComponent<Camera>(); }
 
             m_material.SetFloat("exposure", UseLuminance != LUMINANCE.NONE ? Exposure * 1e-5f : Exposure);
             m_material.SetVector("earth_center", planet==null? new Vector3(0.0f, -kBottomRadius / kLengthUnitInMeters, 0.0f) : planet.transform.position);
@@ -203,7 +206,9 @@ namespace BrunetonsImprovedAtmosphere
 
             for (int i = 0; i < 4; i++)
             {
-                frustumCorners[i] = camera.transform.TransformVector(frustumCorners[i]);
+                frustumCorners[i] = camera.transform.TransformVector(frustumCorners[i] * (camera.farClipPlane - camera.nearClipPlane));
+                //frustumCorners[i] = frustumCorners[i] + camera.transform.position;//relative direction from camera, not positional corner refs
+                MonoBehaviour.print("Setting fcorner: " + frustumCorners[i]);
             }
 
             Vector3 botLeft = frustumCorners[0];
@@ -218,6 +223,8 @@ namespace BrunetonsImprovedAtmosphere
             m_material.SetVector("_Right2", botRight);
 
             m_material.SetFloat("_showSphere", showSphere ? 1 : 0);
+
+            m_material.SetFloat("_ClipDepth", camera.farClipPlane - camera.nearClipPlane);
 
 
             CustomGraphicsBlit(src, dest, m_material, 0);
@@ -254,6 +261,34 @@ namespace BrunetonsImprovedAtmosphere
             GL.End();
             GL.PopMatrix();
 
+        }
+
+        private void dumpTextures()
+        {
+            //sampler2D transmittance_texture;
+            //sampler2D irradiance_texture;
+            RenderTexture tex = m_model.TransmittanceTexture;// (RenderTexture)m_material.GetTexture("transmittance_texture");
+            if (tex == null) { return; }
+
+            Texture2D outputTex = new Texture2D(tex.width, tex.height, TextureFormat.ARGB32, false);
+                        
+            Graphics.SetRenderTarget(tex);
+            outputTex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0);
+            outputTex.Apply();
+
+            string path = "testOut.png";
+            MonoBehaviour.print(Path.GetFullPath(path));
+            
+            File.WriteAllBytes("Assets/transmittance.png", outputTex.EncodeToPNG());
+
+            tex = m_model.IrradianceTexture;
+            outputTex = new Texture2D(tex.width, tex.height, TextureFormat.ARGB32, false);
+
+            Graphics.SetRenderTarget(tex);
+            outputTex.ReadPixels(new Rect(0, 0, tex.width, tex.height), 0, 0);
+            outputTex.Apply();
+
+            File.WriteAllBytes("Assets/irradiance.png", outputTex.EncodeToPNG());
         }
 
     }
