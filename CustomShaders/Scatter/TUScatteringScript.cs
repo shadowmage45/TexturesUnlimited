@@ -35,6 +35,8 @@ public class TUScatteringScript : MonoBehaviour
 
     public int viewSamples = 16;
     public int lightSamples = 8;
+    
+    public bool clouds = true;
 
     //rayliegh scattering constants
     public float rayScaleHeight = 8500f;
@@ -55,7 +57,7 @@ public class TUScatteringScript : MonoBehaviour
     // Use this for initialization
     void Start ()
     {
-        mat = new Material(Shader.Find("Hidden/TU-Scattering"));
+        mat = new Material(Shader.Find("Hidden/TU-Clouds"));
         effectCam = GetComponent<Camera>();
         effectCam.depthTextureMode = DepthTextureMode.Depth;
         tex = new RenderTexture(Screen.width, Screen.height, 0);
@@ -66,7 +68,7 @@ public class TUScatteringScript : MonoBehaviour
     {
         if (mat == null || tex == null || effectCam == null)
         {
-            mat = new Material(Shader.Find("Hidden/TU-Scattering"));
+            mat = new Material(Shader.Find("Hidden/TU-Clouds"));
             effectCam = GetComponent<Camera>();
             effectCam.depthTextureMode = DepthTextureMode.Depth;
             tex = new RenderTexture(Screen.width, Screen.height, 0);
@@ -133,6 +135,8 @@ public class TUScatteringScript : MonoBehaviour
 
         float scaleAdjust = planetRealSize / planetSize;
         mat.SetFloat("_ScaleAdjustFactor", scaleAdjust);
+
+        mat.SetInt("_Clouds", clouds ? 1 : 0);
 
         //extract pass, where the magic happens
         Graphics.Blit(source, tex, mat, 0);

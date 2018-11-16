@@ -1,4 +1,4 @@
-﻿Shader "Hidden/TU-Scattering"
+﻿Shader "Hidden/TU-Clouds"
 {
 	Properties
 	{
@@ -48,18 +48,10 @@
 			//int based toggle for cloud cover
 			int _Clouds;
 
-			//multiplier to sun output intensity -- units are in ??????
-			float _SunIntensity;
-
 			int _ViewSamples = 16;
 			int _LightSamples = 8;
 
-			//actual scattering parameters that control scattering simulation
-			float _RayScaleHeight;
-			float3 _RayScatteringCoefficient;
-			float _MieScaleHeight;			
-			float _MieScatteringCoefficient;
-			float _MieAnisotropy;
+			sampler2D _MainTex;
 			
 			struct appdata
 			{
@@ -87,9 +79,6 @@
 				return o;
 			}
 			
-			sampler2D _MainTex;
-			sampler2D _CameraDepthTexture;
-			sampler2D _LastCameraDepthTexture;
 			
 			float distanceFromLine(float3 origin, float3 direction, float3 pnt)
 			{
@@ -217,18 +206,19 @@
 
 			float cloudNoise(float3 P, float t, int oct) 
 			{
-				return snoise(P);
 				float noise = 0;
-				float samp = 0;
+				float samp = 1;
 				float mult = 1;
+				float freq = 1;
 				for (int i = 0; i < oct; i++) 
 				{
-					samp = snoise(float4(P*i, t));
-					if (i > 1) { samp -= 0.5; }
-					samp *= mult;
+					samp = snoise(float4(P * freq, t)) * mult;
 					noise += samp;
+
 					//decrease blending factor for next noise sample
 					mult *= 0.5;
+					//increase noise frequency
+					freq *= 2;
 				}
 				return clamp(noise, 0, 1);
 			}
@@ -237,54 +227,36 @@
 			//h = height 
 			float cloudSampling(float3 P, float h)
 			{
+				//cloud height deltasomething
+				float chd = 1;
+				//chd = remap01(h, 0, (_AtmoSize - _PlanetSize)*_ScaleAdjustFactor, 2);
+				//return h;
 
 				//offset by world-space planet pos, to get planet-space position
 				P -= _PlanetPos;
 				//normalize by atmosphere size to get a 0-1 value
 				P /= _AtmoSize;
-
-				float chd = 1;
-				if (h < 400) 
-				{
-					return 0;
-				}
-				else if (h < 1000)
-				{
-					chd = remap01(h, 1000, 10000, 2);
-					//cloud height delta something
-					//goes from 0-1 as cloud height approaches 10km
-					chd = (1000 - h) / 1000;
-					//pow it a bit for some exponential decay below 10km
-					chd = pow(chd, 5);
-					//noise *= chd;
-				}
-				else if (h > 20000)
-				{
-					float dpr = ((_AtmoSize - _PlanetSize)*_ScaleAdjustFactor) - 20000;
-					chd = (dpr - h) / dpr;
-					chd = pow(chd, 5);
-					//noise *= chd;
-				}
-				else
-				{
-					//-0.5 <-> +0.5 
-					//chd = (cloudHeight - 15000) / 1000;
-					//chd += 0.5;
-				}
-
 				//modulate y coordinate to instigate some horizontal banding
 				P.y *= 4;
-				return cloudNoise(P * 5, 1, 8)*chd;
+				return cloudNoise(P * 5, 1, 8) * chd;
 			}
 
-			bool lightSampling(float3 P, float3 S, out float opticalDepthRay, out float opticalDepthMie, inout float clouds)
+			bool cloudTest(float3 P) 
 			{
+				P -= _PlanetPos;
+				P /= _AtmoSize;
+				P.y *= 4;
+				float check = cloudNoise(P * 5, 1.5, 4) - 0.25;
+				return check > 0;
+			}
+
+			bool lightSampling(float3 P, float3 S)
+			{
+				float clouds = 0;
 				float C1, C2;
 				rayIntersect(P, S, _PlanetPos, _AtmoSize, C1, C2);
 				// Optical depth for secondary ray
 				// (used for sun light attenuation)
-				opticalDepthRay = 0;
-				opticalDepthMie = 0;
 				float time = 0;
 				float lightSampleSize = distance(P, C2) / (float)(_LightSamples);
 
@@ -298,28 +270,21 @@
 					if (height < 0) 
 					{
 						//break;
-						return false;
+						return 0;
 					}
-
-					// Optical depth for the secondary ray
-					opticalDepthRay += exp(-height / _RayScaleHeight) * lightSampleSize * _ScaleAdjustFactor;
-					opticalDepthMie += exp(-height / _MieScaleHeight) * lightSampleSize * _ScaleAdjustFactor;
-
-					clouds += cloudSampling(Q, height) / (float)_LightSamples;
+					
+					clouds += cloudSampling(Q, height)*100;// *(float)_LightSamples;
 					
 					time += lightSampleSize;
 				}
-				return true;
+				return clouds;
 			}
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				//float3 _RayScatteringCoefficient = float3(0.000005804542996261093, 0.000013562911419845635, 0.00003026590629238531);
-				//float _MieScatteringCoefficient = 0.0021;
-				//float _MieAnisotropy = 0.758;
-				//float _SunIntensity = 20;
-
+				
 				float clouds = 0;
+				float cloudsScat = 0;
 
 				//view direction
 				float3 V = normalize(i.viewDir);
@@ -344,140 +309,28 @@
 				}
 
 				//bool inAtmo = length(cameraPos - _PlanetPos) < _AtmoSize;
-								
-				// Total optical depth
-				float opticalDepthRay = 0; // Rayleigh
-				float opticalDepthMie = 0; // Mie
-
-										   // Total Scattering accumulated
-				float3 totalRayScattering = float3(0, 0, 0); // RGB
-				float totalMieScattering = 0; // A single channel
-				
+												
 				float time = tA;
 				float viewSampleSize = (tB - tA) / (float)(_ViewSamples);
 				for (int i = 0; i < _ViewSamples; i++)
 				{
 					// Point position
 					// (sampling in the middle of the view sample segment)
-					float3 P = cameraPos + D * (time + viewSampleSize * 0.5);
+					float3 P = cameraPos + D * (time + viewSampleSize *0.5);
 					
 					// Height of point
 					float height = distance(pnt, P) - _PlanetSize;
 					height *= _ScaleAdjustFactor;
 
-					// This point is inside the Planet
-					//if (height <= 0)
-					//	break;
-					// The above check is removed
-					// because tB is ajusted so that it never enters into the planet
-
-					// Calculate the optical depth for the current segment
-					float viewOpticalDepthRay = exp(-height / _RayScaleHeight) * viewSampleSize *_ScaleAdjustFactor;
-					float viewOpticalDepthMie = exp(-height / _MieScaleHeight) * viewSampleSize *_ScaleAdjustFactor;
-
-					// Accumulates the optical depths
-					opticalDepthRay += viewOpticalDepthRay;
-					opticalDepthMie += viewOpticalDepthMie;
-
-					clouds += cloudSampling(P, height) / (float)_ViewSamples;
-
-
-					// We are sampling the amount of light received at point P,
-					// from the segment AB
-					// This light comes from the sun.
-					// However, light from the sun itself goes into the atmosphere,
-					// so is subjected to attenuation.
-					// The dependes on how long it has travelled through the atmosphere.
-					// C is the point at which the sun enters the atmosphere.
-					// So the segment PC is the distance light from the sun travels
-					// into the atmosphere before reaching P.
-					// At that point, we take the light that remains and we see how much
-					// is reflected back into the direction of the camera.
-
-					// Optical depth for secondary ray (light sample)
-					// (used for sun light attenuation)
-					float lightOpticalDepthRay = 0;
-					float lightOpticalDepthMie = 0;
-					bool overground = lightSampling(P, S, lightOpticalDepthRay, lightOpticalDepthMie, clouds);
-					if (overground)
+					if (cloudTest(P))
 					{
-						// Calculates the attenuation of sun light
-						// after travelling through the segment PC
-						// This quantity is called T(PC)T(PA) in the tutorial
-						
-						//original implementation
-					#if 1
-						float3 attenuation = exp (-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay) + _MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
-						// Scattering accumulation
-						totalRayScattering += viewOpticalDepthRay * attenuation;
-						totalMieScattering += viewOpticalDepthMie * attenuation;
-					#else
-						//fixed up implementation
-						#if 1
-							float3 mie = max(float3(0, 0, 0), _MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie));
-							float3 attenuation = exp(-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay) + mie));
-							totalRayScattering += viewOpticalDepthRay * attenuation;
-							totalMieScattering += viewOpticalDepthMie * attenuation;
-						#else
-						//alternate attempt at fixed implementation
-							float3 rayAtten = exp(-(_RayScatteringCoefficient * (opticalDepthRay + lightOpticalDepthRay)));
-							float mieAtten = exp(-(_MieScatteringCoefficient * (opticalDepthMie + lightOpticalDepthMie)));
-							totalRayScattering += viewOpticalDepthRay * rayAtten;
-							totalMieScattering += viewOpticalDepthMie * mieAtten;
-						#endif
-
-					#endif
+						clouds += cloudSampling(P, height) / (float)_ViewSamples;
+						cloudsScat += lightSampling(P, S) / (float)_LightSamples;
 					}
+
 					time += viewSampleSize;
 				}
-
-				//phase functions are in here somewhere...
-				float PI = 3.1415926543785;
-				float cosTheta = dot(V, S);
-				float cos2Theta = cosTheta * cosTheta;
-				float g = _MieAnisotropy;
-				float g2 = g * g;
-				float rayPhase = 3.0 / (16.0 * PI) * (1.0 + cos2Theta);
-
-			#if 0
-				float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g2 * cosTheta, 1.5) * (2.0 + g2));
-				
-				//orig below
-				//float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
-			#else
-				#if 1
-					//from http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/2554/pdf/imm2554.pdf
-					// pg 27
-					//float miePhase = (1 - g2) / (4.0 * PI) * pow((1 + g + 2*cosTheta), 1.5);
-					
-					//https://www.astro.umd.edu/~jph/HG_note.pdf
-					//float miePhase = 1 / (4.0 * PI) * (1 - g2  / pow( (1 + g2 - 2 * g * cos2Theta) , 1.5) ) ;
-					
-					//brunetons improved
-					//InverseSolidAngle k = 3.0 / (8.0 * PI * sr) * (1.0 - g * g) / (2.0 + g * g);
-					//return k * (1.0 + nu * nu) / pow(abs(1.0 + g * g - 2.0 * g * nu), 1.5);
-					float nu = cosTheta;
-					float nu2 = nu * nu;
-					float k = 3.0 / (8.0 * PI) * (1.0 - g2) / (2.0 + g2);
-					float miePhase = k * (1.0 + nu2) / pow(abs(1.0 + g2 - 2.0 * g * nu), 1.5);
-				#else
-					float miePhase = ((1-g2) / (4.0 * PI)) / pow(1+g * cosTheta,2);
-				#endif
-			#endif
-
-				float3 rayScatter = (rayPhase * _RayScatteringCoefficient) * totalRayScattering;
-				float ms = (miePhase * _MieScatteringCoefficient) * totalMieScattering;
-				float3 mieScatter = max(float3(0,0,0), float3(ms,ms,ms));
-				if (_Clouds > 0) 
-				{
-					float3 scattering = _SunIntensity * (rayScatter + ms);
-					return fixed4((scattering + clouds.rrr) * _Color.rgb, 1);
-				}
-				else 
-				{
-					float3 scattering = _SunIntensity * (rayScatter + ms);
-					return fixed4(scattering * _Color.rgb, 1);
-				}
+				return fixed4((clouds-cloudsScat).rrr * _Color.rgb, 1);
 			}
 			ENDCG
 		}

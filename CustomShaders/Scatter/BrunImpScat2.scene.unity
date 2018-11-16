@@ -188,6 +188,18 @@ Prefab:
 GameObject:
   m_PrefabParentObject: {fileID: 100000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
   m_PrefabInternal: {fileID: 469526810}
+--- !u!135 &523260866
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 523260865}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &593628327
 GameObject:
   m_ObjectHideFlags: 0
@@ -220,6 +232,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d73351af52271e498137908175610dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  kLengthUnitInMeters: 100
   Sun: {fileID: 1712249084}
   planet: {fileID: 2039112180}
   UseConstantSolarSpectrum: 0
@@ -232,6 +245,7 @@ MonoBehaviour:
   showSphere: 1
   m_compute: {fileID: 7200000, guid: 46a877cda72d1754080b03d44dc444a5, type: 3}
   m_material: {fileID: 2100000, guid: 70ee26176b148224cb554a88e5ff32e4, type: 2}
+  inScat: {fileID: 0}
 --- !u!81 &593628329
 AudioListener:
   m_ObjectHideFlags: 0
@@ -322,6 +336,7 @@ MonoBehaviour:
   sunIntensity: 25
   viewSamples: 16
   lightSamples: 8
+  clouds: 1
   rayScaleHeight: 8500
   rayScatteringCoefficient: {x: 0.000005804543, y: 0.000013562912, z: 0.000030265906}
   mieScaleHeight: 1200
@@ -354,7 +369,6 @@ Transform:
   m_Children:
   - {fileID: 1678248324}
   - {fileID: 1603763095}
-  - {fileID: 1756928052}
   m_Father: {fileID: 0}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -403,84 +417,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1255898903
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 899088593}
-    m_Modifications:
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 12760
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0.8362862
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.5482933
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_RootOrder
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 2300002, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 9129bad9aad7f394aa91b2eb46de21c8, type: 2}
-    - target: {fileID: 2300000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 9129bad9aad7f394aa91b2eb46de21c8, type: 2}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 12720
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 12720.015
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 12720.015
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 100000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: -113.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 100000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-      propertyPath: m_Name
-      value: 100kSphere-Zucconi
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-  m_IsPrefabParent: 0
 --- !u!1 &1340068916
 GameObject:
   m_ObjectHideFlags: 0
@@ -557,8 +493,8 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1340068916}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -6370}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -6360.01}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 6
@@ -595,6 +531,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d73351af52271e498137908175610dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  kLengthUnitInMeters: 100
   Sun: {fileID: 1712249084}
   planet: {fileID: 2039112180}
   UseConstantSolarSpectrum: 0
@@ -607,6 +544,7 @@ MonoBehaviour:
   showSphere: 1
   m_compute: {fileID: 7200000, guid: 46a877cda72d1754080b03d44dc444a5, type: 3}
   m_material: {fileID: 2100000, guid: 70ee26176b148224cb554a88e5ff32e4, type: 2}
+  inScat: {fileID: 0}
 --- !u!81 &1369519029
 AudioListener:
   m_ObjectHideFlags: 0
@@ -697,6 +635,7 @@ MonoBehaviour:
   sunIntensity: 25
   viewSamples: 16
   lightSamples: 8
+  clouds: 1
   rayScaleHeight: 8500
   rayScatteringCoefficient: {x: 0.000005804543, y: 0.000013562912, z: 0.000030265906}
   mieScaleHeight: 1200
@@ -791,10 +730,6 @@ Transform:
   m_Father: {fileID: 953265528}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &1756928052 stripped
-Transform:
-  m_PrefabParentObject: {fileID: 400000, guid: 9accf6374cd989140b2074e165bcbf0a, type: 3}
-  m_PrefabInternal: {fileID: 1255898903}
 --- !u!1001 &1910934013
 Prefab:
   m_ObjectHideFlags: 0
@@ -884,20 +819,21 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1989761517}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0827b5a59698bd249bb94a985c3bf346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sun: {fileID: 1712249082}
   planet: {fileID: 523260865}
-  planetSize: 6360
-  atmoHeight: 63
+  planetSize: 63600
+  atmoHeight: 60
   planetRealSize: 6310000
   atmoColor: {r: 1, g: 1, b: 1, a: 1}
   sunIntensity: 20
-  viewSamples: 16
-  lightSamples: 8
+  viewSamples: 8
+  lightSamples: 6
+  clouds: 1
   rayScaleHeight: 8500
   rayScatteringCoefficient: {x: 0.000005804543, y: 0.000013562912, z: 0.000030265906}
   mieScaleHeight: 1200
@@ -914,6 +850,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d73351af52271e498137908175610dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  kLengthUnitInMeters: 1000
   Sun: {fileID: 1712249084}
   planet: {fileID: 2039112180}
   UseConstantSolarSpectrum: 0
@@ -922,10 +859,11 @@ MonoBehaviour:
   UseHalfPrecision: 0
   DoWhiteBalance: 0
   UseLuminance: 0
-  Exposure: 5
+  Exposure: 2
   showSphere: 1
   m_compute: {fileID: 7200000, guid: 46a877cda72d1754080b03d44dc444a5, type: 3}
   m_material: {fileID: 2100000, guid: 70ee26176b148224cb554a88e5ff32e4, type: 2}
+  inScat: {fileID: 8400000, guid: 7ed1a0c2aa248b54da854325d41dc121, type: 2}
 --- !u!81 &1989761520
 AudioListener:
   m_ObjectHideFlags: 0
@@ -990,7 +928,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1989761517}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 6360, z: -24000}
+  m_LocalPosition: {x: 0, y: 0, z: -13000}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -1018,7 +956,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2039112180}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 12760, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

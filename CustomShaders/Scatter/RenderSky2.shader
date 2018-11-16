@@ -462,7 +462,7 @@
 					d3 = max(0, d3);
 					d3 = pow(d3, 20);
 					d3 = 1 - d3;
-					//radiance *= d3;
+					radiance *= d3;
 				}
 
 

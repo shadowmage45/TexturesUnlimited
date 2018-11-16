@@ -12,7 +12,9 @@ namespace BrunetonsImprovedAtmosphere
 
         static readonly float kSunAngularRadius = 0.00935f / 2.0f;
         static readonly float kBottomRadius = 6360000.0f;
-        static readonly float kLengthUnitInMeters = 1000.0f;
+
+        //rescaleFactor
+        public float kLengthUnitInMeters = 100.0f;
 
         public Light Sun;
 
@@ -39,6 +41,8 @@ namespace BrunetonsImprovedAtmosphere
         public Material m_material;
 
         private Model m_model;
+
+        public RenderTexture inScat;
         
         /// <summary>
         /// The "real" initialization work, which is specific to our atmosphere model,
@@ -165,7 +169,7 @@ namespace BrunetonsImprovedAtmosphere
             m_model.Init(m_compute, numScatteringOrders);
 
             m_model.BindToMaterial(m_material);
-            //dumpTextures();
+            dumpTextures();
         }
 
         private void OnDestroy()
@@ -225,8 +229,10 @@ namespace BrunetonsImprovedAtmosphere
 
             m_material.SetFloat("_ClipDepth", camera.farClipPlane - camera.nearClipPlane);
 
+            Graphics.Blit(src, dest, m_material, 0);
+
             //can remove custom blit as no longer storing indices in vertex data
-            CustomGraphicsBlit(src, dest, m_material, 0);
+            //CustomGraphicsBlit(src, dest, m_material, 0);
         }
 
         private void CustomGraphicsBlit(RenderTexture source, RenderTexture dest, Material mat, int passNr)
@@ -280,6 +286,17 @@ namespace BrunetonsImprovedAtmosphere
             
             File.WriteAllBytes("Assets/transmittance.png", outputTex.EncodeToPNG());
 
+            //okay, so we've got the transmittance texture in a texture2d
+            //along the right-most pixels, set them to 0,0,0
+            //doesn't seem to actually fix... anything...
+            //for (int y = 0; y < tex.height; y++)
+            //{
+            //    outputTex.SetPixel(tex.width - 1, y, new Color(0, 0, 0, 0));
+            //}
+            //outputTex.Apply();
+            //Graphics.Blit(outputTex, tex);
+            //File.WriteAllBytes("Assets/transmittance2.png", outputTex.EncodeToPNG());
+
             tex = m_model.IrradianceTexture;
             outputTex = new Texture2D(tex.width, tex.height, TextureFormat.ARGB32, false);
 
@@ -288,6 +305,37 @@ namespace BrunetonsImprovedAtmosphere
             outputTex.Apply();
 
             File.WriteAllBytes("Assets/irradiance.png", outputTex.EncodeToPNG());
+
+
+
+            RenderTexture inScat = m_model.ScatteringTexture;
+            outputTex = new Texture2D(inScat.width, inScat.height, TextureFormat.RGBAFloat, false);
+
+            RenderTexture realOutputTex = new RenderTexture(inScat.width, inScat.height, 0, RenderTextureFormat.ARGBFloat);
+            realOutputTex.Create();
+
+            for (int i = 0; i < CONSTANTS.SCATTERING_DEPTH; i++)
+            {
+                //copy into the back end GPU memory for the slice
+                Graphics.CopyTexture(inScat, i, realOutputTex, 0);
+
+
+                Graphics.CopyTexture(inScat, i, this.inScat, i);
+
+                //bind the copied texture to be able to read from it
+                Graphics.SetRenderTarget(realOutputTex);
+
+                //read the pixels
+                outputTex.ReadPixels(new Rect(0, 0, inScat.width, inScat.height), 0, 0);
+                outputTex.Apply();
+                
+                File.WriteAllBytes("Assets/scatter-"+i+".png", outputTex.EncodeToPNG());
+
+                realOutputTex.DiscardContents();
+            }
+
+
+            
         }
 
     }
