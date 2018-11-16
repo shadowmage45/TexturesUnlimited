@@ -206,9 +206,8 @@ namespace BrunetonsImprovedAtmosphere
 
             for (int i = 0; i < 4; i++)
             {
+                //transform the vectors to contain frustum depth information, used to recompose world-space pos from depth-buffer
                 frustumCorners[i] = camera.transform.TransformVector(frustumCorners[i] * (camera.farClipPlane - camera.nearClipPlane));
-                //frustumCorners[i] = frustumCorners[i] + camera.transform.position;//relative direction from camera, not positional corner refs
-                MonoBehaviour.print("Setting fcorner: " + frustumCorners[i]);
             }
 
             Vector3 botLeft = frustumCorners[0];
@@ -226,7 +225,7 @@ namespace BrunetonsImprovedAtmosphere
 
             m_material.SetFloat("_ClipDepth", camera.farClipPlane - camera.nearClipPlane);
 
-
+            //can remove custom blit as no longer storing indices in vertex data
             CustomGraphicsBlit(src, dest, m_material, 0);
         }
 

@@ -24,6 +24,7 @@
 			#pragma fragment frag
 			
 			#include "UnityCG.cginc"
+			#include "/../Noise/randomNoise2.cginc"
 
 			//frustum bounding vectors, used to determine world-space view direction from inside screen space shader
 			float3 _Left;
@@ -188,7 +189,7 @@
 				return true;
 			}
 
-			bool lightSampling(float3 P, float3 S, out float opticalDepthRay, out float opticalDepthMie)
+			bool lightSampling(float3 P, float3 S, out float opticalDepthRay, out float opticalDepthMie, inout float3 clouds)
 			{
 				float C1, C2;
 				rayIntersect(P, S, _PlanetPos, _AtmoSize, C1, C2);
@@ -216,6 +217,43 @@
 					opticalDepthRay += exp(-height / _RayScaleHeight) * lightSampleSize * _ScaleAdjustFactor;
 					opticalDepthMie += exp(-height / _MieScaleHeight) * lightSampleSize * _ScaleAdjustFactor;
 
+					//modulate by the current distance from ground; cloud layer is quite low and thin, residing at ~10-20km on earth
+					//
+					float3 cloudPos = Q - _PlanetPos;
+
+					float chd = 1;
+
+					if (height < 10000)
+					{
+						//cloud height delta something
+						//goes from 0-1 as cloud height approaches 10km
+						chd = (10000 - height) / 10000;
+						//pow it a bit for some exponential decay below 10km
+						chd = pow(chd, 5);
+						//noise *= chd;
+					}
+					else if (height > 20000)
+					{
+						float dpr = ((_AtmoSize - _PlanetSize)*_ScaleAdjustFactor) - 20000;
+						chd = (dpr - height) / dpr;
+						chd = pow(chd, 5);
+						//noise *= chd;
+					}
+					else
+					{
+						//-0.5 <-> +0.5 
+						//chd = (cloudHeight - 15000) / 1000;
+						//chd += 0.5;
+					}
+
+					//find the position on the sphere of the atmosphere, and use that as the XYZ coordinate input for noise function; use _Time as the W coord (xyzw)
+					//normalize sphere coordinate to 0-1 range
+					cloudPos = (Q - _PlanetPos) / _AtmoSize;
+					//modulate y coordinate to instigate some horizontal banding
+					cloudPos.y *= 4;
+					float noise = snoise(cloudPos * 5) / (float)_LightSamples;
+					clouds = clouds + float3(1, 1, 1)*noise;
+
 					time += lightSampleSize;
 				}
 				return true;
@@ -228,6 +266,7 @@
 				//float _MieAnisotropy = 0.758;
 				//float _SunIntensity = 20;
 
+				float3 clouds = float3(0,0,0);
 
 				//view direction
 				float3 V = normalize(i.viewDir);
@@ -252,9 +291,7 @@
 				}
 
 				//bool inAtmo = length(cameraPos - _PlanetPos) < _AtmoSize;
-
-
-
+								
 				// Total optical depth
 				float opticalDepthRay = 0; // Rayleigh
 				float opticalDepthMie = 0; // Mie
@@ -270,6 +307,46 @@
 					// Point position
 					// (sampling in the middle of the view sample segment)
 					float3 P = cameraPos + D * (time + viewSampleSize * 0.5);
+
+										
+					//modulate by the current distance from ground; cloud layer is quite low and thin, residing at ~10-20km on earth
+					//
+					float3 cloudPos = P - pnt;
+					float cloudHeight = (length(P - pnt) - _PlanetSize) * _ScaleAdjustFactor;
+
+					float chd=1;
+
+					if (cloudHeight < 10000) 
+					{
+						//cloud height delta something
+						//goes from 0-1 as cloud height approaches 10km
+						chd = (10000 - cloudHeight) / 10000;
+						//pow it a bit for some exponential decay below 10km
+						chd = pow(chd, 5);
+						//noise *= chd;
+					}
+					else if (cloudHeight > 20000) 
+					{
+						float dpr = ((_AtmoSize - _PlanetSize)*_ScaleAdjustFactor) - 20000;
+						chd = (dpr - cloudHeight) / dpr;
+						chd = pow(chd, 5);
+						//noise *= chd;
+					}
+					else 					
+					{
+						//-0.5 <-> +0.5 
+						//chd = (cloudHeight - 15000) / 1000;
+						//chd += 0.5;
+					}
+
+					//find the position on the sphere of the atmosphere, and use that as the XYZ coordinate input for noise function; use _Time as the W coord (xyzw)
+					//normalize sphere coordinate to 0-1 range
+					cloudPos = (P - pnt) / _AtmoSize;
+					//modulate y coordinate to instigate some horizontal banding
+					cloudPos.y *= 4;
+					float noise = snoise(cloudPos * 5) / (float)_ViewSamples;
+
+					clouds += float3(1,1,1) * noise * chd;
 
 					// Height of point
 					float height = distance(pnt, P) - _PlanetSize;
@@ -307,7 +384,7 @@
 					// (used for sun light attenuation)
 					float lightOpticalDepthRay = 0;
 					float lightOpticalDepthMie = 0;
-					bool overground = lightSampling(P, S, lightOpticalDepthRay, lightOpticalDepthMie);
+					bool overground = lightSampling(P, S, lightOpticalDepthRay, lightOpticalDepthMie, clouds);
 					if (overground)
 					{
 						// Calculates the attenuation of sun light
@@ -354,7 +431,7 @@
 				//orig below
 				//float miePhase = (3.0 / (8.0 * PI)) * ((1.0 - g2) * (1. + cos2Theta)) / (pow(1.0 + g2 - 2.0 * g * cosTheta, 1.5) * (2.0 + g2));
 			#else
-				#if 0
+				#if 1
 					//from http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/2554/pdf/imm2554.pdf
 					// pg 27
 					//float miePhase = (1 - g2) / (4.0 * PI) * pow((1 + g + 2*cosTheta), 1.5);
@@ -373,14 +450,13 @@
 					float miePhase = ((1-g2) / (4.0 * PI)) / pow(1+g * cosTheta,2);
 				#endif
 			#endif
-				
-				
 
 				float3 rayScatter = (rayPhase * _RayScatteringCoefficient) * totalRayScattering;
 				float ms = (miePhase * _MieScatteringCoefficient) * totalMieScattering;
 				float3 mieScatter = max(float3(0,0,0), float3(ms,ms,ms));
 				float3 scattering = _SunIntensity * ( rayScatter + ms );
-				return fixed4(scattering*_Color.rgb, 1);
+				float3 outScatter = scattering * (1-clouds);
+				return fixed4((outScatter + (length(scattering) * clouds)) * _Color.rgb , 1);
 			}
 			ENDCG
 		}

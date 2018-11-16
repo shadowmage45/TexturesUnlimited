@@ -59,6 +59,7 @@
 			static const float3 kSphereAlbedo = float3(0.8, 0.8, 0.8);
 			static const float3 kGroundAlbedo = float3(0.0, 0.0, 0.0);
 
+			//cheap hack to disable rendering of the 'sphere'
 			float _showSphere;
 
 			//frustum bounding vectors, used to determine world-space view direction from inside screen space shader
@@ -67,7 +68,9 @@
 			float3 _Left2;
 			float3 _Right2;
 
-			float _ClipDepth;//farClip - nearClip
+			//farClip - nearClip - used to recreate world-space position from depth buffer
+			//may or may not be correct...
+			float _ClipDepth;
 
 			float exposure;
 			float3 white_point;
