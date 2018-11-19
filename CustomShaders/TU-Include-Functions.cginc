@@ -10,6 +10,10 @@ float _UnderwaterMaxAlphaFog;
 float _UnderwaterAlbedoDistanceScalar;
 float _UnderwaterAlphaDistanceScalar;
 float _UnderwaterFogFactor;
+
+float _MixSelection;
+float _DetailMult;
+
 //stock fog function
 fixed4 UnderwaterFog(fixed3 worldPos, fixed3 color)
 {
@@ -57,15 +61,54 @@ inline fixed3 mix3(fixed3 a, fixed3 b, fixed t)
 inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed norm, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
 {	
 	fixed mixFactor = getMaskMix(maskSample);
+	fixed userMix = 1-mixFactor;
 	//the color to use from the recoloring channels
 	fixed3 userSelectedColor = getUserColor(maskSample, userColor1, userColor2, userColor3);
 	//luminance of the original texture -- used for details in masked portions
 	fixed luminance = Luminance(diffuseSample);
-	//gets a +/- 0 value
-	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;
-	//offset it to a +/- 1 value
-	detailColor += 1;
-	return saturate(userSelectedColor * detailColor + diffuseSample * mixFactor);
+	
+	fixed3 baseOutput = diffuseSample * mixFactor;
+	
+	if(_MixSelection <= 0)//prenormalized mode
+	{
+		//gets a +/- 0 value, the extracted detail value
+		fixed detail = (luminance - norm) / norm * userMix;
+		
+		//user selected coloring, plus details
+		fixed3 userPlusDetail = userSelectedColor + userSelectedColor * detail * _DetailMult;
+		
+		//combined output value
+		return saturate(userPlusDetail) + baseOutput;;
+	}
+	else if (_MixSelection <= 1)//extract-add mode
+	{
+		//gets a +/- 0 value, normalized for the original input
+		fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr * _DetailMult;		
+		//apply this to the user selected color, renormalized for the selected color
+		return saturate((userSelectedColor + detailColor) + (baseOutput));
+		
+	}
+	else if (_MixSelection <= 2)//extract-mult mode
+	{
+		//gets a +/- 0 value, normalized for the original input
+		fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr * _DetailMult;
+		//convert to +/- 1 range, for use in multiply mode
+		detailColor += 1;
+		//apply this to the user selected color, renormalized for the selected color
+		return saturate(userSelectedColor * detailColor + baseOutput);	
+	}
+	else if (_MixSelection <= 3)//normalized tinting mode
+	{
+		//corrected tinting mode, use normalization parameter to correct tinting mode into GUI range
+		//norm params are still in 0-1 range, so used as a divisor vs. the user input value
+		//cannot apply detail mult, as they are never extracted
+		fixed3 userOutput = ((diffuseSample * userSelectedColor) * (1 - mixFactor.rrr)) / norm;
+		return saturate(userOutput) + baseOutput;
+	}
+	else
+	{
+		return diffuseSample;
+	}
 }
 
 inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glossSample, fixed3 maskSample, fixed3 maskMetallic, fixed norm, fixed glossNorm, fixed specInput, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3, out fixed3 glossColor)
@@ -98,9 +141,24 @@ inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed
 {
 	fixed mixFactor = getMaskMix(maskSample);
 	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
-	fixed detail = (sample1 - norm) * (1 - mixFactor);
-	detail += 1;
-	return saturate(userSelectedValue * detail + sample1 * mixFactor);
+	if(false)
+	{
+		// +/- 0 value, normalized for the original input
+		fixed detail = (((sample1 - norm) * (1 - mixFactor)) / norm) * userSelectedValue;		
+		return saturate(userSelectedValue + detail) + saturate(sample1 * mixFactor);	
+	}
+	else if (false)
+	{
+		
+	}
+	else
+	{
+		// +/- 0 value, normalized for the original input
+		fixed detail = (sample1 - norm) * (1 - mixFactor);
+		//convert to +/- 1 range, for use in multiply mode
+		detail += 1;		
+		return saturate(userSelectedValue * detail + (sample1 * mixFactor));		
+	}
 }
 
 inline fixed3 recolorTinting(fixed3 diffuseSample, fixed3 maskSample, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
@@ -118,6 +176,7 @@ inline fixed recolorTinting(fixed sample1, fixed3 maskSample, fixed user1, fixed
 	fixed detail = sample1 * (1 - mixFactor);
 	return saturate(userSelectedValue + detail + sample1 * mixFactor);
 }
+
 inline float3 subsurf(float SubSurfScale, float SubSurfPower, float SubSurfDistort, float SubSurfAtten, float SubSurfAmbient, float3 color, float3 Thickness, float3 normal, float3 viewDir, float3 lightColor, float3 lightDir)
 {
 	//SSS implementation from:  https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/	
