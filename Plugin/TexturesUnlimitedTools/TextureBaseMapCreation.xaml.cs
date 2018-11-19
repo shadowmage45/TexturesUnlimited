@@ -185,7 +185,7 @@ namespace TexturesUnlimitedTools
             string img3 = ImageTools.openFileSelectDialog("Select a PNG base image");
             SmoothFileBox.Text = img3;
             smoothMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img3)));
-            smoothImage = ImageTools.BitmapToBitmapImage(auxMap.Bitmap);
+            smoothImage = ImageTools.BitmapToBitmapImage(smoothMap.Bitmap);
             updatePreview();
         }
 
