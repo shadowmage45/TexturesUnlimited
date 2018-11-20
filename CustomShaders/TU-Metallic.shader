@@ -35,6 +35,7 @@ Shader "TU/Metallic"
 		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
 		_MetalNorm("Metallic Normalization", Vector) = (1,1,1,0)
 		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
+		_DetailMult("Recoloring Detail Multiplier", Range(0, 10)) = 1
 		
 		[Header(Subsurface Scattering Parameters)]
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
@@ -50,11 +51,7 @@ Shader "TU/Metallic"
 		_RimColor("_RimColor", Color) = (0,0,0,0)
 		_TemperatureColor("Temperature Color", Color) = (0,0,0,0)
 		_BurnColor ("Burn Color", Color) = (1,1,1,1)
-		_UnderwaterFogFactor ("Underwater Fog Factor", Range(0,1)) = 0
-		
-		_MixSelection("Recolor Mix Mode", Range(0, 10)) = 0
-		_DetailMult("Recolor Mix Mode", Range(0, 10)) = 1
-		
+		_UnderwaterFogFactor ("Underwater Fog Factor", Range(0,1)) = 0		
 	}
 	
 	SubShader
@@ -74,8 +71,8 @@ Shader "TU/Metallic"
 		//subsurface scattering toggle
 		#pragma multi_compile __ TU_SUBSURF
 		//specular input source toggle
-		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC
-		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD
+		#pragma multi_compile __ TU_STOCK_SPEC
+		#pragma multi_compile __ TU_RECOLOR
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
 		#define TU_SURF_MET 1

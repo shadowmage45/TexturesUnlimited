@@ -11,7 +11,6 @@ float _UnderwaterAlbedoDistanceScalar;
 float _UnderwaterAlphaDistanceScalar;
 float _UnderwaterFogFactor;
 
-float _MixSelection;
 float _DetailMult;
 
 //stock fog function
@@ -59,56 +58,29 @@ inline fixed3 mix3(fixed3 a, fixed3 b, fixed t)
 }
 
 inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed norm, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
-{	
+{
 	fixed mixFactor = getMaskMix(maskSample);
-	fixed userMix = 1-mixFactor;
+	fixed userMix = 1 - mixFactor;
+	
 	//the color to use from the recoloring channels
 	fixed3 userSelectedColor = getUserColor(maskSample, userColor1, userColor2, userColor3);
+	
 	//luminance of the original texture -- used for details in masked portions
 	fixed luminance = Luminance(diffuseSample);
 	
+	//output factor of the original texture, used in unmasked or partially masked pixels
 	fixed3 baseOutput = diffuseSample * mixFactor;
 	
-	if(_MixSelection <= 0)//prenormalized mode
-	{
-		//gets a +/- 0 value, the extracted detail value
-		fixed detail = (luminance - norm) / norm * userMix;
-		
-		//user selected coloring, plus details
-		fixed3 userPlusDetail = userSelectedColor + userSelectedColor * detail * _DetailMult;
-		
-		//combined output value
-		return saturate(userPlusDetail) + baseOutput;;
-	}
-	else if (_MixSelection <= 1)//extract-add mode
-	{
-		//gets a +/- 0 value, normalized for the original input
-		fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr * _DetailMult;		
-		//apply this to the user selected color, renormalized for the selected color
-		return saturate((userSelectedColor + detailColor) + (baseOutput));
-		
-	}
-	else if (_MixSelection <= 2)//extract-mult mode
-	{
-		//gets a +/- 0 value, normalized for the original input
-		fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr * _DetailMult;
-		//convert to +/- 1 range, for use in multiply mode
-		detailColor += 1;
-		//apply this to the user selected color, renormalized for the selected color
-		return saturate(userSelectedColor * detailColor + baseOutput);	
-	}
-	else if (_MixSelection <= 3)//normalized tinting mode
-	{
-		//corrected tinting mode, use normalization parameter to correct tinting mode into GUI range
-		//norm params are still in 0-1 range, so used as a divisor vs. the user input value
-		//cannot apply detail mult, as they are never extracted
-		fixed3 userOutput = ((diffuseSample * userSelectedColor) * (1 - mixFactor.rrr)) / norm;
-		return saturate(userOutput) + baseOutput;
-	}
-	else
-	{
-		return diffuseSample;
-	}
+	//extracts a +/- 0 detail value
+	//will be NAN if normalization value is zero (unmasked pixels)
+	fixed detail = ((luminance - norm) / norm) * userMix;
+	
+	//user selected coloring, plus details as applied in a renormalized fashion
+	fixed3 userPlusDetail = (userSelectedColor * detail * _DetailMult) + userSelectedColor;
+	
+	//combined output value
+	//using saturate on the recoloring value, else it might have NANs from the division operation
+	return saturate(userPlusDetail) + baseOutput;
 }
 
 inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glossSample, fixed3 maskSample, fixed3 maskMetallic, fixed norm, fixed glossNorm, fixed specInput, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3, out fixed3 glossColor)

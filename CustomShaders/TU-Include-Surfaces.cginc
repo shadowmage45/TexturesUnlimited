@@ -26,15 +26,14 @@
 		
 		//if 'stock specular' mode is enabled, pull spec value from alpha channel of diffuse shader
 		//else pull it from the alpha channel of the metallic gloss map
-		#if TU_STD_SPEC
-			fixed smooth = specSample.a;
-		#endif
 		#if TU_STOCK_SPEC
 			fixed smooth = color.a;
+		#else
+			fixed smooth = specSample.a;
 		#endif
 		
 		//new TU recolor mode based on normalization maps
-		#if TU_RECOLOR_STANDARD
+		#if TU_RECOLOR
 		
 			//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 			fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
@@ -64,10 +63,7 @@
 			o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1, _MaskColor2, _MaskColor3);
 			o.Metallic = recolorStandard(metal, mask * metalMaskFactor, metallicNorm, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
 			o.Smoothness = recolorStandard(smooth, mask * specMaskFactor, specularNorm, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
-			
-		#endif			
-		//no recoloring enabled -- use standard texture sampling -- use the values directly from the source textures
-		#if TU_RECOLOR_OFF
+		#else
 			o.Albedo = color.rgb;
 			o.Smoothness = smooth;
 			o.Metallic = metal;
@@ -134,15 +130,14 @@
 		fixed4 specSample = tex2D(_SpecGlossMap, (IN.uv_MainTex));
 		fixed3 glossColor = specSample.rgb;
 		
-		#if TU_STD_SPEC
-			fixed smooth = specSample.a;
-		#endif
 		#if TU_STOCK_SPEC
 			fixed smooth = color.a;
+		#else
+			fixed smooth = specSample.a;
 		#endif
 		
 		//new TU recolor mode based on normalization maps
-		#if TU_RECOLOR_STANDARD
+		#if TU_RECOLOR
 		
 			//RGBA value from the mask; RGB = recoloring channels, A = diffuse luminance normalization data
 			fixed4 mask = tex2D(_MaskTex, (IN.uv_MainTex));
@@ -174,10 +169,7 @@
 			// o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb);				
 			// o.SpecularColor = recolorStandard(glossColor, mask * glossMaskFactor, glossNorm, _MaskSpec1.rgb, _MaskSpec2.rgb, _MaskSpec3.rgb);
 			o.Smoothness = recolorStandard(smooth, mask * smoothMaskFactor, smoothNorm, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
-			
-		#endif
-		//no recoloring enabled -- use standard texture sampling -- use the values directly from the source textures
-		#if TU_RECOLOR_OFF
+		#else
 			o.Albedo = color.rgb;
 			o.Smoothness = smooth;
 			o.SpecularColor = glossColor;

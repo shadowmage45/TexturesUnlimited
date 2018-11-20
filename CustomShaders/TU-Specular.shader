@@ -34,7 +34,7 @@ Shader "TU/Specular"
 		_SpecularNorm("Specular Normalization", Vector) = (1,1,1,0)
 		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
 		
-		//sub-surface scattering shader parameters		
+		//sub-surface scattering shader parameters
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
 		_SubSurfScale("SubSurf Scale", Range(0, 10)) = 1
 		_SubSurfPower("SubSurf Falloff Power", Range(0, 10)) = 1
@@ -66,8 +66,8 @@ Shader "TU/Specular"
 		//#pragma skip_variants POINT POINT_COOKIE DIRECTIONAL_COOKIE //need to find out what variants are -actually- used...
 		//#pragma multi_compile_fwdadd_fullshadows //stalls out Unity Editor while compiling shader....
 		#pragma multi_compile __ TU_SUBSURF
-		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC
-		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD
+		#pragma multi_compile __ TU_STOCK_SPEC
+		#pragma multi_compile __ TU_RECOLOR
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
 		#define TU_SURF_SPEC 1

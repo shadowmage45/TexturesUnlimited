@@ -11,9 +11,11 @@ public class TUMetallicUI : ShaderGUI
 
         Material targetMat = materialEditor.target as Material;
 		
-		specularSource(targetMat);				
-		keywordCheckbox(targetMat, "Subsurf", "TU_SUBSURF");
-		recolorType(targetMat);
+		//specularSource(targetMat);				
+		keywordCheckbox(targetMat, "Specular from Diffuse Alpha", "TU_STOCK_SPEC");
+		keywordCheckbox(targetMat, "Subsurf", "TU_SUBSURF");		
+		keywordCheckbox(targetMat, "Recoloring Enabled", "TU_RECOLOR");
+		//recolorType(targetMat);
 		recolorNormalizationType(targetMat);
     }
 	
@@ -38,8 +40,7 @@ public class TUMetallicUI : ShaderGUI
 	{
 		string[] options = new string[]{"MetallicGloss Alpha", "Diffuse Alpha"};
 		int currentIndex = 0;
-		if(Array.IndexOf(mat.shaderKeywords, "TU_STD_SPEC")!=-1){currentIndex=0;}
-		else if(Array.IndexOf(mat.shaderKeywords, "TU_STOCK_SPEC")!=-1){currentIndex=1;}
+		if(Array.IndexOf(mat.shaderKeywords, "TU_STOCK_SPEC")!=-1){currentIndex=1;}
 		EditorGUILayout.BeginHorizontal();
 		EditorGUILayout.LabelField("Smoothness Source");
 		int index = EditorGUILayout.Popup(currentIndex, options);
@@ -48,12 +49,10 @@ public class TUMetallicUI : ShaderGUI
 		{
 			if(index==0)
 			{
-				mat.EnableKeyword("TU_STD_SPEC");
 				mat.DisableKeyword("TU_STOCK_SPEC");
 			}
 			else if(index==1)
 			{
-				mat.DisableKeyword("TU_STD_SPEC");
 				mat.EnableKeyword("TU_STOCK_SPEC");
 			}
 		}
@@ -63,8 +62,7 @@ public class TUMetallicUI : ShaderGUI
 	{
 		string[] options = new string[]{"Disabled", "Standard"};
 		int currentIndex = 0;
-		if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_OFF")!=-1){currentIndex=0;}
-		else if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR_STANDARD")!=-1){currentIndex=1;}
+		if(Array.IndexOf(mat.shaderKeywords, "TU_RECOLOR")!=-1){currentIndex=1;}
 		EditorGUILayout.BeginHorizontal();
 		EditorGUILayout.LabelField("Recolor Mode");
 		int index = EditorGUILayout.Popup(currentIndex, options);
@@ -73,13 +71,11 @@ public class TUMetallicUI : ShaderGUI
 		{
 			if(index==0)
 			{
-				mat.EnableKeyword("TU_RECOLOR_OFF");
-				mat.DisableKeyword("TU_RECOLOR_STANDARD");
+				mat.DisableKeyword("TU_RECOLOR");
 			}
 			else if(index==1)
 			{
-				mat.DisableKeyword("TU_RECOLOR_OFF");
-				mat.EnableKeyword("TU_RECOLOR_STANDARD");
+				mat.EnableKeyword("TU_RECOLOR");
 			}
 		}
 	}
