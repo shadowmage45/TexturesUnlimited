@@ -49,3 +49,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Retarded Unity Meta Files
+*.meta
+TexturesUnlimited/ProjectSettings
+TexturesUnlimited/Temp
+TexturesUnlimited/Library
+TexturesUnlimited/Shaders
