@@ -51,7 +51,7 @@ Mkfile.old
 dkms.conf
 
 # Retarded Unity Meta Files
-*.meta
+# Apparently need to track the goddam things; stupid fucking unity, such a backwards POS *.meta
 TexturesUnlimited/Temp
 TexturesUnlimited/Library
 TexturesUnlimited/Shaders

@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: TU-Metallic-Recolor
-  m_Shader: {fileID: 4800000, guid: 993294e866f006248a172a7351829ec7, type: 3}
+  m_Shader: {fileID: 4800000, guid: df9d10f735f9e2243931a07014a9de57, type: 3}
   m_ShaderKeywords: TU_RECOLOR
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -19,11 +19,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AOMap:
-        m_Texture: {fileID: 2800000, guid: 35870014dd1af80499c81199f8f04f6d, type: 3}
+        m_Texture: {fileID: 2800000, guid: 461708fc49a808843968dcd20144252f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: b03d0dfa436f54b4a9d55a5df38490ed, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -47,11 +47,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 1898b8f2fa849c64693c566e729b965d, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9b0d0b4e6c78ca04aa6e5fd57ea6fc8b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTex:
-        m_Texture: {fileID: 2800000, guid: f9117862768b3e848b6f5dbf7e01876c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 39d955cacbad9a24bb204cdecab715c8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetalGlossInputMask:
@@ -63,7 +63,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 2800000, guid: e7cc9e85fe665b54faf96754e77331ab, type: 3}
+        m_Texture: {fileID: 2800000, guid: 76ed298a5aa2e604baa4f1850041c2e4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
