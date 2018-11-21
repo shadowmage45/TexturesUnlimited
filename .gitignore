@@ -52,7 +52,7 @@ dkms.conf
 
 # Retarded Unity Meta Files
 *.meta
-TexturesUnlimited/ProjectSettings
 TexturesUnlimited/Temp
 TexturesUnlimited/Library
 TexturesUnlimited/Shaders
+TexturesUnlimited/Assets/Shaders*
