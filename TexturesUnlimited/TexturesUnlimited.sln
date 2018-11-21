@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexturesUnlimited.CSharp", "TexturesUnlimited.CSharp.csproj", "{09394BAE-2FCE-6A03-6BEF-A956B4FFABE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexturesUnlimited.CSharp.Editor", "TexturesUnlimited.CSharp.Editor.csproj", "{3BA270C7-FE1F-12C7-B01F-B116DB6BCCB5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{09394BAE-2FCE-6A03-6BEF-A956B4FFABE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09394BAE-2FCE-6A03-6BEF-A956B4FFABE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09394BAE-2FCE-6A03-6BEF-A956B4FFABE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09394BAE-2FCE-6A03-6BEF-A956B4FFABE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3BA270C7-FE1F-12C7-B01F-B116DB6BCCB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BA270C7-FE1F-12C7-B01F-B116DB6BCCB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BA270C7-FE1F-12C7-B01F-B116DB6BCCB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BA270C7-FE1F-12C7-B01F-B116DB6BCCB5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

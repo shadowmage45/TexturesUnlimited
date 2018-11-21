@@ -33,6 +33,7 @@ Shader "TU/Specular"
 		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
 		_SpecularNorm("Specular Normalization", Vector) = (1,1,1,0)
 		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
+		_DetailMult("Recoloring Detail Multiplier", Vector)=(1,1,1,0)
 		
 		//sub-surface scattering shader parameters
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0

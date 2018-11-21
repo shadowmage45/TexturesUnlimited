@@ -11,8 +11,6 @@ float _UnderwaterAlbedoDistanceScalar;
 float _UnderwaterAlphaDistanceScalar;
 float _UnderwaterFogFactor;
 
-float _DetailMult;
-
 //stock fog function
 fixed4 UnderwaterFog(fixed3 worldPos, fixed3 color)
 {
@@ -57,7 +55,7 @@ inline fixed3 mix3(fixed3 a, fixed3 b, fixed t)
 	return a * (1 - t) + b * t;
 }
 
-inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed norm, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
+inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed norm, fixed detailMult, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
 {
 	fixed mixFactor = getMaskMix(maskSample);
 	fixed userMix = 1 - mixFactor;
@@ -69,68 +67,74 @@ inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed nor
 	fixed luminance = Luminance(diffuseSample);
 	
 	//output factor of the original texture, used in unmasked or partially masked pixels
-	fixed3 baseOutput = diffuseSample * mixFactor;
+	fixed3 baseOutput = mixFactor * diffuseSample;
 	
 	//extracts a +/- 0 detail value
 	//will be NAN if normalization value is zero (unmasked pixels)
 	fixed detail = ((luminance - norm) / norm) * userMix;
 	
 	//user selected coloring, plus details as applied in a renormalized fashion
-	fixed3 userPlusDetail = (userSelectedColor * detail * _DetailMult) + userSelectedColor;
+	fixed3 userPlusDetail = (userSelectedColor * detail * detailMult) + userSelectedColor;
 	
 	//combined output value
 	//using saturate on the recoloring value, else it might have NANs from the division operation
 	return saturate(userPlusDetail) + baseOutput;
 }
 
-inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glossSample, fixed3 maskSample, fixed3 maskMetallic, fixed norm, fixed glossNorm, fixed specInput, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3, out fixed3 glossColor)
-{	
+inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed detailMult, fixed user1, fixed user2, fixed user3)
+{
 	fixed mixFactor = getMaskMix(maskSample);
+	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
+	fixed baseOutput = sample1 * mixFactor;
+	// dt = (1 - 0) * ( 1 )
+	// upd = (1 / 0) * 1 * 1 + 1
+	fixed detail = (sample1 - norm) * (1 - mixFactor) * userSelectedValue * detailMult;
+	fixed userPlusDetail = detail + userSelectedValue;
+	return saturate(userPlusDetail) + baseOutput;
+}
+
+/**
+	Specular Recoloring - Convert from Specular to Metallic Workflow
+	For recolored pixels
+		Add diffuse + gloss
+		Extract	gloss color from user-selected value * metallic slider input
+		Output separate gloss color and diffuse colors
+**/
+inline fixed3 recolorStandardSpecularToMetallic(fixed3 diffuseSample, fixed3 glossSample, fixed3 maskSample, fixed3 maskMetallic, fixed norm, fixed glossNorm, fixed detailMult, fixed specInput, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3, out fixed3 glossColor)
+{
+	fixed mixFactor = getMaskMix(maskSample);
+	fixed userMix = 1 - mixFactor;
 	fixed specMixFactor = mixFactor * specInput;
-	
-	//the color to use from the recoloring channels
-	fixed3 userSelectedColor = getUserColor(maskSample, userColor1, userColor2, userColor3);
 	
 	//determines how much of the user selected value is diverted to specular coloring
 	fixed metalMask = getUserValue(maskSample, maskMetallic.r, maskMetallic.g, maskMetallic.b);
 	
-	fixed3 userGlossColor = max(userSelectedColor * metalMask, fixed3(0.2,0.2,0.2));
-	userSelectedColor = (1 - metalMask) * userSelectedColor;	
+	//the color to use from the recoloring channels
+	fixed3 userSelectedColor = getUserColor(maskSample, userColor1, userColor2, userColor3);
 	
-	fixed specLum = Luminance(glossSample);
-	fixed3 detailSpec = ((specLum - glossNorm) * (1 - specMixFactor)).rrr;
-	//output
-	glossColor.rgb = saturate(userGlossColor + glossSample * specMixFactor + detailSpec).rgb;
+	//luminance of the original textures -- used for details in masked portions
+	fixed luminance = Luminance(diffuseSample + glossSample);
 	
-	//luminance of the original texture -- used for details in masked portions
-	fixed luminance = Luminance(diffuseSample);
-	fixed3 detailColor = ((luminance - norm) * (1 - mixFactor)).rrr;
-	detailColor += 1;
-	return saturate(userSelectedColor * detailColor + diffuseSample * mixFactor);
-}
-
-inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed user1, fixed user2, fixed user3)
-{
-	fixed mixFactor = getMaskMix(maskSample);
-	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
-	if(false)
-	{
-		// +/- 0 value, normalized for the original input
-		fixed detail = (((sample1 - norm) * (1 - mixFactor)) / norm) * userSelectedValue;		
-		return saturate(userSelectedValue + detail) + saturate(sample1 * mixFactor);	
-	}
-	else if (false)
-	{
+	//output factor of the original texture, used in unmasked or partially masked pixels
+	fixed3 baseOutput = diffuseSample * mixFactor;
+	fixed3 baseSpecOutput = glossSample * specMixFactor;
+	
+	//extracts a +/- 0 detail value
+	//will be NAN if normalization value is zero (unmasked pixels)
+	fixed detail = ((luminance - norm) / norm) * userMix;
+	
+	//user selected coloring, plus details as applied in a renormalized fashion
+	fixed3 userPlusDetail = (userSelectedColor * detail * detailMult) + userSelectedColor;
 		
-	}
-	else
-	{
-		// +/- 0 value, normalized for the original input
-		fixed detail = (sample1 - norm) * (1 - mixFactor);
-		//convert to +/- 1 range, for use in multiply mode
-		detail += 1;		
-		return saturate(userSelectedValue * detail + (sample1 * mixFactor));		
-	}
+	//this is the gloss color, derived from metallic input + diffuse color
+	fixed3 userGlossColor = max(userPlusDetail * metalMask, fixed3(0.2,0.2,0.2));
+	
+	//the remainder is used for the diffuse output
+	userPlusDetail = (1 - metalMask) * userPlusDetail;	
+	
+	//output glossColor
+	glossColor = saturate(userGlossColor) + baseSpecOutput;
+	return saturate(userPlusDetail) + baseOutput;
 }
 
 inline fixed3 recolorTinting(fixed3 diffuseSample, fixed3 maskSample, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)

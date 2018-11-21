@@ -35,7 +35,7 @@ Shader "TU/Metallic"
 		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
 		_MetalNorm("Metallic Normalization", Vector) = (1,1,1,0)
 		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
-		_DetailMult("Recoloring Detail Multiplier", Range(0, 10)) = 1
+		_DetailMult("Recoloring Detail Multiplier", Vector)=(1,1,1,0)
 		
 		[Header(Subsurface Scattering Parameters)]
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0

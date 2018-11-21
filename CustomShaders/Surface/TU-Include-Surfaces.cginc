@@ -41,6 +41,7 @@
 			fixed diffuseNorm = getUserValue(mask, _DiffuseNorm.x, _DiffuseNorm.y, _DiffuseNorm.z);
 			fixed metallicNorm = getUserValue(mask, _MetalNorm.x, _MetalNorm.y, _MetalNorm.z);
 			fixed specularNorm = getUserValue(mask, _SmoothnessNorm.x, _SmoothnessNorm.y, _SmoothnessNorm.z);
+			fixed detailMult = getUserValue(mask, _DetailMult.x, _DetailMult.y, _DetailMult.z);
 			
 			//same for specular and metallic if normalization for those channels is enabled
 			#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
@@ -60,9 +61,9 @@
 				specMaskFactor = specMaskValues.a;
 			#endif
 			
-			o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1, _MaskColor2, _MaskColor3);
-			o.Metallic = recolorStandard(metal, mask * metalMaskFactor, metallicNorm, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
-			o.Smoothness = recolorStandard(smooth, mask * specMaskFactor, specularNorm, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
+			o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, detailMult, _MaskColor1, _MaskColor2, _MaskColor3);
+			o.Metallic = recolorStandard(metal, mask * metalMaskFactor, metallicNorm, detailMult, _MaskMetallic.r, _MaskMetallic.g, _MaskMetallic.b);
+			o.Smoothness = recolorStandard(smooth, mask * specMaskFactor, specularNorm, detailMult, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
 		#else
 			o.Albedo = color.rgb;
 			o.Smoothness = smooth;
@@ -144,6 +145,7 @@
 			fixed diffuseNorm = getUserValue(mask, _DiffuseNorm.x, _DiffuseNorm.y, _DiffuseNorm.z);
 			fixed glossNorm = getUserValue(mask, _SpecularNorm.x, _SpecularNorm.y, _SpecularNorm.z);
 			fixed smoothNorm = getUserValue(mask, _SmoothnessNorm.x, _SmoothnessNorm.y, _SmoothnessNorm.z);
+			fixed detailMult = getUserValue(mask, _DetailMult.x, _DetailMult.y, _DetailMult.z);
 			
 			//same for specular and metallic if normalization for those channels is enabled
 			#if TU_RECOLOR_NORM || TU_RECOLOR_NORM_INPUT
@@ -164,11 +166,11 @@
 			#endif
 			
 			fixed3 custSpec;
-			o.Albedo = recolorStandardSpecularToMetallic(color.rgb, glossColor.rgb, mask, _MaskMetallic, diffuseNorm, glossNorm, glossMaskFactor, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb, custSpec);
+			o.Albedo = recolorStandardSpecularToMetallic(color.rgb, glossColor.rgb, mask, _MaskMetallic, diffuseNorm, glossNorm, detailMult, glossMaskFactor, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb, custSpec);
 			o.SpecularColor = custSpec;
 			// o.Albedo = recolorStandard(color.rgb, mask, diffuseNorm, _MaskColor1.rgb, _MaskColor2.rgb, _MaskColor3.rgb);				
 			// o.SpecularColor = recolorStandard(glossColor, mask * glossMaskFactor, glossNorm, _MaskSpec1.rgb, _MaskSpec2.rgb, _MaskSpec3.rgb);
-			o.Smoothness = recolorStandard(smooth, mask * smoothMaskFactor, smoothNorm, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
+			o.Smoothness = recolorStandard(smooth, mask * smoothMaskFactor, smoothNorm, detailMult, _MaskColor1.a, _MaskColor2.a, _MaskColor3.a);
 		#else
 			o.Albedo = color.rgb;
 			o.Smoothness = smooth;

@@ -54,7 +54,7 @@ float _NormalFlipX;
 float _NormalFlipY;
 
 //recoloring property values
-#if TU_RECOLOR_STANDARD
+#if TU_RECOLOR
 	float4 _MaskColor1;
 	float4 _MaskColor2;
 	float4 _MaskColor3;
@@ -67,6 +67,7 @@ float _NormalFlipY;
 		float4 _MetalNorm;
 	#endif
 	float4 _SmoothnessNorm;
+	float4 _DetailMult;
 #endif
 
 #if TU_SUBSURF

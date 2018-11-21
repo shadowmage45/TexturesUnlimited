@@ -36,6 +36,7 @@ Shader "TU/Transparent/Metallic"
 		_DiffuseNorm("Diffuse Normalization", Vector) = (1,1,1,0)
 		_MetalNorm("Metallic Normalization", Vector) = (1,1,1,0)
 		_SmoothnessNorm("Smoothness Normalization", Vector)=(1,1,1,0)
+		_DetailMult("Recoloring Detail Multiplier", Vector)=(1,1,1,0)
 		
 		[Header(Subsurface Scattering Parameters)]
 		_SubSurfAmbient("SubSurf Ambient", Range(0, 1)) = 0
@@ -71,8 +72,8 @@ Shader "TU/Transparent/Metallic"
 		//subsurface scattering toggle
 		#pragma multi_compile __ TU_SUBSURF
 		//specular input source toggle
-		#pragma multi_compile TU_STD_SPEC TU_STOCK_SPEC
-		#pragma multi_compile TU_RECOLOR_OFF TU_RECOLOR_STANDARD
+		#pragma multi_compile __ TU_STOCK_SPEC
+		#pragma multi_compile __ TU_RECOLOR
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
 		
 		#define TU_SURF_MET 1
