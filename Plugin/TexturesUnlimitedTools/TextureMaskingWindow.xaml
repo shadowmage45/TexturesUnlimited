@@ -27,9 +27,8 @@
         <TextBox x:Name ="MaskFileBox" Height="23" Margin="85,104,156,0" TextWrapping="Wrap" Text="Select A Mask Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
         <Button Content="Browse" Margin="0,106,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectMaskClick"/>
 
-        <Button Content="Generate Normalization Data" Margin="10,134,0,0" VerticalAlignment="Top" Click="GenerateNormTexClick" HorizontalAlignment="Left" Width="202"/>
-        <Button Content="View Normalization Config" Margin="217,134,218,0" VerticalAlignment="Top" Click="GetNormTextClick"/>
-        <Button Content="Export Normalization Textures" Margin="0,134,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="203" Click="ExportClick"/>
+        <Button Content="Update Recoloring Preview" Margin="10,134,0,0" VerticalAlignment="Top" Click="GenerateNormTexClick" HorizontalAlignment="Left" Width="202"/>
+        <Button Content="Export Recolored Textures" Margin="0,134,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="296" Click="ExportClick"/>
 
         <Label Content="Preview Selection" HorizontalAlignment="Left" Margin="10,159,0,0" VerticalAlignment="Top" Width="108"/>
         <ComboBox x:Name="PreviewSelectionComboBox" Margin="123,161,10,0" VerticalAlignment="Top"/>
