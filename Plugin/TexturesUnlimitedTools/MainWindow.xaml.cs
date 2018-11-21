@@ -96,6 +96,11 @@ namespace TexturesUnlimitedTools
             Application.Current.Shutdown();
         }
 
+        private void TextureMaskClick(object sender, RoutedEventArgs e)
+        {
+            TextureMaskingWindow window = new TextureMaskingWindow();
+            window.ShowDialog();
+        }
     }
 
     public class TextureRemapEntry : INotifyPropertyChanged

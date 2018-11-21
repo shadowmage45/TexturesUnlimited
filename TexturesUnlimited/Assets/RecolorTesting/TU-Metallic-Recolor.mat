@@ -8,7 +8,7 @@ Material:
   m_PrefabInternal: {fileID: 0}
   m_Name: TU-Metallic-Recolor
   m_Shader: {fileID: 4800000, guid: df9d10f735f9e2243931a07014a9de57, type: 3}
-  m_ShaderKeywords: TU_RECOLOR
+  m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0

@@ -28,5 +28,6 @@
         <Button Content="Texture Combine/Channel Remap" Margin="10,98,10,0" VerticalAlignment="Top" Click="TextureCombineClick"/>
         <Button Content="DDS Texture Conversion" Margin="10,123,10,0" VerticalAlignment="Top" Click="TextureConvertClick"/>
         <Button Content="Normalization Data Generation" Margin="10,148,10,0" VerticalAlignment="Top" Click="TextureNormClick"/>
+        <Button Content="Masked Texture Recoloring" Margin="10,173,10,0" VerticalAlignment="Top" Click="TextureMaskClick"/>
     </Grid>
 </Window>
