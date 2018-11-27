@@ -22,7 +22,6 @@ namespace TexturesUnlimitedTools
 
         //enum list stashes, for combobox dropdown use
         private List<ImagePreviewSelection> previewOptions = new List<ImagePreviewSelection>();
-        private List<ChannelSelection> channelOptions = new List<ChannelSelection>();
 
         //raw bitmaps of input textures
         DirectBitmap diffuseMap;//diffuse input
@@ -66,10 +65,7 @@ namespace TexturesUnlimitedTools
         TextureRecolor diffRecolor;
         TextureRecolor auxRecolor;
         TextureRecolor smoothRecolor;
-
-        //accessed by worker thread; don't mess with these while workers are active
-        private ChannelSelection diffInputChannels, auxInputChannels, smoothInputChannels;
-        
+                
         public TextureMaskingWindow()
         {
             previewOptions.Add(ImagePreviewSelection.DIFFUSE);
@@ -79,31 +75,19 @@ namespace TexturesUnlimitedTools
             previewOptions.Add(ImagePreviewSelection.DIFFUSE_COLOR_DIFFERENCE);
             previewOptions.Add(ImagePreviewSelection.AUX_COLOR_DIFFERENCE);
             previewOptions.Add(ImagePreviewSelection.SMOOTH_COLOR_DIFFERENCE);
-            channelOptions.Add(ChannelSelection.R);
-            channelOptions.Add(ChannelSelection.G);
-            channelOptions.Add(ChannelSelection.B);
-            channelOptions.Add(ChannelSelection.A);
-            channelOptions.Add(ChannelSelection.RGB);
 
             InitializeComponent();
 
             PreviewSelectionComboBox.ItemsSource = previewOptions;
             PreviewSelectionComboBox.SelectedIndex = 0;
             PreviewSelectionComboBox.SelectionChanged += PreviewTypeSelected;
-
-            DiffuseChannelComboBox.ItemsSource = channelOptions;
-            DiffuseChannelComboBox.SelectedIndex = 4;
-
-            AuxChannelComboBox.ItemsSource = channelOptions;
-            AuxChannelComboBox.SelectedIndex = 0;
-
-            SmoothChannelComboBox.ItemsSource = channelOptions;
-            SmoothChannelComboBox.SelectedIndex = 3;
+                        
         }
         
         protected override void OnClosing(CancelEventArgs e)
         {
             base.OnClosing(e);
+
             //release any resources that might be hanging out
             diffRecolor = null;
             auxRecolor = null;
@@ -141,42 +125,6 @@ namespace TexturesUnlimitedTools
             updatePreview();
         }
 
-        private void SelectBaseMapClik(object sender, RoutedEventArgs e)
-        {
-            string img1 = ImageTools.openFileSelectDialog("Select a PNG base image");
-            DiffFileBox.Text = img1;
-            diffuseMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img1)));
-            diffuseImage = ImageTools.BitmapToBitmapImage(diffuseMap.Bitmap);
-            updatePreview();
-        }
-
-        private void SelectSpecClick(object sender, RoutedEventArgs e)
-        {
-            string img2 = ImageTools.openFileSelectDialog("Select a PNG base image");
-            SpecFileBox.Text = img2;
-            auxMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img2)));
-            auxImage = ImageTools.BitmapToBitmapImage(auxMap.Bitmap);
-            updatePreview();
-        }
-
-        private void SelectSmoothClick(object sender, RoutedEventArgs e)
-        {
-            string img3 = ImageTools.openFileSelectDialog("Select a PNG base image");
-            SmoothFileBox.Text = img3;
-            smoothMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img3)));
-            smoothImage = ImageTools.BitmapToBitmapImage(smoothMap.Bitmap);
-            updatePreview();
-        }
-
-        private void SelectMaskClick(object sender, RoutedEventArgs e)
-        {
-            string img4 = ImageTools.openFileSelectDialog("Select a PNG mask image");
-            MaskFileBox.Text = img4;
-            maskMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img4)));
-            maskImage = ImageTools.BitmapToBitmapImage(maskMap.Bitmap);
-            updatePreview();
-        }
-
         private void GenerateNormTexClick(object sender, RoutedEventArgs e)
         {
             generateOutput();
@@ -190,9 +138,6 @@ namespace TexturesUnlimitedTools
         private void generateOutput()
         {
             if (maskMap == null) { return; }
-            diffInputChannels = (ChannelSelection)DiffuseChannelComboBox.SelectedItem;
-            auxInputChannels = (ChannelSelection)AuxChannelComboBox.SelectedItem;
-            smoothInputChannels = (ChannelSelection)SmoothChannelComboBox.SelectedItem;
             ProgressWindow window = new ProgressWindow();
             window.start(generatationSequence, generateFinished);
         }
@@ -211,22 +156,22 @@ namespace TexturesUnlimitedTools
             valid = 0;
             if (diffuseMap != null)
             {
-                generatorDiff = new NormGenerator(diffuseMap, maskMap, diffInputChannels, new NormParams(), valid * offset, div);
-                generatorDiff.generate(sender, doWork);
+                //generatorDiff = new NormGenerator(diffuseMap, maskMap, diffInputChannels, new NormParams(), valid * offset, div);
+                //generatorDiff.generate(sender, doWork);
                 valid++;
             }
 
             if (auxMap != null)
             {
-                generatorAux = new NormGenerator(auxMap, maskMap, auxInputChannels, new NormParams(), valid * offset, div);
-                generatorAux.generate(sender, doWork);
+                //generatorAux = new NormGenerator(auxMap, maskMap, auxInputChannels, new NormParams(), valid * offset, div);
+                //generatorAux.generate(sender, doWork);
                 valid++;
             }
 
             if (smoothMap != null)
             {
-                generatorSmooth = new NormGenerator(smoothMap, maskMap, smoothInputChannels, new NormParams(), valid * offset, div);
-                generatorSmooth.generate(sender, doWork);
+                //generatorSmooth = new NormGenerator(smoothMap, maskMap, smoothInputChannels, new NormParams(), valid * offset, div);
+                //generatorSmooth.generate(sender, doWork);
                 valid++;
             }
         }
@@ -236,20 +181,20 @@ namespace TexturesUnlimitedTools
 
             if (diffRecolor != null)
             {
-                diffuseColDiffMap = (DirectBitmap)generatorDiff.coloredDiff;
-                diffuseColDiffImage = ImageTools.BitmapToBitmapImage(diffuseColDiffMap.Bitmap);
+                //diffuseColDiffMap = (DirectBitmap)generatorDiff.coloredDiff;
+                //diffuseColDiffImage = ImageTools.BitmapToBitmapImage(diffuseColDiffMap.Bitmap);
             }
 
             if (auxRecolor != null)
             {
-                auxColDiffMap = (DirectBitmap)generatorAux.coloredDiff;
-                auxColDiffImage = ImageTools.BitmapToBitmapImage(auxColDiffMap.Bitmap);
+                //auxColDiffMap = (DirectBitmap)generatorAux.coloredDiff;
+                //auxColDiffImage = ImageTools.BitmapToBitmapImage(auxColDiffMap.Bitmap);
             }
 
             if (smoothRecolor != null)
             {
-                smoothColDiffMap = (DirectBitmap)generatorSmooth.coloredDiff;
-                smoothColDiffImage = ImageTools.BitmapToBitmapImage(smoothColDiffMap.Bitmap);
+                //smoothColDiffMap = (DirectBitmap)generatorSmooth.coloredDiff;
+                //smoothColDiffImage = ImageTools.BitmapToBitmapImage(smoothColDiffMap.Bitmap);
             }
 
             diffRecolor = null;

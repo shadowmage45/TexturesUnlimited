@@ -154,27 +154,51 @@ namespace KSPShaderTools
             //black-list, do everything not specified in excludeMeshes array
             if (excludeMeshes != null && excludeMeshes.Length > 0)
             {
+                if (TexturesUnlimitedLoader.logAll)
+                {
+                    MonoBehaviour.print("TexturesUnlimited - Finding meshes for excludeMesh= (blacklist)");
+                }
                 Renderer[] rends = root.GetComponentsInChildren<Renderer>();
                 int len = rends.Length;
                 for (int i = 0; i < len; i++)
                 {
                     if (!excludeMeshes.Contains(rends[i].name))
                     {
+                        if (TexturesUnlimitedLoader.logAll)
+                        {
+                            MonoBehaviour.print("Adding mesh due to blacklist: " + rends[i].transform);
+                        }
                         transforms.AddUnique(rends[i].transform);
+                    }
+                    else if (TexturesUnlimitedLoader.logAll)
+                    {
+                        MonoBehaviour.print("Excluding mesh due to blacklist: " + rends[i].transform);
                     }
                 }
             }
             else if (meshes == null || meshes.Length <= 0)//no validation, do them all
             {
+                if (TexturesUnlimitedLoader.logAll)
+                {
+                    MonoBehaviour.print("TexturesUnlimited - Finding meshes for all meshes (fulllist)");
+                }
                 Renderer[] rends = root.GetComponentsInChildren<Renderer>(true);
                 int len = rends.Length;
                 for (int i = 0; i < len; i++)
                 {
+                    if (TexturesUnlimitedLoader.logAll)
+                    {
+                        MonoBehaviour.print("Adding mesh due to adjusting all meshes: " + rends[i].transform);
+                    }
                     transforms.AddUnique(rends[i].transform);
                 }
             }
             else//white-list, only do what is specified by meshes array
             {
+                if (TexturesUnlimitedLoader.logAll)
+                {
+                    MonoBehaviour.print("TexturesUnlimited - Finding meshes for mesh= (whitelist)");
+                }
                 int len = meshes.Length;
                 Transform[] trs;
                 Transform tr;
@@ -194,6 +218,10 @@ namespace KSPShaderTools
                         if (r == null)
                         {
                             continue;
+                        }
+                        if (TexturesUnlimitedLoader.logAll)
+                        {
+                            MonoBehaviour.print("Adding mesh due to whitelist: " + tr);
                         }
                         transforms.AddUnique(tr);
                     }
@@ -276,6 +304,10 @@ namespace KSPShaderTools
                 render = trs[i].GetComponent<Renderer>();
                 if (render != null)
                 {
+                    if (TexturesUnlimitedLoader.logAll)
+                    {
+                        MonoBehaviour.print("Updating material properties for mesh: " + trs[i]);
+                    }
                     updateMaterialProperties(render.sharedMaterial, props);
                 }
             }

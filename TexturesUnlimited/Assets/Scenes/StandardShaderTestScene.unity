@@ -329,23 +329,23 @@ Prefab:
       objectReference: {fileID: 2100000, guid: 39e231ff6fc88ef469e41205f30ece97, type: 2}
     - target: {fileID: 2300012, guid: bb79b945ecc0ebb46a3dfcbc35a27865, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2300008, guid: bb79b945ecc0ebb46a3dfcbc35a27865, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2300004, guid: bb79b945ecc0ebb46a3dfcbc35a27865, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2300010, guid: bb79b945ecc0ebb46a3dfcbc35a27865, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2300000, guid: bb79b945ecc0ebb46a3dfcbc35a27865, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: bb79b945ecc0ebb46a3dfcbc35a27865, type: 3}

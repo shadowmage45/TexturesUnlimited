@@ -8,7 +8,7 @@ Material:
   m_PrefabInternal: {fileID: 0}
   m_Name: TU-Metallic-Recolor
   m_Shader: {fileID: 4800000, guid: df9d10f735f9e2243931a07014a9de57, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: TU_RECOLOR
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -114,9 +114,9 @@ Material:
     - _DiffuseNorm: {r: 0.822, g: 0.562, b: 0.707, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
-    - _MaskColor1: {r: 0.6392157, g: 0, b: 0, a: 0.49019608}
-    - _MaskColor2: {r: 0.5441177, g: 0.5441177, b: 0.5441177, a: 0.709}
-    - _MaskColor3: {r: 0.7647059, g: 0, b: 0, a: 0.491}
+    - _MaskColor1: {r: 1, g: 0.797, b: 0.578, a: 0.516}
+    - _MaskColor2: {r: 0.6838235, g: 0.6838235, b: 0.6838235, a: 0.722}
+    - _MaskColor3: {r: 1, g: 0.47586206, b: 0, a: 0.491}
     - _MaskMetallic: {r: 0, g: 1, b: 0, a: 0}
     - _MetalNorm: {r: 0, g: 1, b: 0, a: 0}
     - _RimColor: {r: 0, g: 0, b: 0, a: 0}

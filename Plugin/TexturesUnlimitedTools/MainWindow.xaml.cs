@@ -98,7 +98,7 @@ namespace TexturesUnlimitedTools
 
         private void TextureMaskClick(object sender, RoutedEventArgs e)
         {
-            TextureMaskingWindow window = new TextureMaskingWindow();
+            TextureSelectionWindow window = new TextureSelectionWindow();
             window.ShowDialog();
         }
     }

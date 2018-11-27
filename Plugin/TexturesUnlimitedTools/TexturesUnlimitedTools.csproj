@@ -113,6 +113,9 @@
     <Compile Include="TextureMaskingWindow.xaml.cs">
       <DependentUpon>TextureMaskingWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TextureSelectionWindow.xaml.cs">
+      <DependentUpon>TextureSelectionWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ZoomBorder.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -147,6 +150,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="TextureMaskingWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TextureSelectionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

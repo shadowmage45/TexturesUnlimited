@@ -63,6 +63,7 @@ namespace KSPShaderTools
 
         #region REGION - Config Values loaded from disk
 
+        public static bool logAll = false;
         public static bool logReplacements = false;
         public static bool logErrors = false;
 
@@ -122,6 +123,7 @@ namespace KSPShaderTools
             ConfigNode config = Array.Find(allTUNodes, m => m.GetStringValue("name") == "default");
             configurationNode = config;
 
+            logAll = config.GetBoolValue("logAll", logAll);
             logReplacements = config.GetBoolValue("logReplacements", logReplacements);
             logErrors = config.GetBoolValue("logErrors", logErrors);
             recolorGUIWidth = config.GetIntValue("recolorGUIWidth");

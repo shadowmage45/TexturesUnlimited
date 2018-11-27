@@ -5,38 +5,38 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TexturesUnlimitedTools"
         mc:Ignorable="d"
-        Title="TextureMaskingWindow" Height="600" Width="800">
+        Title="TextureMaskingWindow" Height="600" Width="720" MinWidth="720">
     <Grid>
 
-        <Label Content="Diffuse" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name ="DiffFileBox" Height="23" Margin="85,11,311,0" TextWrapping="Wrap" Text="Select Diffuse/Albedo Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
-        <ComboBox x:Name="DiffuseChannelComboBox" Margin="0,12,156,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
-        <Button Content="Browse" Margin="0,13,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectBaseMapClik"/>
+        <Button Content="Update Recoloring Preview" Margin="210,135,0,0" VerticalAlignment="Top" Click="GenerateNormTexClick" HorizontalAlignment="Left" Width="212" Height="23"/>
+        <Button Content="Export Recolored Textures" Margin="210,104,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="212" Click="ExportClick" Height="23"/>
 
-        <Label Content="Metal/Spec" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name ="SpecFileBox" Height="23" Margin="85,42,311,0" TextWrapping="Wrap" Text="Select Specular or Metallic Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
-        <ComboBox x:Name="AuxChannelComboBox" Margin="0,43,156,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
-        <Button Content="Browse" Margin="0,44,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectSpecClick"/>
+        <Label Content="Preview Selection" HorizontalAlignment="Left" Margin="10,165,0,0" VerticalAlignment="Top" Width="108"/>
+        <ComboBox x:Name="PreviewSelectionComboBox" Margin="123,167,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="299"/>
 
-        <Label Content="Smooth" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name ="SmoothFileBox" Height="23" Margin="85,73,311,0" TextWrapping="Wrap" Text="Select Smoothness Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
-        <ComboBox x:Name="SmoothChannelComboBox" Margin="0,74,156,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
-        <Button Content="Browse" Margin="0,75,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectSmoothClick"/>
-
-        <Label Content="Mask" HorizontalAlignment="Left" Margin="10,103,0,0" VerticalAlignment="Top"/>
-        <TextBox x:Name ="MaskFileBox" Height="23" Margin="85,104,156,0" TextWrapping="Wrap" Text="Select A Mask Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
-        <Button Content="Browse" Margin="0,106,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectMaskClick"/>
-
-        <Button Content="Update Recoloring Preview" Margin="10,134,0,0" VerticalAlignment="Top" Click="GenerateNormTexClick" HorizontalAlignment="Left" Width="202"/>
-        <Button Content="Export Recolored Textures" Margin="0,134,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="296" Click="ExportClick"/>
-
-        <Label Content="Preview Selection" HorizontalAlignment="Left" Margin="10,159,0,0" VerticalAlignment="Top" Width="108"/>
-        <ComboBox x:Name="PreviewSelectionComboBox" Margin="123,161,10,0" VerticalAlignment="Top"/>
-        
-        <local:ZoomBorder Margin="10,190,10,10" ClipToBounds="True">
+        <local:ZoomBorder Margin="10,196,10,10" ClipToBounds="True">
             <Canvas x:Name ="ImageCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Background="Black" >
                 <Image Canvas.Top="0" Canvas.Left="0" x:Name ="MapImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Stretch="None"/>
             </Canvas>
         </local:ZoomBorder>
+
+        <Label Content="Red" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="DiffFileBox_Copy" Height="23" Margin="85,11,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Label Content="Green" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="SpecFileBox_Copy" Height="23" Margin="85,42,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Label Content="Blue" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="SmoothFileBox_Copy" Height="23" Margin="85,73,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Label Content="Aux" HorizontalAlignment="Left" Margin="10,103,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="MaskFileBox_Copy" Height="23" Margin="85,104,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Label Content="Smooth" HorizontalAlignment="Left" Margin="10,134,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="MaskFileBox_Copy1" Height="23" Margin="85,135,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+
+
+        <Label Content="DiffNorm" HorizontalAlignment="Left" Margin="210,10,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="DiffFileBox_Copy1" Height="23" Margin="302,11,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Label Content="AuxNorm" HorizontalAlignment="Left" Margin="210,41,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="SpecFileBox_Copy1" Height="23" Margin="302,42,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
+        <Label Content="SmoothNorm" HorizontalAlignment="Left" Margin="210,72,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="SmoothFileBox_Copy1" Height="23" Margin="302,73,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalAlignment="Left" Width="120"/>
     </Grid>
 </Window>

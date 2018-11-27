@@ -1,0 +1,31 @@
+﻿<Window x:Class="TexturesUnlimitedTools.TextureSelectionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TexturesUnlimitedTools"
+        mc:Ignorable="d"
+        Title="TextureSelectionWindow" Height="202" Width="800">
+    <Grid>
+
+        <Label Content="Diffuse" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="DiffFileBox" Height="23" Margin="85,11,311,0" TextWrapping="Wrap" Text="Select Diffuse/Albedo Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
+        <ComboBox x:Name="DiffuseChannelComboBox" Margin="0,10,156,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
+        <Button Content="Browse" Margin="0,11,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectBaseMapClik"/>
+
+        <Label Content="Metal/Spec" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="SpecFileBox" Height="23" Margin="85,42,311,0" TextWrapping="Wrap" Text="Select Specular or Metallic Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
+        <ComboBox x:Name="AuxChannelComboBox" Margin="0,41,156,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
+        <Button Content="Browse" Margin="0,42,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectSpecClick"/>
+
+        <Label Content="Smooth" HorizontalAlignment="Left" Margin="10,72,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="SmoothFileBox" Height="23" Margin="85,73,311,0" TextWrapping="Wrap" Text="Select Smoothness Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
+        <ComboBox x:Name="SmoothChannelComboBox" Margin="0,72,156,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="150"/>
+        <Button Content="Browse" Margin="0,73,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectSmoothClick"/>
+
+        <Label Content="Mask" HorizontalAlignment="Left" Margin="10,103,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name ="MaskFileBox" Height="23" Margin="85,104,311,0" TextWrapping="Wrap" Text="Select A Mask Texture File" VerticalAlignment="Top" VerticalContentAlignment="Center"/>
+        <Button Content="Browse" Margin="0,104,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="141" Click="SelectMaskClick"/>
+        <Button Content="Process" Margin="0,0,10,10" HorizontalAlignment="Right" Width="772" Click="ProcessClick" Height="20" VerticalAlignment="Bottom"/>
+    </Grid>
+</Window>
