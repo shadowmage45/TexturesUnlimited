@@ -19,6 +19,13 @@ namespace KSPShaderTools
         [KSPField]
         public string transformName = string.Empty;
 
+        /// <summary>
+        /// A CSV list of root transform names to traverse when looking for model-related transforms.  Defaults to the stock 'model' transform, but may
+        /// have others added for special case needs (e.g. kerbalEVA uses 'model' and 'model01' transforms, which would be specified as 'rootNames="model,model01"').
+        /// </summary>
+        [KSPField]
+        public string rootNames = "model";
+
         [KSPField]
         public int transformIndex = -1;
 
@@ -127,22 +134,47 @@ namespace KSPShaderTools
         /// <returns></returns>
         protected Transform[] getModelTransforms()
         {
-            if (!string.IsNullOrEmpty(transformName))
+            List<Transform> modelTransforms = new List<Transform>();
+            Transform[] roots = getRootTransforms();
+            int len = roots.Length;
+            for (int i = 0; i < len; i++)
             {
-                Transform[] trs = part.transform.FindRecursive("model").FindChildren(transformName);
-                if (transformIndex >= 0)
+                if (!string.IsNullOrEmpty(transformName))
                 {
-                    return new Transform[] { trs[transformIndex] };
+                    Transform[] trs = roots[i].FindChildren(transformName);
+                    if (transformIndex >= 0)
+                    {
+                        modelTransforms.Add(trs[transformIndex]);
+                    }
+                    else
+                    {
+                        modelTransforms.AddRange(trs);
+                    }
                 }
                 else
                 {
-                    return trs;
+                    modelTransforms.Add(roots[i]);
                 }
             }
-            else
+            return modelTransforms.ToArray();
+        }
+
+        /// <summary>
+        /// Helper method to return the list of -root- transforms to use for this module.
+        /// This should generally only be 'model', but in some special stock cases it may
+        /// also include other transforms (e.g. 'model01' in evaKerbal part)
+        /// </summary>
+        /// <returns></returns>
+        protected Transform[] getRootTransforms()
+        {
+            List<Transform> trs = new List<Transform>();
+            string[] names = rootNames.Split(',');
+            int len = names.Length;
+            for (int i = 0; i < len; i++)
             {
-                return new Transform[] { part.transform.FindRecursive("model") };
+                trs.AddRange(part.transform.FindChildren(names[i].Trim()));
             }
+            return trs.ToArray();
         }
 
         /// <summary>
@@ -275,28 +307,6 @@ namespace KSPShaderTools
             {
                 set.enable(roots[i], customColors);
             }
-            saveColors(customColors);
-        }
-
-        /// <summary>
-        /// Apply the current texture to the input transform.  The texture sets include/exclude settings will be used to determine what children of the input transforms should be adjusted.
-        /// </summary>
-        /// <param name="root"></param>
-        public void enableCurrentSet(Transform root)
-        {
-            TextureSet set = currentTextureSet;
-            if (set == null)
-            {
-                return;
-            }
-            if (customColors == null || customColors.Length == 0)
-            {
-                customColors = new RecoloringData[3];
-                customColors[0] = set.maskColors[0];
-                customColors[1] = set.maskColors[1];
-                customColors[2] = set.maskColors[2];
-            }
-            set.enable(root, customColors);
             saveColors(customColors);
         }
 
