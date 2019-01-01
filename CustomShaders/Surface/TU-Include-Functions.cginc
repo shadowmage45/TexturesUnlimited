@@ -55,6 +55,9 @@ inline fixed3 mix3(fixed3 a, fixed3 b, fixed t)
 	return a * (1 - t) + b * t;
 }
 
+/**
+	Pre-Normalized detail mixing function for RGB input.
+**/
 inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed norm, fixed detailMult, fixed3 userColor1, fixed3 userColor2, fixed3 userColor3)
 {
 	fixed mixFactor = getMaskMix(maskSample);
@@ -71,7 +74,7 @@ inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed nor
 	
 	//extracts a +/- 0 detail value
 	//will be NAN if normalization value is zero (unmasked pixels)
-	fixed detail = ((luminance - norm) / norm) * userMix;
+	fixed detail = (luminance - norm) * userMix;
 	
 	//user selected coloring, plus details as applied in a renormalized fashion
 	fixed3 userPlusDetail = (userSelectedColor * detail * detailMult) + userSelectedColor;
@@ -81,15 +84,28 @@ inline fixed3 recolorStandard(fixed3 diffuseSample, fixed3 maskSample, fixed nor
 	return saturate(userPlusDetail) + baseOutput;
 }
 
+/**
+	Same function as above, but for single-channel inputs
+**/
 inline fixed recolorStandard(fixed sample1, fixed3 maskSample, fixed norm, fixed detailMult, fixed user1, fixed user2, fixed user3)
 {
 	fixed mixFactor = getMaskMix(maskSample);
+	fixed userMix = 1 - mixFactor;
+	
+	//the value to use from the recoloring channels
 	fixed userSelectedValue = getUserValue(maskSample, user1, user2, user3);
-	fixed baseOutput = sample1 * mixFactor;
-	// dt = (1 - 0) * ( 1 )
-	// upd = (1 / 0) * 1 * 1 + 1
-	fixed detail = (sample1 - norm) * (1 - mixFactor) * userSelectedValue * detailMult;
-	fixed userPlusDetail = detail + userSelectedValue;
+	
+	//the value of the original sample
+	fixed luminance = sample1;
+	
+	//output factor of original texture values, used in unmasked or partially masked pixels
+	fixed baseOutput = mixFactor * sample1;
+	
+	//detail value of pixel
+	fixed detail = (luminance - norm) * userMix;
+	
+	fixed userPlusDetail = (userSelectedValue * detail * detailMult) + userSelectedValue;
+	
 	return saturate(userPlusDetail) + baseOutput;
 }
 
