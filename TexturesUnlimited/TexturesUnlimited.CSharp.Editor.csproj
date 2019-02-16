@@ -165,7 +165,6 @@
     <None Include="Assets\Shaders\Surface\TU-Include-Surfaces.cginc" />
     <None Include="Assets\Shaders\Surface\TU-Legacy.shader" />
     <None Include="Assets\Shaders\Surface\TU-Metallic.shader" />
-    <None Include="Assets\Shaders\Surface\TU-MetallicDetail.shader" />
     <None Include="Assets\Shaders\Surface\TU-Skybox.shader" />
     <None Include="Assets\Shaders\Surface\TU-Specular.shader" />
     <None Include="Assets\Shaders\Surface\TU-Transparent-Legacy.shader" />
