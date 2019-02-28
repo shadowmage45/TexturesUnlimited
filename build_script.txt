@@ -1,0 +1,15 @@
+//TexturesUnlimited build script
+//read by SSTUBuildTools.exe
+//currently only supported options are MS-DOS Command-Line options (CMD:) and Zip operations (ZIP:{})
+versionFile = GameData/000_TexturesUnlimited/TexturesUnlimited.version
+//simply zip it up and export it to the parent directory
+ZIP:TexturesUnlimited-%version%.zip
+{
+    +d GameData/000_TexturesUnlimited:GameData/000_TexturesUnlimited
+	+d Plugin/SSTUTools/KSPShaderTools/Addon:Source/Addon
+	+d Plugin/SSTUTools/KSPShaderTools/GUI:Source/GUI
+	+d Plugin/SSTUTools/KSPShaderTools/Module:Source/Module
+	+d Plugin/SSTUTools/KSPShaderTools/Util:Source/Util
+	//+f Build/Installation_Instructions.txt:Installation_Instructions.txt
+}
+CMD:move /y *.zip ..

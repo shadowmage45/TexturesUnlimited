@@ -71,14 +71,9 @@ namespace KSPShaderTools
         {
             base.OnStart(state);
             initialize();
-            Callback<BaseField, System.Object> onChangeAction = delegate (BaseField a, System.Object b)
+            Callback<BaseField, System.Object> onChangeAction = (BaseField a, System.Object b) =>
             {
-                this.actionWithSymmetry(m =>
-                {
-                    m.currentTextureSet = currentTextureSet;
-                    m.textureSets.enableCurrentSet(m.getModelTransforms());
-                    TextureCallbacks.onTextureSetChanged(m.part);
-                });
+                enableTextureSet(currentTextureSet, true);
             };
             BaseField field = Fields[nameof(currentTextureSet)];
             field.uiControlEditor.onFieldChanged = onChangeAction;
@@ -222,6 +217,54 @@ namespace KSPShaderTools
         public TextureSet getSectionTexture(string section)
         {
             return textureSets.currentTextureSet;
+        }
+
+        /// <summary>
+        /// Singular 'enable texture set' function to be used by internal and external plugin code.  Optionally calls recursively
+        /// to update symmetry counterparts if 'symmetry' parameter is true.<para/>
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="symmetry"></param>
+        public void enableTextureSet(string name, bool symmetry = false)
+        {
+            if (textureSets == null) { return; }
+            //TODO - validate input texture set name; log error if invalid
+            currentTextureSet = name;
+            textureSets.enableCurrentSet(getModelTransforms());
+            TextureCallbacks.onTextureSetChanged(part);
+            if (symmetry)
+            {
+                this.actionWithSymmetry(m => 
+                {
+                    m.enableTextureSet(name, false);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Callback from Unity GameObject.SendMessage("onPartGeometryChanged")<para/>
+        /// Sent by KSPWheel on KSPWheelSidedModel model changes to re-initialize texture sets.<para/>
+        /// May optionally be called by any other mods that need to reapply the current texture set.<para/>
+        /// Same message is used by FAR for voxel rebuilding, so this might change to something else in the future.
+        /// </summary>
+        public void onPartGeometryChanged()
+        {
+            enableTextureSet(currentTextureSet);
+        }
+
+        /// <summary>
+        /// Callback from GameObject.SendMessage("changeTextureSet", "textureSetNameGoesHere")<para/>
+        /// Currently unutilized; added for completion.  TODO - verify that system.object is correct type for input param (or can use string?)
+        /// </summary>
+        /// <param name="setNameString"></param>
+        public void changeTextureSet(object setNameString)
+        {
+            string name = setNameString as string;
+            if (name == null)
+            {
+                return;
+            }
+            enableTextureSet(name);
         }
 
     }
