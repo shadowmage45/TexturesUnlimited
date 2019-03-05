@@ -15,30 +15,25 @@ namespace TexturesUnlimitedTools
     /// </summary>
     public partial class TextureCombineWindow : Window
     {
-        
+
+        public ViewModelTextureCombine ViewModel { get; private set; }
 
         public TextureCombineWindow()
         {
+            ViewModel = new ViewModelTextureCombine();
+            this.DataContext = ViewModel;
             InitializeComponent();
 
-            DataGridComboBoxColumn column;
+            RecordGrid.SelectionChanged += RecordGrid_SelectionChanged;
+        }
 
-            column = RecordGrid.Columns[3] as DataGridComboBoxColumn;
-            column.ItemsSource = MainWindow.instance.ImageOptions;
-            //column.SelectedItemBinding = new Binding("ImageR");
-            
-            column = RecordGrid.Columns[4] as DataGridComboBoxColumn;
-            column.ItemsSource = MainWindow.instance.ImageOptions;
-            //column.SelectedItemBinding = new Binding("ImageG");
-
-            column = RecordGrid.Columns[5] as DataGridComboBoxColumn;
-            column.ItemsSource = MainWindow.instance.ImageOptions;
-            //column.SelectedItemBinding = new Binding("ImageB");
-
-            column = RecordGrid.Columns[6] as DataGridComboBoxColumn;
-            column.ItemsSource = MainWindow.instance.ImageOptions;
-            //column.SelectedItemBinding = new Binding("ImageA");
-
+        private void RecordGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ViewModel.SelectedEntries.Clear();
+            foreach (TextureCombineEntry d in RecordGrid.SelectedItems)
+            {
+                ViewModel.SelectedEntries.Add(d);
+            }
         }
 
         private void SelectImagesClick(object sender, RoutedEventArgs e)

@@ -116,6 +116,7 @@
     <Compile Include="TextureSelectionWindow.xaml.cs">
       <DependentUpon>TextureSelectionWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModelTextureCombine.cs" />
     <Compile Include="ZoomBorder.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
