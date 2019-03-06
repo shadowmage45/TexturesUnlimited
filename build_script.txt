@@ -10,6 +10,8 @@ ZIP:TexturesUnlimited-%version%.zip
 	+d Plugin/SSTUTools/KSPShaderTools/GUI:Source/GUI
 	+d Plugin/SSTUTools/KSPShaderTools/Module:Source/Module
 	+d Plugin/SSTUTools/KSPShaderTools/Util:Source/Util
+	//TODO -- add source dirs for other plugins?
+	//TODO -- add installation instructions
 	//+f Build/Installation_Instructions.txt:Installation_Instructions.txt
 }
 CMD:move /y *.zip ..
