@@ -8,22 +8,28 @@
         x:Name="TUCombineWindow"
         Title="Texture Combine and Channel Remapping" Height="420" Width="800" MinHeight="420" MinWidth="800">
     <Grid>
-        <Button Content="Add Image Set" Margin="10,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="290" Click="SelectImagesClick"/>
-        <Button Content="Convert All Images" Margin="0,10,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="317" Click="ConvertImagesClick"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Content="Output Folder" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="95"/>
+        <TextBox Height="28" Margin="105,10,10,0" TextWrapping="Wrap" Text="{Binding Path=ExportFolderPath}" VerticalAlignment="Top" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"/>
+
+        <Button Grid.Column="0" Content="Add Image Set" Margin="10,0,10,10" Width="Auto" Height="28" VerticalAlignment="Bottom" Command="{Binding Path=AddImageCommand}"/>
+        <Button Grid.Column="1" Content="Convert All Images" Margin="10,0,10,10" HorizontalAlignment="Stretch" Width="Auto" Command="{Binding Path=ConvertBatchCommand}" Height="28" VerticalAlignment="Bottom"/>
+        <Button Grid.Column="1" Content="Select Output Folder" Margin="10,10,10,0" VerticalAlignment="Top" Height="28" Command="{Binding Path=SelectFolderCommand}"/>
         <DataGrid x:Name="RecordGrid" 
-                  Margin="10,35,10,10" 
+                  Grid.ColumnSpan="2"
+                  Margin="10,48,10,48" 
                   CanUserAddRows="False" 
                   CanUserDeleteRows="True" 
                   CanUserReorderColumns="False" 
                   CanUserSortColumns="False"
                   AutoGenerateColumns="False"
-                  ItemsSource="{Binding RemapRecords}">
-            <DataGrid.DataContext>
-                <local:MainWindow/>
-            </DataGrid.DataContext>
+                  ItemsSource="{Binding Path=TextureEntries}">
             <DataGrid.Columns>
 
-                <DataGridTextColumn x:Name ="Input1NameText" Header="Input Img 1" Binding="{Binding Image1Name}" Width="115">
+                <DataGridTextColumn x:Name ="Input1NameText" Header="Input Img 1" Binding="{Binding Path = Image1Path}" Width="2*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType ="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Right"/>
@@ -31,33 +37,44 @@
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
-                <DataGridTextColumn x:Name ="Input2NameText" Header="Input Img 2" Binding="{Binding Image2Name}" Width="115">
+                <DataGridTextColumn x:Name ="Input2NameText" Header="Input Img 2" Binding="{Binding Path = Image2Path}" Width="2*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType ="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Right"/>
                         </Style>
-                    </DataGridTextColumn.ElementStyle>                    
+                    </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                
-                <DataGridTextColumn x:Name ="OutputNameText" Header="Output Name" Binding="{Binding OutputName}" Width="115">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType ="TextBlock">
-                            <Setter Property="HorizontalAlignment" Value="Right"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>                    
-                </DataGridTextColumn>
-                
-                <DataGridComboBoxColumn Header="Out R" 
-                    SelectedItemBinding="{Binding ImageR}" Width="100"/>
 
-                <DataGridComboBoxColumn Header="Out G"
-                    SelectedItemBinding="{Binding ImageG}" Width="100"/>
+                <DataGridComboBoxColumn 
+                    Width="1*"
+                    Header="Out R" 
+                    ItemsSource="{Binding Source={x:Static local:ViewModelTextureCombine.ChannelSelections}}"
+                    SelectedValueBinding="{Binding Path=OutRChannel, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <DataGridComboBoxColumn Header="Out B"
-                    SelectedItemBinding="{Binding ImageB}" Width="100"/>
+                <DataGridComboBoxColumn 
+                    Width="1*"
+                    Header="Out G" 
+                    ItemsSource="{Binding Source={x:Static local:ViewModelTextureCombine.ChannelSelections}}"
+                    SelectedValueBinding="{Binding Path=OutGChannel, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <DataGridComboBoxColumn Header="Out A"
-                    SelectedItemBinding="{Binding ImageA}" Width="100"/>
+                <DataGridComboBoxColumn 
+                    Width="1*"
+                    Header="Out B" 
+                    ItemsSource="{Binding Source={x:Static local:ViewModelTextureCombine.ChannelSelections}}"
+                    SelectedValueBinding="{Binding Path=OutBChannel, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <DataGridComboBoxColumn 
+                    Width="1*"
+                    Header="Out A" 
+                    ItemsSource="{Binding Source={x:Static local:ViewModelTextureCombine.ChannelSelections}}"
+                    SelectedValueBinding="{Binding Path=OutAChannel, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <DataGridComboBoxColumn 
+                    Width="1*"
+                    Header="Output Format" 
+                    ItemsSource="{Binding Source={x:Static local:ViewModelTextureCombine.ImageFormats}}"
+                    SelectedValueBinding="{Binding Path=OutputFormat, UpdateSourceTrigger=PropertyChanged}"/>
+
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
