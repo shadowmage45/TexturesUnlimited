@@ -15,7 +15,6 @@ C:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCrea
 F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.exe.config
 F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.exe
 F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.pdb
-F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.csprojResolveAssemblyReference.cache
 F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.exe
 F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.pdb
 C:\git_source\TexturesUnlimited\Plugin\BaseMapCreation\bin\Debug\BaseMapCreation.exe.config
@@ -25,3 +24,5 @@ C:\git_source\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation
 C:\git_source\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.csproj.CoreCompileInputs.cache
 C:\git_source\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.exe
 C:\git_source\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.pdb
+F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.csprojAssemblyReference.cache
+F:\git_source\git\TexturesUnlimited\Plugin\BaseMapCreation\obj\Debug\BaseMapCreation.csproj.CoreCompileInputs.cache
