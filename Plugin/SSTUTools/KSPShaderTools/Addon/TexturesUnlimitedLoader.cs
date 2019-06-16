@@ -118,6 +118,13 @@ namespace KSPShaderTools
 
         private void load()
         {
+            //clear any existing data in case of module-manager reload
+            loadedShaders.Clear();
+            loadedModelShaderSets.Clear();
+            iconShaders.Clear();
+            loadedTextureSets.Clear();
+            textureColors.Clear();
+            transparentShaderData.Clear();
             MonoBehaviour.print("TexturesUnlimited - Initializing shader and texture set data.");
             ConfigNode[] allTUNodes = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED");
             ConfigNode config = Array.Find(allTUNodes, m => m.GetStringValue("name") == "default");
@@ -131,7 +138,8 @@ namespace KSPShaderTools
             recolorGUISectionHeight = config.GetIntValue("recolorGUISectionHeight");
             if (config.GetBoolValue("displayDX9Warning", true))
             {
-                doAPICheck();
+                //disable API check as long as using stock reflection system
+                //doAPICheck();
             }
             loadBundles();
             buildShaderSets();

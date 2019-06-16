@@ -5,7 +5,9 @@ using System.IO;
 
 namespace KSPShaderTools
 {
-    [KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
+
+    //disabled entirely -- use stock reflection system
+    //[KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
     public class ReflectionManager : MonoBehaviour
     {
 
