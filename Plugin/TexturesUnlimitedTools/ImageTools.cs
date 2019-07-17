@@ -3,6 +3,9 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Windows.Media.Imaging;
+using DirectXTexNet;
+using System;
+using System.Diagnostics;
 
 namespace TexturesUnlimitedTools
 {
@@ -12,11 +15,23 @@ namespace TexturesUnlimitedTools
 
         public static Bitmap loadImage(string fileName)
         {
-            Image image = Image.FromFile(fileName);
-
-            Bitmap bmp = new Bitmap(image);
-            image.Dispose();
-            return bmp;
+            if (fileName.ToLower().EndsWith(".dds"))
+            {
+                string path = System.IO.Path.GetFullPath(fileName);
+                Debug.WriteLine("PATH: " + path);
+                ScratchImage i2 = DirectXTexNet.TexHelper.Instance.LoadFromDDSFile(path, DDS_FLAGS.NONE);
+                var i = i2.GetImage(0);
+                IntPtr ip = i.Pixels;
+                Bitmap bmp = new Bitmap(i.Width, i.Height, i.Width, System.Drawing.Imaging.PixelFormat.Format32bppArgb, ip);
+                return bmp;
+            }
+            else
+            {
+                System.Drawing.Image image = System.Drawing.Image.FromFile(fileName);
+                Bitmap bmp = new Bitmap(image);
+                image.Dispose();
+                return bmp;
+            }
         }
 
         public static void saveImage(Bitmap image, string fileName)

@@ -166,6 +166,7 @@ namespace TexturesUnlimitedTools
         {
             string img1 = ImageTools.openFileSelectDialog("Select a PNG base image");
             DiffFileBox.Text = img1;
+            ImageTools.loadImage(img1);
             diffuseMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img1)));
             diffuseImage = ImageTools.BitmapToBitmapImage(diffuseMap.Bitmap);
             updatePreview();
