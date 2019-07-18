@@ -46,7 +46,8 @@
 using System;
 using System.IO;
 
-namespace Microsoft.Xna.Framework.Graphics
+//modified to place into TU namespace, for access to internal methods
+namespace TexturesUnlimitedTools
 {
     internal static class DxtUtil
     {

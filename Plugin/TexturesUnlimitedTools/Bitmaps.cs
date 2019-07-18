@@ -28,76 +28,45 @@ namespace TexturesUnlimitedTools
     }
 
     /// <summary>
-    /// Wrapper around windows Bitmap (slow)
+    /// Custom implementation of bitmap image structure that can be utilized within the application.
+    /// Will contain helper methods to convert/provide other API specific formats upon request.
+    /// Will provide methods to update external formats with color changes.
+    /// WIP, Unused
     /// </summary>
-    public class TUBitmapWrapper : IBitmap, IDisposable
+    public class TUBitmap
     {
 
-        private Bitmap image;
+        private int width;
+        private int height;
+        private int[] colorData;
+        public int Width { get { return width; } }
+        public int Height { get { return height; } }
 
-        public TUBitmapWrapper(int width, int height)
-        {
-            this.image = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-        }
-
-        public TUBitmapWrapper(Bitmap source)
-        {
-            this.image = source;
-        }
-
-        public TUBitmapWrapper(Image source)
-        {
-            this.image = new Bitmap(source);
-        }
-
-        public System.Drawing.Color this[int x, int y]
-        {
-            get { return GetPixel(x, y); }
-            set { SetPixel(x, y, value); }
-        }
-
-        public int Height => image.Height;
-
-        public int Width => image.Width;
-
-        public System.Drawing.Color GetPixel(int x, int y) => image.GetPixel(x, y);
-
-        public void SetPixel(int x, int y, System.Drawing.Color color) => image.SetPixel(x, y, color);
-
-        public void Dispose() => image.Dispose();
-
-    }
-
-    public class TUWriteableBitmap : IBitmap
-    {
-        private int width, height;
-        WriteableBitmap image;
-        public TUWriteableBitmap(int width, int height)
+        #region CONSTRUCTORS
+        public TUBitmap(int width, int height)
         {
             this.width = width;
             this.height = height;
-            image = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
         }
-
-        public System.Drawing.Color this[int x, int y]
+        public TUBitmap(Bitmap bitmap)
         {
-            get { return GetPixel(x, y); }
-            set { SetPixel(x, y, value); }
+            this.width = bitmap.Width;
+            this.height = bitmap.Height;
+            //TODO
         }
-
-        public int Height => image.PixelHeight;
-
-        public int Width => image.PixelWidth;
-
-        public System.Drawing.Color GetPixel(int x, int y)
+        #endregion
+        #region STATIC CONSTRUCTORS
+        public static TUBitmap LoadFromFile(string fileName)
         {
-            throw new NotImplementedException();
+            return null;
+        }
+        #endregion
+
+        public int GetPixel(int x, int y)
+        {
+            return 0;
         }
 
-        public void SetPixel(int x, int y, System.Drawing.Color color)
-        {
-            throw new NotImplementedException();
-        }
     }
 
 }

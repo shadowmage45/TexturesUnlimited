@@ -166,8 +166,7 @@ namespace TexturesUnlimitedTools
         {
             string img1 = ImageTools.openFileSelectDialog("Select a PNG base image");
             DiffFileBox.Text = img1;
-            ImageTools.loadImage(img1);
-            diffuseMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img1)));
+            diffuseMap = new DirectBitmap(ImageTools.loadImage(img1));
             diffuseImage = ImageTools.BitmapToBitmapImage(diffuseMap.Bitmap);
             updatePreview();
         }
@@ -176,7 +175,7 @@ namespace TexturesUnlimitedTools
         {
             string img2 = ImageTools.openFileSelectDialog("Select a PNG base image");
             SpecFileBox.Text = img2;
-            auxMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img2)));
+            auxMap = new DirectBitmap(ImageTools.loadImage(img2));
             auxImage = ImageTools.BitmapToBitmapImage(auxMap.Bitmap);
             updatePreview();
         }
@@ -185,7 +184,7 @@ namespace TexturesUnlimitedTools
         {
             string img3 = ImageTools.openFileSelectDialog("Select a PNG base image");
             SmoothFileBox.Text = img3;
-            smoothMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img3)));
+            smoothMap = new DirectBitmap(ImageTools.loadImage(img3));
             smoothImage = ImageTools.BitmapToBitmapImage(smoothMap.Bitmap);
             updatePreview();
         }
@@ -194,7 +193,7 @@ namespace TexturesUnlimitedTools
         {
             string img4 = ImageTools.openFileSelectDialog("Select a PNG mask image");
             MaskFileBox.Text = img4;
-            maskMap = new DirectBitmap(new Bitmap(System.Drawing.Image.FromFile(img4)));
+            maskMap = new DirectBitmap(ImageTools.loadImage(img4));
             maskImage = ImageTools.BitmapToBitmapImage(maskMap.Bitmap);
             updatePreview();
         }
@@ -219,7 +218,7 @@ namespace TexturesUnlimitedTools
             window.start(generatationSequence, generateFinished);
         }
 
-        //accessed by worker thread; don't mess with these while workers are active
+        //accessed (read only?) by worker thread; don't mess with these while workers are active
         ChannelSelection a, b, c;
 
         private void generatationSequence(object sender, DoWorkEventArgs doWork)
@@ -443,7 +442,7 @@ namespace TexturesUnlimitedTools
 
             //difference mask vars
             
-            //first pass -- get min/max bounds
+            //first pass -- get min/max bounds, count and sum
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
