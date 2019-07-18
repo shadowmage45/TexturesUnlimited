@@ -16,7 +16,11 @@ namespace TexturesUnlimitedTools
         public static Bitmap loadImage(string fileName)
         {
             //quick and dirty check for DDS images
-            if (fileName.ToLower().EndsWith(".dds"))
+            if (string.IsNullOrEmpty(fileName) || !System.IO.File.Exists(fileName))
+            {
+                return null;
+            }
+            else if (fileName.ToLower().EndsWith(".dds"))
             {
                 return BitmapFromDDS(fileName);
             }
@@ -457,7 +461,26 @@ namespace TexturesUnlimitedTools
         /// <summary>
         /// Number of bytes of data for primary image
         /// </summary>
-        public int Length { get { return (int)dwPitchOrLinearSize; } }
+        public int Length
+        {
+            get
+            {
+                int val = (int)dwPitchOrLinearSize;
+                if (val <= 0)
+                {
+                    Debug.WriteLine("ERROR: Header contained invalid pitch/length specification.  Manually calculating based on FourCC");
+                    if (FourCC == "DXT1")
+                    {
+                        return (Width * Height) / 2;//4bpp or 1/2Bpp
+                    }
+                    else
+                    {
+                        return Width * Height;//8bpp or 1Bpp
+                    }
+                }
+                return val;
+            }
+        }
 
         /// <summary>
         /// String representation of the FourCC code 
