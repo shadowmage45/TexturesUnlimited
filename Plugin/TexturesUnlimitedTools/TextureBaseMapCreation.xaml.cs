@@ -223,35 +223,44 @@ namespace TexturesUnlimitedTools
 
         private void generatationSequence(object sender, DoWorkEventArgs doWork)
         {
-            int valid = 0;
-            valid += diffuseMap == null ? 0 : 1;
-            valid += auxMap == null ? 0 : 1;
-            valid += smoothMap == null ? 0 : 1;
-            if (valid == 0) { valid = 1; }
-
-            double offset = 100 / valid;
-            double div = 1 * valid;
-
-            valid = 0;
-            if (diffuseMap != null)
+            try
             {
-                generatorDiff = new NormGenerator(diffuseMap, maskMap, a, new NormParams(), valid * offset, div);
-                generatorDiff.generate(sender, doWork);
-                valid++;
-            }            
+                int valid = 0;
+                valid += diffuseMap == null ? 0 : 1;
+                valid += auxMap == null ? 0 : 1;
+                valid += smoothMap == null ? 0 : 1;
+                if (valid == 0) { valid = 1; }
 
-            if (auxMap != null)
-            {
-                generatorAux = new NormGenerator(auxMap, maskMap, b, new NormParams(), valid * offset, div);
-                generatorAux.generate(sender, doWork);
-                valid++;
+                double offset = 100 / valid;
+                double div = 1 * valid;
+
+                valid = 0;
+                if (diffuseMap != null)
+                {
+                    generatorDiff = new NormGenerator(diffuseMap, maskMap, a, new NormParams(), valid * offset, div);
+                    generatorDiff.generate(sender, doWork);
+                    valid++;
+                }
+
+                if (auxMap != null)
+                {
+                    generatorAux = new NormGenerator(auxMap, maskMap, b, new NormParams(), valid * offset, div);
+                    generatorAux.generate(sender, doWork);
+                    valid++;
+                }
+
+                if (smoothMap != null)
+                {
+                    generatorSmooth = new NormGenerator(smoothMap, maskMap, c, new NormParams(), valid * offset, div);
+                    generatorSmooth.generate(sender, doWork);
+                    valid++;
+                }
+
             }
-
-            if (smoothMap != null)
+            catch (Exception e)
             {
-                generatorSmooth = new NormGenerator(smoothMap, maskMap, c, new NormParams(), valid * offset, div);
-                generatorSmooth.generate(sender, doWork);
-                valid++;
+                Debug.WriteLine(e.Message);
+                Debug.WriteLine(e.StackTrace);
             }
         }
 
@@ -281,6 +290,11 @@ namespace TexturesUnlimitedTools
                 auxDiffImage = ImageTools.BitmapToBitmapImage(auxDiffMap.Bitmap);
                 auxColDiffImage = ImageTools.BitmapToBitmapImage(auxColDiffMap.Bitmap);
                 auxText = generatorAux.outText;
+                if (string.IsNullOrEmpty(auxText)) { auxText = "0,0,0"; }
+            }
+            else
+            {
+                auxText = "0,0,0";
             }
 
             if (generatorSmooth != null)
@@ -292,6 +306,11 @@ namespace TexturesUnlimitedTools
                 smoothDiffImage = ImageTools.BitmapToBitmapImage(smoothDiffMap.Bitmap);
                 smoothColDiffImage = ImageTools.BitmapToBitmapImage(smoothColDiffMap.Bitmap);
                 smoothText = generatorSmooth.outText;
+                if (string.IsNullOrEmpty(smoothText)) { smoothText = "0,0,0"; }
+            }
+            else
+            {
+                smoothText = "0,0,0";
             }
 
             generatorDiff = null;
@@ -466,25 +485,10 @@ namespace TexturesUnlimitedTools
                 }
             }
 
-            ////second pass -- count, sum
-            //for (int x = 0; x < width; x++)
-            //{
-            //    for (int y = 0; y < height; y++)
-            //    {
-            //        maskColor = mask.GetPixel(x, y);
-            //        if (maskColor.R == 0 && maskColor.G == 0 && maskColor.B == 0) { continue; }//unmasked pixel, skip
-            //        getPixelColors(maskColor, out mr, out mg, out mb);
-            //        srcColor = src.GetPixel(x, y);
-            //        getPixelColors(srcColor, out sr, out sg, out sb);
-            //        channelCalc(sr, mr, ref countR, ref sumR, ref minR, ref maxR);
-            //        channelCalc(sg, mg, ref countG, ref sumG, ref minG, ref maxG);
-            //        channelCalc(sb, mb, ref countB, ref sumB, ref minB, ref maxB);
-            //    }
-            //}
-
-            outR = sumR / countR;
-            outG = sumG / countG;
-            outB = sumB / countB;
+            //guard against NAN from div/0
+            outR = countR==0? 0 : sumR / countR;
+            outG = countG==0? 0 : sumG / countG;
+            outB = countB==0? 0 : sumB / countB;
                         
             //third pass -- write output
             dest = new DirectBitmap(src.Width, src.Height);

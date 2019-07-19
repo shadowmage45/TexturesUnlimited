@@ -32,8 +32,8 @@
 
         <Label Content="Preview Selection" HorizontalAlignment="Left" Margin="10,159,0,0" VerticalAlignment="Top" Width="108"/>
         <ComboBox x:Name="PreviewSelectionComboBox" Margin="123,161,10,0" VerticalAlignment="Top"/>
-        <local:ZoomBorder Margin="10,190,10,10" ClipToBounds="True">
-            <Canvas x:Name ="ImageCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Background="Black" >
+        <local:ZoomBorder Margin="10,190,10,10" ClipToBounds="True" BorderThickness="1" BorderBrush="Black">
+            <Canvas x:Name ="ImageCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Background="White" >
                 <Image Canvas.Top="0" Canvas.Left="0" x:Name ="MapImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Stretch="None"/>
             </Canvas>
         </local:ZoomBorder>

@@ -41,16 +41,16 @@ namespace TexturesUnlimitedTools
         {
             bool metal = true;
             StringBuilder builder = new StringBuilder();
-            builder.Append("\\t").Append("vector = _DiffuseNorm,").AppendLine(diffText);
+            builder.Append("    ").Append("vector = _DiffuseNorm,").AppendLine(diffText);
             if (metal)
             {
-                builder.Append("\\t").Append("vector = _MetalNorm,").AppendLine(auxText);
+                builder.Append("    ").Append("vector = _MetalNorm,").AppendLine(auxText);
             }
             else
             {
-                builder.Append("\\t").Append("vector = _SpecularNorm,").AppendLine(auxText);
+                builder.Append("    ").Append("vector = _SpecularNorm,").AppendLine(auxText);
             }
-            builder.Append("\\t").Append("vector = _SmoothnessNorm,").AppendLine(smoothText);
+            builder.Append("    ").Append("vector = _SmoothnessNorm,").AppendLine(smoothText);
             NormTextBlock.Text = builder.ToString();
         }
 
