@@ -88,7 +88,7 @@ namespace KSPShaderTools
             else
             {
                 maskColors = new RecoloringData[3];
-                Color white = Color.white;
+                Color white = PresetColor.getColor("white").color;//will always return -something-, even if 'white' is undefined
                 maskColors[0] = new RecoloringData(white, 0, 0);
                 maskColors[1] = new RecoloringData(white, 0, 0);
                 maskColors[2] = new RecoloringData(white, 0, 0);

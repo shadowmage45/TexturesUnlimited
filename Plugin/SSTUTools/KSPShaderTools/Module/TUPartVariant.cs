@@ -14,10 +14,11 @@ namespace KSPShaderTools
         private EventData<AvailablePart, PartVariant>.OnEvent editorDefaultApplied;
 
         //set by part-variant; only updated on variant change
-        //config value should match the texture set for the default variant for the part
+        //config value should match the texture set for the default variant for the part  (TODO -- is this optional or mandatory?)
         [KSPField(isPersistant = true)]
         public string textureSet = string.Empty;
 
+        //alternative to texture-set; used to load 'model-shader' configurations as texture-sets at runtime
         [KSPField(isPersistant = true)]
         public string modelShaderSet = string.Empty;
 
@@ -156,7 +157,7 @@ namespace KSPShaderTools
 
         private void editorDefaultVariantApplied(AvailablePart part, PartVariant variant)
         {
-            //TODO -- how to tell if it was -this- part?
+            //TODO -- how to tell if it was -this- part? -- or is this to apply to the icon when the icon-switch is toggled?
             //MonoBehaviour.print("EditorDefaultVariant applied: " + variant.Name);
             //TextureSet set = getSet(variant);
             //if (set != null)
@@ -176,6 +177,7 @@ namespace KSPShaderTools
         private TextureSet getSet(PartVariant variant)
         {
             string setName = variant.GetExtraInfoValue("textureSet");
+            MonoBehaviour.print("Found texture set name of: " + setName);
             TextureSet set = null;
             if (!string.IsNullOrEmpty(setName))
             {
@@ -193,6 +195,10 @@ namespace KSPShaderTools
                 return set;
             }
             //if nothing found, clear out references
+            if (TexturesUnlimitedLoader.logErrors || TexturesUnlimitedLoader.logAll)
+            {
+                MonoBehaviour.print("Could not load texture set for part variant: " + variant?.Name + " for part: " + part.name);
+            }
             modelShaderSet = textureSet = string.Empty;
             return null;
         }

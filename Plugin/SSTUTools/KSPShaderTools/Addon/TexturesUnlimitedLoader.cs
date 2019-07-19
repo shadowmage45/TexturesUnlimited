@@ -741,6 +741,14 @@ namespace KSPShaderTools
                     return colorList[0];
                 }
                 MonoBehaviour.print("ERROR: No preset colors defined, could not return a valid preset.");
+                return new RecoloringDataPreset()
+                {
+                    color = Color.gray,
+                    metallic = 0,
+                    specular = 0,
+                    name = "ERROR",
+                    title = "ERROR",
+                };
             }
             return presetColors[name];
         }
