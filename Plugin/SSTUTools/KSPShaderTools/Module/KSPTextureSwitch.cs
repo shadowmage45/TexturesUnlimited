@@ -134,6 +134,7 @@ namespace KSPShaderTools
             int len = roots.Length;
             for (int i = 0; i < len; i++)
             {
+                MonoBehaviour.print("Examining root transform: " + roots[i]);
                 if (!string.IsNullOrEmpty(transformName))
                 {
                     Transform[] trs = roots[i].FindChildren(transformName);
@@ -167,6 +168,9 @@ namespace KSPShaderTools
             int len = names.Length;
             for (int i = 0; i < len; i++)
             {
+                //TODO -- this causes issues in the editor with part hierarchy
+                //in the editor parts are parented to eachother through transforms, and this method picks up the
+                //'model' transforms from all children parts as well as the parent part.
                 trs.AddRange(part.transform.FindChildren(names[i].Trim()));
             }
             return trs.ToArray();
