@@ -168,10 +168,27 @@ namespace KSPShaderTools
             int len = names.Length;
             for (int i = 0; i < len; i++)
             {
-                //TODO -- this causes issues in the editor with part hierarchy
-                //in the editor parts are parented to eachother through transforms, and this method picks up the
-                //'model' transforms from all children parts as well as the parent part.
-                trs.AddRange(part.transform.FindChildren(names[i].Trim()));
+
+                //special handling for editor as parts are parented to eachother through transforms
+                if (HighLogic.LoadedSceneIsEditor)
+                {
+                    if (names.Length == 1 && names[0].Trim() == "model")
+                    {
+                        trs.Add(part.transform.FindRecursive("model"));
+                    }
+                    else
+                    {
+                        //TODO -- this causes issues in the editor with part hierarchy
+                        //in the editor parts are parented to eachother through transforms, and this method picks up the
+                        //'model' transforms from all children parts as well as the parent part.
+                        MonoBehaviour.print("TODO - fix part-hierarchy checking in editor when custom root transforms are specified.");
+                        trs.AddRange(part.transform.FindChildren(names[i].Trim()));
+                    }
+                }
+                else
+                {
+                    trs.AddRange(part.transform.FindChildren(names[i].Trim()));
+                }
             }
             return trs.ToArray();
         }
