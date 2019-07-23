@@ -60,7 +60,7 @@ namespace KSPShaderTools
                 if (len < 3)
                 {
                     MonoBehaviour.print("ERROR: Not enough data in: " + data + " to construct color values.");
-                    values = new string[] { "255", "255", "255", "0", "0"};
+                    values = new string[] { "1", "1", "1", "0", "0"};
                 }
                 string redString = values[0];
                 string greenString = values[1];
