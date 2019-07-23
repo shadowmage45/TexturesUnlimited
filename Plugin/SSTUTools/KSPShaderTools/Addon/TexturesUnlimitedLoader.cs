@@ -150,6 +150,7 @@ namespace KSPShaderTools
             MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
+            NormMaskCreation.processBatch();
         }
 
         private void doAPICheck()

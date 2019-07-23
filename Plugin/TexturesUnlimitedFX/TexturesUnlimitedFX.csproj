@@ -66,13 +66,15 @@
     <Compile Include="Effect\BloomEffect.cs" />
     <Compile Include="Effect\EffectManager.cs" />
     <Compile Include="GUI\ConfigurationGUI.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SSTUTools\KSPShaderTools\TexturesUnlimited.csproj">
       <Project>{90c22d61-2261-4b94-844c-59536357b09d}</Project>
       <Name>TexturesUnlimited</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

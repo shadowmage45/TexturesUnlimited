@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPShaderTools.Util;
+using System;
 using UnityEngine;
 
 namespace KSPShaderTools
@@ -74,6 +75,10 @@ namespace KSPShaderTools
             if (GUILayout.Button("Dump model UV Maps"))
             {
                 TexturesUnlimitedLoader.dumpUVMaps(true);
+            }
+            if(GUILayout.Button("Calculate Normalization Data"))
+            {
+                NormMaskCreation.processBatch();
             }
             GUILayout.EndVertical();
         }

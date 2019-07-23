@@ -15,6 +15,7 @@ namespace KSPShaderTools.Util
         public static void processBatch()
         {
             long totalProcessTime = 0;
+            List<string> configExport = new List<string>();
             foreach (TextureSet set in TexturesUnlimitedLoader.loadedTextureSets.Values)
             {
                 if (set.supportsRecoloring)
@@ -82,22 +83,25 @@ namespace KSPShaderTools.Util
                                 }
                             }
 
-                            MonoBehaviour.print("CONFIG EXPORT START---------------");
-                            string patch = "@KSP_TEXTURE_SET[" + set.name + "]" +
+                            //MonoBehaviour.print("CONFIG EXPORT START---------------");
+                            string patch = 
+                                         "\n@KSP_TEXTURE_SET[" + set.name + "]" +
                                          "\n{" +
-                                         "\n   @MATERIAL," + setIndex +
-                                         "\n   {" +
-                                         "\n       color = _Channel1Norm," + diff[0] + "," + met[0] + "," + smth[0]+
-                                         "\n       color = _Channel2Norm," + diff[1] + "," + met[1] + "," + smth[1] +
-                                         "\n       color = _Channel3Norm," + diff[2] + "," + met[2] + "," + smth[2] +
-                                         "\n   }" +
+                                         "\n    @MATERIAL," + setIndex +
+                                         "\n    {" +
+                                         "\n        vector = _DiffuseNorm," + diff[0] + "," + diff[1] + "," + diff[2]+
+                                         "\n        vector = _SmoothnessNorm," + smth[0] + "," + smth[1] + "," + smth[2] +
+                                         "\n        vector = _MetalNorm," + met[0] + "," + met[1] + "," + met[2] +
+                                         "\n    }" +
                                          "\n}";
                             MonoBehaviour.print(patch);
-                            MonoBehaviour.print("CONFIG EXPORT END------------------");
+                            //MonoBehaviour.print("CONFIG EXPORT END------------------");
+                            configExport.Add(patch);
                             setIndex++;
                         }
                         sw.Stop();
                         totalProcessTime += sw.ElapsedMilliseconds;
+
                         MonoBehaviour.print("elapsed: " + sw.ElapsedMilliseconds+" generated: "+generatedTextures+" masks for set");
                     }
                     catch (Exception e)
@@ -106,6 +110,10 @@ namespace KSPShaderTools.Util
                     }
                 }
             }
+            string file = "NormalizationDataExport.txt";
+            string path = System.IO.Path.GetFullPath(file);
+            MonoBehaviour.print("Exporting configs to: " + path);
+            System.IO.File.WriteAllLines(file, configExport.ToArray());
             MonoBehaviour.print("Total process time: " + totalProcessTime);
         }
 
@@ -155,11 +163,11 @@ namespace KSPShaderTools.Util
             try
             {
                 //skip if already exists
-                if (File.Exists("maskExport/" + exportFileName))
-                {
-                    MonoBehaviour.print("Skipping export due to file already existing.");
-                    return null;
-                }
+                //if (File.Exists("maskExport/" + exportFileName))
+                //{
+                //    MonoBehaviour.print("Skipping export due to file already existing.");
+                //    return null;
+                //}
 
                 //because KSP loads textures as GPU only (no CPU side reads), blit the inputs to new Texture2Ds that can be read.
                 //its a round-about process, but is probably the fastest way to make it work.
@@ -283,13 +291,13 @@ namespace KSPShaderTools.Util
                 Color maskColor;
                 int width = map.width;
                 int height = map.height;
-                double valR = r = aggregateValueR / sampleCountR;
-                double valG = g = aggregateValueG / sampleCountG;
-                double valB = b = aggregateValueB / sampleCountB;
+                double valR = r = sampleCountR == 0? 0 : aggregateValueR / sampleCountR;
+                double valG = g = sampleCountG == 0? 0 : aggregateValueG / sampleCountG;
+                double valB = b = sampleCountB == 0? 0 : aggregateValueB / sampleCountB;
                 //really, these values are all that are needed for the normalization values
                 //the rest of the math is already in the shader in the form of the mask-based recolor values
-                MonoBehaviour.print("export vals-double: " + valR + "," + valG + "," + valB);                
-                MonoBehaviour.print("export vals-byte: " + (byte)(valR*255) + "," + (byte)(valG*255) + "," + (byte)(valB*255));
+                //MonoBehaviour.print("export vals-double: " + valR + "," + valG + "," + valB);                
+                //MonoBehaviour.print("export vals-byte: " + (byte)(valR*255) + "," + (byte)(valG*255) + "," + (byte)(valB*255));
                 double maskR, maskG, maskB;
                 double maskSum;
                 double colorValR;
