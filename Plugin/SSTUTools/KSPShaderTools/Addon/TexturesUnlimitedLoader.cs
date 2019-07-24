@@ -145,12 +145,11 @@ namespace KSPShaderTools
             buildShaderSets();
             PresetColor.loadColors();
             loadTextureSets();
-            //NormMaskCreation.processBatch();
             applyToModelDatabase();
             Log.log("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
-            NormMaskCreation.processBatch();
+            //NormMaskCreation.processBatch();
         }
 
         private void doAPICheck()
