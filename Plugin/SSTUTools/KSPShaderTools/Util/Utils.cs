@@ -38,7 +38,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print("ERROR: could not parse float value from: '" + val + "'\n" + e.Message);
+                Log.exception("ERROR: could not parse float value from: '" + val + "'\n" + e.Message);
             }
             return returnVal;
         }
@@ -52,7 +52,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print("ERROR: could not parse int value from: '" + val + "'\n" + e.Message);
+                Log.exception("ERROR: could not parse int value from: '" + val + "'\n" + e.Message);
             }
             return returnVal;
         }
@@ -146,12 +146,12 @@ namespace KSPShaderTools
                 //check length -- if it is 7 chars it should be RGB, 9 chars = RGBA
                 if (!ColorUtility.TryParseHtmlString(input, out color))
                 {
-                    MonoBehaviour.print("ERROR: Could not parse HTML color value from the input string of: " + input);
+                    Log.exception("ERROR: Could not parse HTML color value from the input string of: " + input);
                 }
             }
             else
             {
-                MonoBehaviour.print("ERROR: Could not determine color format from input: "+input+" , returning Color.white");
+                Log.exception("ERROR: Could not determine color format from input: "+input+" , returning Color.white");
             }
             return color;
         }
@@ -159,8 +159,8 @@ namespace KSPShaderTools
         public static ConfigNode parseConfigNode(String input)
         {
             ConfigNode baseCfn = ConfigNode.Parse(input);
-            if (baseCfn == null) { MonoBehaviour.print("ERROR: Base config node was null!!\n" + input); }
-            else if (baseCfn.nodes.Count <= 0) { MonoBehaviour.print("ERROR: Base config node has no nodes!!\n" + input); }
+            if (baseCfn == null) { Log.exception("ERROR: Base config node was null!!\n" + input); }
+            else if (baseCfn.nodes.Count <= 0) { Log.exception("ERROR: Base config node has no nodes!!\n" + input); }
             return baseCfn.nodes[0];
         }
 
@@ -223,7 +223,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print(e.Message);
+                Log.exception(e.Message);
             }
             return defaultValue;
         }
@@ -282,7 +282,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print(e.Message);
+                Log.exception(e.Message);
             }
             return defaultValue;
         }
@@ -302,7 +302,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print(e.Message);
+                Log.exception(e.Message);
             }
             return defaultValue;
         }
@@ -322,7 +322,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print(e.Message);
+                Log.exception(e.Message);
             }
             return defaultValue;
         }
@@ -382,7 +382,7 @@ namespace KSPShaderTools
             String value = node.GetValue(name);
             if (value == null)
             {
-                MonoBehaviour.print("ERROR: No value for name: " + name + " found in config node: " + node);
+                Log.exception("ERROR: No value for name: " + name + " found in config node: " + node);
                 return Vector3.zero;
             }
             String[] vals = value.Split(',');
@@ -404,7 +404,7 @@ namespace KSPShaderTools
             string[] vals = value.Split(',');
             if (vals.Length < 2)
             {
-                MonoBehaviour.print("ERROR parsing values for Vector2 from input: " + value + ". found less than 2 values, cannot create Vector2");
+                Log.exception("ERROR parsing values for Vector2 from input: " + value + ". found less than 2 values, cannot create Vector2");
                 return defaultValue;
             }
             float a, b;
@@ -698,7 +698,7 @@ namespace KSPShaderTools
         {
             int childCount = go.transform.childCount;
             Component[] comps = go.GetComponents<Component>();
-            MonoBehaviour.print("Found gameObject: " + prefix + go.name + " enabled: " + go.activeSelf + " inHierarchy: " + go.activeInHierarchy + " layer: " + go.layer + " children: " + childCount + " components: " + comps.Length + " position: " + go.transform.position + " scale: " + go.transform.localScale);
+            Log.debug("Found gameObject: " + prefix + go.name + " enabled: " + go.activeSelf + " inHierarchy: " + go.activeInHierarchy + " layer: " + go.layer + " children: " + childCount + " components: " + comps.Length + " position: " + go.transform.position + " scale: " + go.transform.localScale);
             foreach (Component comp in comps)
             {
                 if (comp is MeshRenderer)
@@ -706,11 +706,11 @@ namespace KSPShaderTools
                     MeshRenderer r = (MeshRenderer)comp;
                     Material m = r.material;
                     Shader s = m == null ? null : m.shader;
-                    MonoBehaviour.print("Found Mesh Renderer component.  Mat/shader: " + m + " : " + s);
+                    Log.debug("Found Mesh Renderer component.  Mat/shader: " + m + " : " + s);
                 }
                 else
                 {
-                    MonoBehaviour.print("Found Component : " + prefix + "* " + comp);
+                    Log.debug("Found Component : " + prefix + "* " + comp);
                 }
             }
             Transform t = go.transform;
@@ -883,7 +883,7 @@ namespace KSPShaderTools
             {
                 field.guiActive = false;
                 field.guiActiveEditor = false;
-                MonoBehaviour.print("ERROR: Not enough data to create intervals: " + min + " : " + max + " :: " + increment);
+                Log.exception("ERROR: Not enough data to create intervals: " + min + " : " + max + " :: " + increment);
             }
             else
             {
@@ -1071,7 +1071,7 @@ namespace KSPShaderTools
             StringBuilder builder = new StringBuilder();
             builder.AppendLine();//add carriage return to fix timestamp formatting stuff in log
             exportModelHierarchy(current, builder, 0);
-            MonoBehaviour.print(builder.ToString());
+            Log.debug(builder.ToString());
         }
 
         private static void exportModelHierarchy(GameObject current, StringBuilder builder, int indent)
@@ -1110,27 +1110,27 @@ namespace KSPShaderTools
             {
                 Camera cam = cams[i];
                 string output = "camera: " + cam.name + "," + cam.gameObject + "," + cam.gameObject.transform.parent + "," + cam.cullingMask + "," + cam.nearClipPlane + "," + cam.farClipPlane + "," + cam.transform.position.x + "," + cam.transform.position.y + "," + cam.transform.position.z;
-                MonoBehaviour.print(output);
+                Log.debug(output);
             }
         }
 
         public static void dumpReflectionData()
         {
-            MonoBehaviour.print("------------------REFLECTION DATA--------------------");
-            MonoBehaviour.print("Reflection probes found in scene:");
+            Log.debug("------------------REFLECTION DATA--------------------");
+            Log.debug("Reflection probes found in scene:");
             ReflectionProbe[] probes = GameObject.FindObjectsOfType<ReflectionProbe>();
             int len = probes.Length;
             for (int i = 0; i < len; i++)
             {
-                MonoBehaviour.print(string.Format("ReflectionProbe[{0}] : Object Parent: {1}  Probe: {2}", i, probes[i].gameObject, probes[i]));
+                Log.debug(string.Format("ReflectionProbe[{0}] : Object Parent: {1}  Probe: {2}", i, probes[i].gameObject, probes[i]));
             }
             Material mat = RenderSettings.skybox;
-            MonoBehaviour.print("Rendersetting skybox: " + mat);
+            Log.debug("Rendersetting skybox: " + mat);
             if (mat != null)
             {
                 Texture tex = mat.GetTexture("_Tex");
-                MonoBehaviour.print("skybox shader: " + mat.shader);
-                MonoBehaviour.print("skybox texture: " + tex);
+                Log.debug("skybox shader: " + mat.shader);
+                Log.debug("skybox texture: " + tex);
                 Cubemap cube = tex as Cubemap;
                 if (cube != null)
                 {
@@ -1152,15 +1152,15 @@ namespace KSPShaderTools
             {
                 Skybox sky = skies[i];
                 mat = sky.material;
-                MonoBehaviour.print(string.Format("Camera Skybox[{0}]: {1}  Material: {2} ", i, sky, mat));
+                Log.debug(string.Format("Camera Skybox[{0}]: {1}  Material: {2} ", i, sky, mat));
             }
             Cubemap cube2 = RenderSettings.customReflection;
             if (cube2 != null)
             {
-                MonoBehaviour.print("Custom cube reflection: " + cube2);
+                Log.debug("Custom cube reflection: " + cube2);
                 exportCubemapReadOnly(cube2, "RenderSettings-CustomReflection");
             }
-            MonoBehaviour.print("------------------REFLECTION DATA--------------------");
+            Log.debug("------------------REFLECTION DATA--------------------");
         }
 
         #endregion

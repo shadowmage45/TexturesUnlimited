@@ -137,7 +137,6 @@ namespace KSPShaderTools
             int len = roots.Length;
             for (int i = 0; i < len; i++)
             {
-                MonoBehaviour.print("Examining root transform: " + roots[i]);
                 if (!string.IsNullOrEmpty(transformName))
                 {
                     Transform[] trs = roots[i].FindChildren(transformName);
@@ -184,7 +183,7 @@ namespace KSPShaderTools
                         //TODO -- this causes issues in the editor with part hierarchy
                         //in the editor parts are parented to eachother through transforms, and this method picks up the
                         //'model' transforms from all children parts as well as the parent part.
-                        MonoBehaviour.print("TODO - fix part-hierarchy checking in editor when custom root transforms are specified.");
+                        Log.debug("TODO - fix part-hierarchy checking in editor when custom root transforms are specified.");
                         trs.AddRange(part.transform.FindChildren(names[i].Trim()));
                     }
                 }
@@ -320,7 +319,7 @@ namespace KSPShaderTools
                 TextureSet set = Array.Find(textureSets, m => m.name == currentTextureSetName);
                 if (set == null)
                 {
-                    MonoBehaviour.print("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName+" on part: "+pm.part.name);
+                    Log.error("ERROR: KSPTextureSwitch could not locate texture set for name: " + currentTextureSetName+" on part: "+pm.part.name);
                 }
                 return set;
             }

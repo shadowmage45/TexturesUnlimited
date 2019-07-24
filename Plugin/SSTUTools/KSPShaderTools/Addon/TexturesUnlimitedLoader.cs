@@ -24,7 +24,7 @@ namespace KSPShaderTools
          *  Texture sets (KSP_TEXTURE_SET) can be referenced in the texture-switch module for run-time texture switching capability.
          *  
          *  
-         *  //eve shader loading data -- need to examine what graphics APIs the SSTU shaders are set to build for -- should be able to build 'universal' bundles
+         *  //eve shader loading data -- need to examine what graphics APIs the SSTU shaders are set to build for -- should be able to build 'universal' bundles (done)
          *  https://github.com/WazWaz/EnvironmentalVisualEnhancements/blob/master/Assets/Editor/BuildABs.cs
          */
 
@@ -87,7 +87,7 @@ namespace KSPShaderTools
 
         public void Start()
         {
-            MonoBehaviour.print("TULoader - Start()");
+            Log.log("TexturesUnlimitedLoader - Start()");
             INSTANCE = this;
             DontDestroyOnLoad(this);
             if (partListLoadedEvent == null)
@@ -125,7 +125,7 @@ namespace KSPShaderTools
             loadedTextureSets.Clear();
             textureColors.Clear();
             transparentShaderData.Clear();
-            MonoBehaviour.print("TexturesUnlimited - Initializing shader and texture set data.");
+            Log.log("TexturesUnlimited - Initializing shader and texture set data.");
             ConfigNode[] allTUNodes = GameDatabase.Instance.GetConfigNodes("TEXTURES_UNLIMITED");
             ConfigNode config = Array.Find(allTUNodes, m => m.GetStringValue("name") == "default");
             configurationNode = config;
@@ -147,7 +147,7 @@ namespace KSPShaderTools
             loadTextureSets();
             //NormMaskCreation.processBatch();
             applyToModelDatabase();
-            MonoBehaviour.print("TexturesUnlimited - Calling PostLoad handlers");
+            Log.log("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
             NormMaskCreation.processBatch();
@@ -189,7 +189,7 @@ namespace KSPShaderTools
 
         private void onPartListLoaded()
         {
-            MonoBehaviour.print("TexturesUnlimited - Updating Part Icon shaders.");
+            Log.log("TexturesUnlimited - Updating Part Icon shaders.");
             applyToPartIcons();
         }
 
@@ -213,7 +213,7 @@ namespace KSPShaderTools
             else if (Application.platform == RuntimePlatform.OSXPlayer) { assetBundleName = node.GetStringValue("osx"); }
             assetBundleName = KSPUtil.ApplicationRootPath + "GameData/" + assetBundleName;
 
-            MonoBehaviour.print("TexturesUnlimited - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
+            Log.log("TexturesUnlimited - Loading Shader Pack: " + node.GetStringValue("name") + " :: " + assetBundleName);
 
             // KSP-PartTools built AssetBunldes are in the Web format, 
             // and must be loaded using a WWW reference; you cannot use the
@@ -223,12 +223,12 @@ namespace KSPShaderTools
 
             if (!string.IsNullOrEmpty(www.error))
             {
-                MonoBehaviour.print("TexturesUnlimited - Error while loading shader AssetBundle: " + www.error);
+                Log.exception("TexturesUnlimited - Error while loading shader AssetBundle: " + www.error);
                 return;
             }
             else if (www.assetBundle == null)
             {
-                MonoBehaviour.print("TexturesUnlimited - Could not load AssetBundle from WWW - " + www);
+                Log.exception("TexturesUnlimited - Could not load AssetBundle from WWW - " + www);
                 return;
             }
 
@@ -242,14 +242,14 @@ namespace KSPShaderTools
                 if (assetNames[i].EndsWith(".shader"))
                 {
                     shader = bundle.LoadAsset<Shader>(assetNames[i]);
-                    MonoBehaviour.print("TexturesUnlimited - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
+                    Log.log("TexturesUnlimited - Loaded Shader: " + shader.name + " :: " + assetNames[i]+" from pack: "+ node.GetStringValue("name"));
                     if (shader == null || string.IsNullOrEmpty(shader.name))
                     {
-                        MonoBehaviour.print("ERROR: Shader did not load properly for asset name: " + assetNames[i]);
+                        Log.exception("ERROR: Shader did not load properly for asset name: " + assetNames[i]);
                     }
                     else if (shaderDict.ContainsKey(shader.name))
                     {
-                        MonoBehaviour.print("ERROR: Duplicate shader detected: " + shader.name);
+                        Log.exception("ERROR: Duplicate shader detected: " + shader.name);
                     }
                     else
                     {
@@ -283,17 +283,17 @@ namespace KSPShaderTools
                 node = shaderNodes[i];
                 sName = node.GetStringValue("shader", "KSP/Diffuse");
                 iName = node.GetStringValue("iconShader", "KSP/ScreenSpaceMask");
-                MonoBehaviour.print("Loading shader icon replacement data for: " + sName + " :: " + iName);
+                Log.log("Loading shader icon replacement data for: " + sName + " :: " + iName);
                 Shader shader = getShader(sName);
                 if (shader == null)
                 {
-                    MonoBehaviour.print("ERROR: Could not locate base Shader for name: " + sName + " while setting up icon shaders.");
+                    Log.exception("ERROR: Could not locate base Shader for name: " + sName + " while setting up icon shaders.");
                     continue;
                 }
                 Shader iconShader = getShader(iName);
                 if (iconShader == null)
                 {
-                    MonoBehaviour.print("ERROR: Could not locate icon Shader for name: " + iName + " while setting up icon shaders.");
+                    Log.exception("ERROR: Could not locate icon Shader for name: " + iName + " while setting up icon shaders.");
                     continue;
                 }
                 IconShaderData data = new IconShaderData(shader, iconShader);
@@ -327,7 +327,7 @@ namespace KSPShaderTools
             }
             catch (Exception e)
             {
-                MonoBehaviour.print("Error while creating AssetBundle request: " + e);
+                Log.exception("Error while creating AssetBundle request: " + e);
                 return null;
             }
         }
@@ -342,7 +342,7 @@ namespace KSPShaderTools
             {
                 if (loadedTextureSets.ContainsKey(sets[i].name))
                 {
-                    MonoBehaviour.print("ERROR: Duplicate texture set definition found for name: " + sets[i].name +
+                    Log.exception("ERROR: Duplicate texture set definition found for name: " + sets[i].name +
                         "  This is a major configuration error that should be corrected.  Correct operation cannot be ensured.");
                 }
                 else
@@ -383,7 +383,7 @@ namespace KSPShaderTools
                     set = getTextureSet(setName);
                     if (set == null)
                     {
-                        MonoBehaviour.print("ERROR: Did not locate texture set from global cache for input name: " + setName+" while applying KSP_MODEL_SHADER with name of: "+modelShaderNodes[i].GetStringValue("name","UNKNOWN"));
+                        Log.exception("ERROR: Did not locate texture set from global cache for input name: " + setName+" while applying KSP_MODEL_SHADER with name of: "+modelShaderNodes[i].GetStringValue("name","UNKNOWN"));
                         continue;
                     }
                 }
@@ -398,15 +398,12 @@ namespace KSPShaderTools
                     model = GameDatabase.Instance.GetModelPrefab(modelNames[k]);
                     if (model != null)
                     {
-                        if (logReplacements)
-                        {
-                            MonoBehaviour.print("TexturesUnlimited -- Replacing textures on database model: " + modelNames[k]);
-                        }
+                        Log.replacement("TexturesUnlimited -- Replacing textures on database model: " + modelNames[k]);
                         set.enable(model.transform, set.maskColors);
                     }
                     else
                     {
-                        MonoBehaviour.print("ERROR: Could not locate model: " + modelNames[k] + " while applying KSP_MODEL_SHADER with name of: " + modelShaderNodes[i].GetStringValue("name", "UNKNOWN"));
+                        Log.exception("ERROR: Could not locate model: " + modelNames[k] + " while applying KSP_MODEL_SHADER with name of: " + modelShaderNodes[i].GetStringValue("name", "UNKNOWN"));
                     }
                 }
             }
@@ -428,12 +425,12 @@ namespace KSPShaderTools
             {
                 if (p.iconPrefab == null)//should never happen
                 {
-                    MonoBehaviour.print("ERROR: Part: " + p.name + " had a null icon!");
+                    Log.exception("ERROR: Part: " + p.name + " had a null icon!");
                     continue;
                 }
                 if (p.partPrefab == null)
                 {
-                    MonoBehaviour.print("ERROR: Part: " + p.name + " had a null prefab!");
+                    Log.exception("ERROR: Part: " + p.name + " had a null prefab!");
                     continue;
                 }
                 bool outputName = false;//only log the adjustment a single time
@@ -444,8 +441,8 @@ namespace KSPShaderTools
                     Material originalMeshMaterial = partRenderer.sharedMaterial;
                     if (originalMeshMaterial == null || partRenderer.sharedMaterial.shader == null)
                     {
-                        if (originalMeshMaterial == null) { MonoBehaviour.print("ERROR: Null material found on renderer: " + partRenderer.gameObject.name); }
-                        else if (originalMeshMaterial.shader == null) { MonoBehaviour.print("ERROR: Null shader found on renderer: " + partRenderer.gameObject.name); }
+                        if (originalMeshMaterial == null) { Log.exception("ERROR: Null material found on renderer: " + partRenderer.gameObject.name); }
+                        else if (originalMeshMaterial.shader == null) { Log.exception("ERROR: Null shader found on renderer: " + partRenderer.gameObject.name); }
                         continue;
                     }
                     //part transform shader name
@@ -453,9 +450,9 @@ namespace KSPShaderTools
                     if (!string.IsNullOrEmpty(materialShaderName) && iconShaders.ContainsKey(materialShaderName))//is a shader that we care about
                     {
                         iconShader = iconShaders[materialShaderName].iconShader;
-                        if (!outputName && logReplacements)
+                        if (!outputName)
                         {
-                            MonoBehaviour.print("KSPShaderLoader - Adjusting icon shaders for part: " + p.name + " for original shader:" + materialShaderName + " replacement: " + iconShader.name);
+                            Log.replacement("KSPShaderLoader - Adjusting icon shaders for part: " + p.name + " for original shader:" + materialShaderName + " replacement: " + iconShader.name);
                             outputName = true;
                         }
                         //transforms in the icon prefab
@@ -467,11 +464,8 @@ namespace KSPShaderTools
                             if (itr == null) { continue; }
                             Material mat2 = itr.material;//use .material to force non-shared material instances
                             if (mat2 == null) { continue; }
-                            if (logReplacements)
-                            {
-                                MonoBehaviour.print("BASE:\n" + Debug.getMaterialPropertiesDebug(originalMeshMaterial));
-                                MonoBehaviour.print("PRE :\n" + Debug.getMaterialPropertiesDebug(mat2));
-                            }
+                            Log.replacement("BASE:\n" + Debug.getMaterialPropertiesDebug(originalMeshMaterial));
+                            Log.replacement("PRE :\n" + Debug.getMaterialPropertiesDebug(mat2));
                             //can't just swap shaders, does some weird stuff with properties??
                             mat2.shader = iconShader;
                             //mat2.CopyPropertiesFromMaterial(originalMeshMaterial);
@@ -481,10 +475,7 @@ namespace KSPShaderTools
                             {
                                 mat2.SetFloat("_Smoothness", originalMeshMaterial.GetFloat("_Shininess"));
                             }
-                            if (logReplacements)
-                            {
-                                MonoBehaviour.print("POST:\n"+ Debug.getMaterialPropertiesDebug(mat2));
-                            }
+                            Log.replacement("POST:\n" + Debug.getMaterialPropertiesDebug(mat2));
                             //TODO -- since these parts have already been mangled and had the stock icon shader applied
                             //  do any properties not present on stock parts need to be re-seated, or do they stay resident in
                             //  the material even if the current shader lacks the property?
@@ -548,7 +539,7 @@ namespace KSPShaderTools
             {
                 return s;
             }
-            MonoBehaviour.print("ERROR: Could not locate TextureSet from global cache for the input name of: " + name);
+            Log.exception("ERROR: Could not locate TextureSet for MODEL_SHADER from global cache for the input name of: " + name);
             return null;
         }
 
@@ -564,7 +555,7 @@ namespace KSPShaderTools
             {
                 return s;
             }
-            MonoBehaviour.print("ERROR: Could not locate TextureSet from global cache for the input name of: " + name);
+            Log.exception("ERROR: Could not locate TextureSet from global cache for the input name of: " + name);
             return null;
         }
 

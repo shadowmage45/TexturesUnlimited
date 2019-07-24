@@ -215,7 +215,7 @@ namespace KSPShaderTools
                 skyboxShader = KSPShaderTools.TexturesUnlimitedLoader.getShader("SSTU/Skybox/Cubemap");
                 if (skyboxShader == null)
                 {
-                    MonoBehaviour.print("ERROR: TUReflectionManager - Could not find skybox shader.");
+                    Log.error("ERROR: TUReflectionManager - Could not find skybox shader.");
                 }
             }
             probeData = createProbe();

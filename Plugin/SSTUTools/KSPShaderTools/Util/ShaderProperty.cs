@@ -95,13 +95,7 @@ namespace KSPShaderTools
             {
                 return true;
             }
-            else
-            {
-                if (TexturesUnlimitedLoader.logErrors)
-                {
-                    MonoBehaviour.print("KSPShaderLoader -- Shader: " + mat.shader + " did not have property: " + name);
-                }
-            }
+            Log.error("KSPShaderLoader -- Shader: " + mat.shader + " did not have property: " + name);
             return false;
         }
 
@@ -285,9 +279,9 @@ namespace KSPShaderTools
             if (checkApply(mat))
             {
                 Texture2D texture = GameDatabase.Instance.GetTexture(textureName, normal);
-                if (texture == null && TexturesUnlimitedLoader.logErrors)
+                if (texture == null)
                 {
-                    MonoBehaviour.print("ERROR: KSPShaderLoader - Texture could not be located for name: " + textureName + " for texture slot: " + name + " while loading textures for material: " + mat);
+                    Log.error("ERROR: KSPShaderLoader - Texture could not be located for name: " + textureName + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }
                 mat.SetTexture(name, texture);
             }
@@ -357,9 +351,9 @@ namespace KSPShaderTools
             if (checkApply(mat))
             {
                 Texture2D texture = TexturesUnlimitedLoader.getTextureColor(colorString);
-                if (texture == null && TexturesUnlimitedLoader.logErrors)
+                if (texture == null)
                 {
-                    MonoBehaviour.print("ERROR: KSPShaderLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
+                    Log.error("ERROR: KSPShaderLoader - TextureColor could not be created for string: " + colorString + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }
                 mat.SetTexture(name, texture);
             }

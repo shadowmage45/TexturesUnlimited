@@ -64,8 +64,8 @@ namespace KSPShaderTools
             int len = texNodes.Length;
             if (len == 0)
             {
-                MonoBehaviour.print("Did not find any MATERIAL nodes in texture set:"+name+", searching for legacy styled TEXTURE nodes.");
-                MonoBehaviour.print("Please update the config for the texture-set to fix this error.");
+                Log.log("Did not find any MATERIAL nodes in texture set:"+name+", searching for legacy styled TEXTURE nodes.");
+                Log.log("Please update the config for the texture-set to fix this error.");
                 texNodes = node.GetNodes("TEXTURE");
                 len = texNodes.Length;
             }
@@ -154,51 +154,36 @@ namespace KSPShaderTools
             //black-list, do everything not specified in excludeMeshes array
             if (excludeMeshes != null && excludeMeshes.Length > 0)
             {
-                if (TexturesUnlimitedLoader.logAll)
-                {
-                    MonoBehaviour.print("TexturesUnlimited - Finding meshes for excludeMesh= (blacklist)");
-                }
+                Log.extra("TexturesUnlimited - Finding meshes for excludeMesh= (blacklist)");
                 Renderer[] rends = root.GetComponentsInChildren<Renderer>();
                 int len = rends.Length;
                 for (int i = 0; i < len; i++)
                 {
                     if (!excludeMeshes.Contains(rends[i].name))
                     {
-                        if (TexturesUnlimitedLoader.logAll)
-                        {
-                            MonoBehaviour.print("Adding mesh due to blacklist: " + rends[i].transform);
-                        }
+                        Log.extra("Adding mesh due to blacklist: " + rends[i].transform);
                         transforms.AddUnique(rends[i].transform);
                     }
-                    else if (TexturesUnlimitedLoader.logAll)
+                    else
                     {
-                        MonoBehaviour.print("Excluding mesh due to blacklist: " + rends[i].transform);
+                        Log.extra("Excluding mesh due to blacklist: " + rends[i].transform);
                     }
                 }
             }
             else if (meshes == null || meshes.Length <= 0)//no validation, do them all
             {
-                if (TexturesUnlimitedLoader.logAll)
-                {
-                    MonoBehaviour.print("TexturesUnlimited - Finding meshes for all meshes (fulllist)");
-                }
+                Log.extra("TexturesUnlimited - Finding meshes for all meshes (fulllist)");
                 Renderer[] rends = root.GetComponentsInChildren<Renderer>(true);
                 int len = rends.Length;
                 for (int i = 0; i < len; i++)
                 {
-                    if (TexturesUnlimitedLoader.logAll)
-                    {
-                        MonoBehaviour.print("Adding mesh due to adjusting all meshes: " + rends[i].transform);
-                    }
+                    Log.extra("Adding mesh due to adjusting all meshes: " + rends[i].transform);
                     transforms.AddUnique(rends[i].transform);
                 }
             }
             else//white-list, only do what is specified by meshes array
             {
-                if (TexturesUnlimitedLoader.logAll)
-                {
-                    MonoBehaviour.print("TexturesUnlimited - Finding meshes for mesh= (whitelist)");
-                }
+                Log.extra("TexturesUnlimited - Finding meshes for mesh= (whitelist)");
                 int len = meshes.Length;
                 Transform[] trs;
                 Transform tr;
@@ -219,10 +204,7 @@ namespace KSPShaderTools
                         {
                             continue;
                         }
-                        if (TexturesUnlimitedLoader.logAll)
-                        {
-                            MonoBehaviour.print("Adding mesh due to whitelist: " + tr);
-                        }
+                        Log.extra("Adding mesh due to whitelist: " + tr);
                         transforms.AddUnique(tr);
                     }
                 }
@@ -304,10 +286,7 @@ namespace KSPShaderTools
                 render = trs[i].GetComponent<Renderer>();
                 if (render != null)
                 {
-                    if (TexturesUnlimitedLoader.logAll)
-                    {
-                        MonoBehaviour.print("Updating material properties for mesh: " + trs[i]);
-                    }
+                    Log.extra("Updating material properties for mesh: " + trs[i]);
                     updateMaterialProperties(render.sharedMaterial, props);
                 }
             }
@@ -349,7 +328,7 @@ namespace KSPShaderTools
                     }
                     else
                     {
-                        MonoBehaviour.print("Skipping updating of custom color: " + name + " due to matching existing texture prop");
+                        Log.extra("Skipping updating of custom color: " + name + " due to matching existing texture prop");
                     }
                 }
                 if (!Array.Exists(matProps, m => m.name == "_MaskMetallic"))//only add custom metallic value if it was not overriden in the MATERIAL block (else keep material block props)
@@ -362,7 +341,7 @@ namespace KSPShaderTools
                 }
                 else
                 {
-                    MonoBehaviour.print("Skipping updating of custom metallic due to matching existing texture prop");
+                    Log.extra("Skipping updating of custom metallic due to matching existing texture prop");
                 }
             }
             return ps.ToArray();
@@ -382,10 +361,7 @@ namespace KSPShaderTools
         {
             if (mat.HasProperty(slot) && mat.GetTexture(slot) == null)
             {
-                if (TexturesUnlimitedLoader.logReplacements)
-                {
-                    MonoBehaviour.print("Replacing empty textureslot: " + slot + " with color: " + textureColor);
-                }
+                Log.replacement("Replacing empty textureslot: " + slot + " with color: " + textureColor);
                 mat.SetTexture(slot, TexturesUnlimitedLoader.getTextureColor(textureColor));
             }
         }
@@ -494,10 +470,7 @@ namespace KSPShaderTools
             material.renderQueue = renderQueue;
             material.mainTextureOffset = textureOffset;
             material.mainTextureScale = textureScale;
-            if (TexturesUnlimitedLoader.logReplacements)
-            {
-                MonoBehaviour.print("Updated material properties\n" + Debug.getMaterialPropertiesDebug(material));
-            }
+            Log.replacement("Updated material properties\n" + Debug.getMaterialPropertiesDebug(material));
         }
 
         /// <summary>
@@ -528,6 +501,10 @@ namespace KSPShaderTools
                 throw new NullReferenceException("ERROR: No shader specified for texture set.");
             }
             Shader shader = TexturesUnlimitedLoader.getShader(this.shader);
+            if (shader == null)
+            {
+                throw new NullReferenceException("ERROR: No shader found for name:" + this.shader);
+            }
             Material material = new Material(shader);
             TextureSet.updateMaterialProperties(material, shaderProperties);
             material.renderQueue = TexturesUnlimitedLoader.isTransparentMaterial(material) ? TexturesUnlimitedLoader.transparentTextureRenderQueue : TexturesUnlimitedLoader.diffuseTextureRenderQueue;
@@ -538,12 +515,12 @@ namespace KSPShaderTools
         {
             if (newMat == null)
             {
-                MonoBehaviour.print("ERROR: New material was null when trying to inherit properties.");
+                Log.error("ERROR: New material was null when trying to inherit properties.");
                 return;
             }
             if (origMat == null)
             {
-                MonoBehaviour.print("ERROR: Original material was null when trying to inherit properties.");
+                Log.error("ERROR: Original material was null when trying to inherit properties.");
                 return;
             }
             int len = inheritedTex.Length;
@@ -558,7 +535,7 @@ namespace KSPShaderTools
                 }
                 else
                 {
-                    MonoBehaviour.print("ERROR: Could not inherit texture: " + propName + " from material.  Texture was not found");
+                    Log.error("ERROR: Could not inherit texture: " + propName + " from material.  Texture was not found.");
                 }
             }
             len = inheritedFloat.Length;

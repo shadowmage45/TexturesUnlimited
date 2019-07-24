@@ -59,7 +59,7 @@ namespace KSPShaderTools
                 int len = values.Length;
                 if (len < 3)
                 {
-                    MonoBehaviour.print("ERROR: Not enough data in: " + data + " to construct color values.");
+                    Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
                     values = new string[] { "1", "1", "1", "0", "0"};
                 }
                 string redString = values[0];

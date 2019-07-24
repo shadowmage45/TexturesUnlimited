@@ -142,7 +142,7 @@ namespace KSPShaderTools
                     }
                 }
             }
-            MonoBehaviour.print("ERROR: Could not locate recolorable section for part: " + openPart);
+            Log.error("ERROR: Could not locate recolorable section for part: " + openPart);
             module = 0;
             section = 0;
         }
@@ -513,7 +513,7 @@ namespace KSPShaderTools
             }
             else
             {
-                MonoBehaviour.print("Set was null");
+                Log.error("Set was null while setting up recoloring section for: "+name);
             }
         }
 
