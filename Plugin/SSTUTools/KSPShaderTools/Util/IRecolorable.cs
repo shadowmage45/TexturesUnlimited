@@ -103,6 +103,14 @@ namespace KSPShaderTools
             }
         }
 
+        public RecoloringData(Color color, float spec, float metal)
+        {
+            this.color = color;
+            specular = spec;
+            metallic = metal;
+            this.detail = 1;
+        }
+
         public RecoloringData(Color color, float spec, float metal, float detail)
         {
             this.color = color;
