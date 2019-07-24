@@ -73,12 +73,15 @@ namespace KSPShaderTools
             initialize();
             Callback<BaseField, System.Object> onChangeAction = (BaseField a, System.Object b) =>
             {
-                enableTextureSet(currentTextureSet, true);
+                enableTextureSet(currentTextureSet, true, true);
             };
             BaseField field = Fields[nameof(currentTextureSet)];
             field.uiControlEditor.onFieldChanged = onChangeAction;
             field.uiControlFlight.onFieldChanged = onChangeAction;
-            field.guiActive = canChangeInFlight && textureSets.textureSets.Length > 1;
+            //set default values for UI enabled
+            field.guiActive = canChangeInFlight;
+            field.guiActiveEditor = true;
+            //disable both if zero or one texture set exists
             if (textureSets.textureSets.Length <= 1)
             {
                 field.guiActive = field.guiActiveEditor = false;
@@ -119,7 +122,7 @@ namespace KSPShaderTools
                 currentTextureSet = allSets[0].name;
             }
             this.updateUIChooseOptionControl(nameof(currentTextureSet), textureSets.getTextureSetNames(), textureSets.getTextureSetTitles(), true, currentTextureSet);
-            textureSets.enableCurrentSet(getModelTransforms());
+            textureSets.enableCurrentSet(getModelTransforms(), false);
             Fields[nameof(currentTextureSet)].guiName = sectionName;
         }
 
@@ -246,18 +249,18 @@ namespace KSPShaderTools
         /// </summary>
         /// <param name="name"></param>
         /// <param name="symmetry"></param>
-        public void enableTextureSet(string name, bool symmetry = false)
+        public void enableTextureSet(string name, bool symmetry, bool userInput)
         {
             if (textureSets == null) { return; }
             //TODO - validate input texture set name; log error if invalid
             currentTextureSet = name;
-            textureSets.enableCurrentSet(getModelTransforms());
+            textureSets.enableCurrentSet(getModelTransforms(), userInput);
             TextureCallbacks.onTextureSetChanged(part);
             if (symmetry)
             {
                 this.actionWithSymmetry(m => 
                 {
-                    m.enableTextureSet(name, false);
+                    m.enableTextureSet(name, false, userInput);
                 });
             }
         }
@@ -270,7 +273,7 @@ namespace KSPShaderTools
         /// </summary>
         public void onPartGeometryChanged()
         {
-            enableTextureSet(currentTextureSet);
+            enableTextureSet(currentTextureSet, false, false);
         }
 
         /// <summary>
@@ -285,7 +288,7 @@ namespace KSPShaderTools
             {
                 return;
             }
-            enableTextureSet(name);
+            enableTextureSet(name, false, false);
         }
 
     }
@@ -352,14 +355,14 @@ namespace KSPShaderTools
         /// Apply the current texture to the input transforms.  The texture sets include/exclude settings will be used to determine what children of the input transforms should be adjusted.
         /// </summary>
         /// <param name="roots"></param>
-        public void enableCurrentSet(Transform[] roots)
+        public void enableCurrentSet(Transform[] roots, bool userInput)
         {
             TextureSet set = currentTextureSet;
             if (set == null)
             {
                 return;
             }
-            if (customColors == null || customColors.Length == 0)
+            if (userInput || customColors == null || customColors.Length == 0)
             {
                 customColors = new RecoloringData[3];
                 customColors[0] = set.maskColors[0];
