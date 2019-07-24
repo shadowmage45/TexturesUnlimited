@@ -60,19 +60,28 @@ namespace KSPShaderTools
                 if (len < 3)
                 {
                     Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
-                    values = new string[] { "1", "1", "1", "0", "0"};
+                    color = Color.white;
+                    specular = 0;
+                    metallic = 0;
                 }
-                string redString = values[0];
-                string greenString = values[1];
-                string blueString = values[2];
-                string specString = len > 3 ? values[3] : "0";
-                string metalString = len > 4 ? values[4] : "0";
-                float r = Utils.safeParseFloat(redString);
-                float g = Utils.safeParseFloat(greenString);
-                float b = Utils.safeParseFloat(blueString);
-                color = new Color(r, g, b);
-                specular = Utils.safeParseFloat(specString);
-                metallic = Utils.safeParseFloat(metalString);
+                else if (data.Contains("."))
+                {
+                    string rgb = values[0] + "," + values[1] + "," + values[2]+",1.0";
+                    string specString = len > 3 ? values[3] : "0";
+                    string metalString = len > 4 ? values[4] : "0";
+                    color = Utils.parseColor(rgb);
+                    specular = Utils.safeParseFloat(specString);
+                    metallic = Utils.safeParseFloat(metalString);
+                }
+                else
+                {
+                    string rgb = values[0] + "," + values[1] + "," + values[2] + ",255";
+                    string specString = len > 3 ? values[3] : "0";
+                    string metalString = len > 4 ? values[4] : "0";
+                    color = Utils.parseColor(rgb);
+                    specular = Utils.safeParseInt(specString) / 255f;
+                    metallic = Utils.safeParseInt(metalString) / 255f;
+                }
             }
             else //preset color, load from string value
             {
