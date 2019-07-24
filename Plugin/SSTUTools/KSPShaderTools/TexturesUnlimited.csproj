@@ -81,6 +81,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Addon\EditorReflectionUpdate.cs" />
     <Compile Include="GUI\CraftRecolorGUI.cs" />
     <Compile Include="GUI\GraphicsAPIGUI.cs" />
     <Compile Include="Module\TUPartVariant.cs" />
