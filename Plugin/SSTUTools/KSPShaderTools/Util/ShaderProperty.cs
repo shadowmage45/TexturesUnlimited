@@ -452,6 +452,11 @@ namespace KSPShaderTools
             vector = new Vector4(x, y, z, w);
         }
 
+        public ShaderPropertyVector(string name, Vector4 vector) : base(name)
+        {
+            this.vector = vector;
+        }
+
         protected override void applyInternal(Material mat)
         {
             if (checkApply(mat))

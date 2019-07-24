@@ -696,7 +696,7 @@ namespace KSPShaderTools
 
         public RecoloringData getRecoloringData()
         {
-            return new RecoloringData(color, specular, metallic);
+            return new RecoloringData(color, specular, metallic, 1);
         }
     }
 

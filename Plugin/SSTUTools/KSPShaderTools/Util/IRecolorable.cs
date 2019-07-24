@@ -50,9 +50,15 @@ namespace KSPShaderTools
         public Color color;
         public float specular;
         public float metallic;
+        public float detail;
 
+        /// <summary>
+        /// Load a recoloring data instance from an input CSV string.
+        /// </summary>
+        /// <param name="data"></param>
         public RecoloringData(string data)
         {
+            detail = 1;
             if (data.Contains(","))//CSV value, parse from floats
             {
                 string[] values = data.Split(',');
@@ -69,18 +75,22 @@ namespace KSPShaderTools
                     string rgb = values[0] + "," + values[1] + "," + values[2]+",1.0";
                     string specString = len > 3 ? values[3] : "0";
                     string metalString = len > 4 ? values[4] : "0";
+                    string detailString = len > 5 ? values[5] : "1";
                     color = Utils.parseColor(rgb);
                     specular = Utils.safeParseFloat(specString);
                     metallic = Utils.safeParseFloat(metalString);
+                    detail = Utils.safeParseFloat(detailString);
                 }
                 else
                 {
                     string rgb = values[0] + "," + values[1] + "," + values[2] + ",255";
                     string specString = len > 3 ? values[3] : "0";
                     string metalString = len > 4 ? values[4] : "0";
+                    string detailString = len > 5 ? values[5] : "255";
                     color = Utils.parseColor(rgb);
                     specular = Utils.safeParseInt(specString) / 255f;
                     metallic = Utils.safeParseInt(metalString) / 255f;
+                    detail = Utils.safeParseInt(detailString) / 255f;
                 }
             }
             else //preset color, load from string value
@@ -89,14 +99,16 @@ namespace KSPShaderTools
                 color = preset.color;
                 specular = preset.specular;
                 metallic = preset.metallic;
+                detail = 1;
             }
         }
 
-        public RecoloringData(Color color, float spec, float metal)
+        public RecoloringData(Color color, float spec, float metal, float detail)
         {
             this.color = color;
             specular = spec;
             metallic = metal;
+            this.detail = detail;
         }
 
         public RecoloringData(RecoloringData data)
@@ -104,6 +116,7 @@ namespace KSPShaderTools
             color = data.color;
             specular = data.specular;
             metallic = data.metallic;
+            detail = data.detail;
         }
         
         public Color getShaderColor()
@@ -114,7 +127,7 @@ namespace KSPShaderTools
 
         public string getPersistentData()
         {
-            return color.r + "," + color.g + "," + color.b + "," + specular + "," + metallic;
+            return color.r + "," + color.g + "," + color.b + "," + specular + "," + metallic+"," + detail;
         }
 
     }
@@ -138,7 +151,7 @@ namespace KSPShaderTools
             {
                 for (int i = 0; i < len; i++)
                 {
-                    colorData[i] = new RecoloringData(Color.white, 0, 0);
+                    colorData[i] = new RecoloringData(Color.white, 0, 0, 1);
                 }
             }
             else

@@ -23,7 +23,7 @@ namespace KSPShaderTools
         private int moduleIndex = -1;
         private int sectionIndex = -1;
         private int colorIndex = -1;
-        private string rStr, gStr, bStr, aStr, mStr;//string caches of color values//TODO -- set initial state when a section color is selected
+        private string rStr, gStr, bStr, aStr, mStr, dStr;//string caches of color values//TODO -- set initial state when a section color is selected
         private static RecoloringData editingColor;
         private static RecoloringData[] storedPattern;
         private static RecoloringData storedColor;
@@ -219,13 +219,14 @@ namespace KSPShaderTools
             bStr = (editingColor.color.b * 255f).ToString("F0");
             aStr = (editingColor.specular * 255f).ToString("F0");
             mStr = (editingColor.metallic * 255f).ToString("F0");
+            dStr = (editingColor.detail * 100).ToString("F0");
         }
 
         private void closeSectionGUI()
         {
             sectionData = null;
-            editingColor = new RecoloringData(Color.white, 0, 0);
-            rStr = gStr = bStr = aStr = "255";
+            editingColor = new RecoloringData(Color.white, 0, 0, 1);
+            rStr = gStr = bStr = aStr = mStr = dStr = "255";
             colorIndex = 0;
         }
 
@@ -307,7 +308,7 @@ namespace KSPShaderTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (drawColorInputLine("Red", ref editingColor.color.r, ref rStr, sectionData.colorSupported())) { updated = true; }
+            if (drawColorInputLine("Red", ref editingColor.color.r, ref rStr, sectionData.colorSupported(), 255, 1)) { updated = true; }
             if (GUILayout.Button("Load Pattern", GUILayout.Width(120)))
             {
                 sectionData.colors[0] = storedPattern[0];
@@ -319,7 +320,7 @@ namespace KSPShaderTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (drawColorInputLine("Green", ref editingColor.color.g, ref gStr, sectionData.colorSupported())) { updated = true; }
+            if (drawColorInputLine("Green", ref editingColor.color.g, ref gStr, sectionData.colorSupported(), 255, 1)) { updated = true; }
             if (GUILayout.Button("Store Pattern", GUILayout.Width(120)))
             {
                 storedPattern = new RecoloringData[3];
@@ -330,7 +331,7 @@ namespace KSPShaderTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (drawColorInputLine("Blue", ref editingColor.color.b, ref bStr, sectionData.colorSupported())) { updated = true; }
+            if (drawColorInputLine("Blue", ref editingColor.color.b, ref bStr, sectionData.colorSupported(), 255, 1)) { updated = true; }
             if (GUILayout.Button("Load Color", GUILayout.Width(120)))
             {
                 editingColor = storedColor;
@@ -339,7 +340,7 @@ namespace KSPShaderTools
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            if (drawColorInputLine("Specular", ref editingColor.specular, ref aStr, sectionData.specularSupported())) { updated = true; }
+            if (drawColorInputLine("Specular", ref editingColor.specular, ref aStr, sectionData.specularSupported(), 255, 1)) { updated = true; }
             if (GUILayout.Button("Store Color", GUILayout.Width(120)))
             {
                 storedColor = editingColor;
@@ -349,16 +350,20 @@ namespace KSPShaderTools
             GUILayout.BeginHorizontal();
             if (sectionData.metallicSupported())
             {
-                if (drawColorInputLine("Metallic", ref editingColor.metallic, ref mStr, true)) { updated = true; }
+                if (drawColorInputLine("Metallic", ref editingColor.metallic, ref mStr, true, 255, 1)) { updated = true; }
             }
             else if (sectionData.hardnessSupported())
             {
-                if (drawColorInputLine("Hardness", ref editingColor.metallic, ref mStr, true)) { updated = true; }
+                if (drawColorInputLine("Hardness", ref editingColor.metallic, ref mStr, true, 255, 1)) { updated = true; }
             }
             else
             {
-                if (drawColorInputLine("Metallic", ref editingColor.metallic, ref mStr, false)) { updated = true; }
+                if (drawColorInputLine("Metallic", ref editingColor.metallic, ref mStr, false, 255, 1)) { updated = true; }
             }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (drawColorInputLine("Detail %", ref editingColor.detail, ref dStr, true, 100, 5)) { updated = true; }
             GUILayout.EndHorizontal();
 
             if (updated)
@@ -401,6 +406,7 @@ namespace KSPShaderTools
                     bStr = (editingColor.color.b * 255f).ToString("F0");
                     aStr = (editingColor.specular * 255f).ToString("F0");
                     mStr = (editingColor.metallic * 255f).ToString("F0");
+                    //dStr = (editingColor.detail * 100f).ToString("F0");//leave detail mult as pre-specified value (user/config); it does not pull from preset colors at all
                     update = true;
                 }
                 GUI.color = old;
@@ -418,7 +424,7 @@ namespace KSPShaderTools
             }
         }
 
-        private bool drawColorInputLine(string label, ref float val, ref string sVal, bool enabled)
+        private bool drawColorInputLine(string label, ref float val, ref string sVal, bool enabled, float mult, float max)
         {
             if (!enabled)
             {
@@ -430,11 +436,11 @@ namespace KSPShaderTools
             GUILayout.Label(label, GUILayout.Width(60));
             bool updated = false;
             float result = val;
-            result = GUILayout.HorizontalSlider(val, 0, 1, GUILayout.Width(120));
+            result = GUILayout.HorizontalSlider(val, 0, max, GUILayout.Width(120));
             if (result != val)
             {
                 val = result;
-                sVal = (val * 255f).ToString("F0");
+                sVal = (val * mult).ToString("F0");
                 updated = true;
             }
             string textOutput = GUILayout.TextField(sVal, 3, GUILayout.Width(60));
@@ -444,7 +450,7 @@ namespace KSPShaderTools
                 int iVal;
                 if (int.TryParse(textOutput, out iVal))
                 {
-                    val = iVal / 255f;
+                    val = iVal / mult;
                     updated = true;
                 }
             }

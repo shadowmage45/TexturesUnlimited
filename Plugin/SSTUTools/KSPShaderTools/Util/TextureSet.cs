@@ -89,9 +89,9 @@ namespace KSPShaderTools
             {
                 maskColors = new RecoloringData[3];
                 Color white = PresetColor.getColor("white").color;//will always return -something-, even if 'white' is undefined
-                maskColors[0] = new RecoloringData(white, 0, 0);
-                maskColors[1] = new RecoloringData(white, 0, 0);
-                maskColors[2] = new RecoloringData(white, 0, 0);
+                maskColors[0] = new RecoloringData(white, 0, 0, 1);
+                maskColors[1] = new RecoloringData(white, 0, 0, 1);
+                maskColors[2] = new RecoloringData(white, 0, 0, 1);
             }
             //loop through materials, and auto-enable 'recoloring' flag if recoloring keyword is set
             len = textureData.Length;
@@ -342,6 +342,12 @@ namespace KSPShaderTools
                 else
                 {
                     Log.extra("Skipping updating of custom metallic due to matching existing texture prop");
+                }
+                //if detail mult was not specified in the text config, add it to the recoloring block based on user selection values.
+                if (!Array.Exists(matProps, m => m.name == "_DetailMult"))
+                {
+                    Vector4 dv = new Vector4(userColors[0].detail, userColors[1].detail, userColors[2].detail, 0);
+                    ps.Add(new ShaderPropertyVector("_DetailMult", dv));
                 }
             }
             return ps.ToArray();
