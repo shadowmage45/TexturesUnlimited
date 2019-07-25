@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KSPShaderTools.Settings;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,8 @@ namespace KSPShaderTools
         private static int graphWidth = 400;
         private static int graphHeight = 540;
         private static int sectionHeight = 100;
+        private static float windowX = -1;
+        private static float windowY = -1;
         private static int id;
         private static Rect windowRect = new Rect(Screen.width - 500, 40, graphWidth, graphHeight);
         private static Vector2 scrollPos;
@@ -35,10 +38,18 @@ namespace KSPShaderTools
         public void Awake()
         {
             id = GetInstanceID();
-            graphWidth = TexturesUnlimitedLoader.recolorGUIWidth;
-            graphHeight = TexturesUnlimitedLoader.recolorGUITotalHeight;
-            sectionHeight = TexturesUnlimitedLoader.recolorGUISectionHeight;
-            windowRect.x = Screen.width - (graphWidth + 100);
+            graphWidth = TUGameSettings.RecolorGUIWidth;// TexturesUnlimitedLoader.recolorGUIWidth;
+            graphHeight = TUGameSettings.RecolorGUIHeight;// TexturesUnlimitedLoader.recolorGUITotalHeight;
+            sectionHeight = TUGameSettings.RecolorGUITopHeight;// TexturesUnlimitedLoader.recolorGUISectionHeight;
+            if (windowX == -1)
+            {
+                windowRect.x = Screen.width - (graphWidth + 100);
+            }
+            else
+            {
+                windowRect.x = windowX;
+                windowRect.y = windowY;
+            }            
         }
 
         internal void openGUIPart(Part part)
@@ -181,6 +192,8 @@ namespace KSPShaderTools
                 nonWrappingLabelStyle = style;
             }
             windowRect = GUI.Window(id, windowRect, drawWindow, "Part Recoloring");
+            windowX = windowRect.x;
+            windowY = windowRect.y;
         }
 
         private void drawWindow(int id)

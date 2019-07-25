@@ -85,6 +85,7 @@
     <Compile Include="GUI\CraftRecolorGUI.cs" />
     <Compile Include="GUI\GraphicsAPIGUI.cs" />
     <Compile Include="Module\TUPartVariant.cs" />
+    <Compile Include="Settings\TUGameSettings.cs" />
     <Compile Include="Util\Debug.cs" />
     <Compile Include="Util\IRecolorable.cs" />
     <Compile Include="Addon\TexturesUnlimitedLoader.cs" />
