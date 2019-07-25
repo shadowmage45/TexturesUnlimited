@@ -227,7 +227,7 @@ namespace KSPShaderTools
             this.actionWithSymmetry(m => 
             {
                 m.textureSets.setCustomColors(colors);
-                m.textureSets.applyRecoloring(getModelTransforms(), colors);
+                m.textureSets.applyRecoloring(m.getModelTransforms(), colors);
             });
         }
 
