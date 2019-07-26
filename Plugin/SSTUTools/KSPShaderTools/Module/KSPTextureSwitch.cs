@@ -436,7 +436,7 @@ namespace KSPShaderTools
                 customColors = new RecoloringData[len];
                 for (int i = 0; i < len; i++)
                 {
-                    customColors[i] = new RecoloringData(colorSplits[i]);
+                    customColors[i] = RecoloringData.ParsePersistence(colorSplits[i]);
                 }
             }
             else

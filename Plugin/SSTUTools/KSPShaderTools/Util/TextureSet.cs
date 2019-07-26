@@ -80,9 +80,9 @@ namespace KSPShaderTools
             if (node.HasNode("COLORS"))
             {
                 ConfigNode colorsNode = node.GetNode("COLORS");
-                RecoloringData c1 = new RecoloringData(colorsNode.GetStringValue("mainColor"));
-                RecoloringData c2 = new RecoloringData(colorsNode.GetStringValue("secondColor"));
-                RecoloringData c3 = new RecoloringData(colorsNode.GetStringValue("detailColor"));
+                RecoloringData c1 = RecoloringData.ParseColorsBlockEntry(colorsNode.GetStringValue("mainColor"));
+                RecoloringData c2 = RecoloringData.ParseColorsBlockEntry(colorsNode.GetStringValue("secondColor"));
+                RecoloringData c3 = RecoloringData.ParseColorsBlockEntry(colorsNode.GetStringValue("detailColor"));
                 maskColors = new RecoloringData[] { c1, c2, c3 };
             }
             else
@@ -100,7 +100,7 @@ namespace KSPShaderTools
                 int len2 = textureData[i].shaderProperties.Length;
                 for (int k = 0; k < len2; k++)
                 {
-                    if (textureData[i].shaderProperties[k].name == "TU_RECOLOR_STANDARD")
+                    if (textureData[i].shaderProperties[k].name == "TU_RECOLOR")
                     {
                         supportsRecoloring = true;
                     }

@@ -177,7 +177,6 @@ namespace KSPShaderTools
         private TextureSet getSet(PartVariant variant)
         {
             string setName = variant.GetExtraInfoValue("textureSet");
-            MonoBehaviour.print("Found texture set name of: " + setName);
             TextureSet set = null;
             if (!string.IsNullOrEmpty(setName))
             {
@@ -287,7 +286,6 @@ namespace KSPShaderTools
 
         public void setSectionColors(string name, RecoloringData[] colors)
         {
-            MonoBehaviour.print("Set section colors: " + name);
             this.actionWithSymmetry(m =>
             {
                 m.customColors = colors;
@@ -305,7 +303,7 @@ namespace KSPShaderTools
                 customColors = new RecoloringData[len];
                 for (int i = 0; i < len; i++)
                 {
-                    customColors[i] = new RecoloringData(colorSplits[i]);
+                    customColors[i] = RecoloringData.ParsePersistence(colorSplits[i]);
                 }
             }
             else if(customColors == null)
@@ -325,7 +323,6 @@ namespace KSPShaderTools
                 data = data + colors[i].getPersistentData();
             }
             persistentData = data;
-            MonoBehaviour.print("Saving custom color data: " + persistentData);
         }
         
     }

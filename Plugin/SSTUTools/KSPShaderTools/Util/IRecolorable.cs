@@ -52,57 +52,6 @@ namespace KSPShaderTools
         public float metallic;
         public float detail;
 
-        /// <summary>
-        /// Load a recoloring data instance from an input CSV string.
-        /// </summary>
-        /// <param name="data"></param>
-        public RecoloringData(string data)
-        {
-            detail = 1;
-            if (data.Contains(","))//CSV value, parse from floats
-            {
-                string[] values = data.Split(',');
-                int len = values.Length;
-                if (len < 3)
-                {
-                    Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
-                    color = Color.white;
-                    specular = 0;
-                    metallic = 0;
-                }
-                else if (data.Contains("."))
-                {
-                    string rgb = values[0] + "," + values[1] + "," + values[2]+",1.0";
-                    string specString = len > 3 ? values[3] : "0";
-                    string metalString = len > 4 ? values[4] : "0";
-                    string detailString = len > 5 ? values[5] : "1";
-                    color = Utils.parseColor(rgb);
-                    specular = Utils.safeParseFloat(specString);
-                    metallic = Utils.safeParseFloat(metalString);
-                    detail = Utils.safeParseFloat(detailString);
-                }
-                else
-                {
-                    string rgb = values[0] + "," + values[1] + "," + values[2] + ",255";
-                    string specString = len > 3 ? values[3] : "0";
-                    string metalString = len > 4 ? values[4] : "0";
-                    string detailString = len > 5 ? values[5] : "255";
-                    color = Utils.parseColor(rgb);
-                    specular = Utils.safeParseInt(specString) / 255f;
-                    metallic = Utils.safeParseInt(metalString) / 255f;
-                    detail = Utils.safeParseInt(detailString) / 255f;
-                }
-            }
-            else //preset color, load from string value
-            {
-                RecoloringDataPreset preset = PresetColor.getColor(data);
-                color = preset.color;
-                specular = preset.specular;
-                metallic = preset.metallic;
-                detail = 1;
-            }
-        }
-
         public RecoloringData(Color color, float spec, float metal)
         {
             this.color = color;
@@ -138,6 +87,96 @@ namespace KSPShaderTools
             return color.r + "," + color.g + "," + color.b + "," + specular + "," + metallic+"," + detail;
         }
 
+        /// <summary>
+        /// Parses saved persistence data, using floating-point color values as output by the getPersistentData() function.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static RecoloringData ParsePersistence(string data)
+        {
+            string[] values = data.Split(',');
+            int len = values.Length;
+            Color color;
+            float specular, metallic, detail;
+            if (len < 3)
+            {
+                Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
+                color = Color.white;
+                specular = 0;
+                metallic = 0;
+                detail = 1;
+            }
+            else
+            {
+                string rgb = values[0] + "," + values[1] + "," + values[2] + ",1.0";
+                string specString = len > 3 ? values[3] : "0";
+                string metalString = len > 4 ? values[4] : "0";
+                string detailString = len > 5 ? values[5] : "1";
+                color = Utils.parseColor(rgb);
+                specular = Utils.safeParseFloat(specString);
+                metallic = Utils.safeParseFloat(metalString);
+                detail = Utils.safeParseFloat(detailString);
+            }
+            return new RecoloringData(color, specular, metallic, detail);
+        }
+
+        /// <summary>
+        /// Load a recoloring data instance from an input CSV string.  This method attempts intelligent parsing based on the values provided.
+        /// If the value contains commas and periods, attempt to parse as floating point.  If the value contains commas only, attempt to parse
+        /// as bytes.  If the value contains neither period nor comma, attempt to parse as a 'presetColor' name.
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static RecoloringData ParseColorsBlockEntry(string data)
+        {
+            Color color;
+            float specular, metallic, detail;
+            detail = 1;
+            if (data.Contains(","))//CSV value, parse from floats
+            {
+                string[] values = data.Split(',');
+                int len = values.Length;
+                if (len < 3)
+                {
+                    Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
+                    color = Color.white;
+                    specular = 0;
+                    metallic = 0;
+                }
+                else if (data.Contains("."))
+                {
+                    string rgb = values[0] + "," + values[1] + "," + values[2] + ",1.0";
+                    string specString = len > 3 ? values[3] : "0";
+                    string metalString = len > 4 ? values[4] : "0";
+                    string detailString = len > 5 ? values[5] : "1";
+                    color = Utils.parseColor(rgb);
+                    specular = Utils.safeParseFloat(specString);
+                    metallic = Utils.safeParseFloat(metalString);
+                    detail = Utils.safeParseFloat(detailString);
+                }
+                else
+                {
+                    string rgb = values[0] + "," + values[1] + "," + values[2] + ",255";
+                    string specString = len > 3 ? values[3] : "0";
+                    string metalString = len > 4 ? values[4] : "0";
+                    string detailString = len > 5 ? values[5] : "255";
+                    color = Utils.parseColor(rgb);
+                    specular = Utils.safeParseInt(specString) / 255f;
+                    metallic = Utils.safeParseInt(metalString) / 255f;
+                    detail = Utils.safeParseInt(detailString) / 255f;
+                }
+            }
+            else //preset color, load from string value
+            {
+                RecoloringDataPreset preset = PresetColor.getColor(data);
+                color = preset.color;
+                specular = preset.specular;
+                metallic = preset.metallic;
+                detail = 1;
+            }
+            return new RecoloringData(color, specular, metallic, detail);
+        }
+
     }
 
     /// <summary>
@@ -167,7 +206,7 @@ namespace KSPShaderTools
                 string[] channelData = data.Split(';');
                 for (int i = 0; i < len; i++)
                 {
-                    colorData[i] = new RecoloringData(channelData[i]);
+                    colorData[i] = RecoloringData.ParsePersistence(channelData[i]);
                 }
             }
         }
