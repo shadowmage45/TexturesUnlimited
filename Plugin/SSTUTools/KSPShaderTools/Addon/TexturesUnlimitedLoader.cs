@@ -335,7 +335,7 @@ namespace KSPShaderTools
         {
             loadedTextureSets.Clear();
             ConfigNode[] setNodes = GameDatabase.Instance.GetConfigNodes("KSP_TEXTURE_SET");
-            TextureSet[] sets = TextureSet.parse(setNodes);
+            TextureSet[] sets = TextureSet.parse(setNodes, "create");
             int len = sets.Length;
             for (int i = 0; i < len; i++)
             {
@@ -368,12 +368,12 @@ namespace KSPShaderTools
                 textureNode = modelShaderNodes[i];
                 if (textureNode.HasNode("MATERIAL"))
                 {
-                    set = new TextureSet(textureNode);
+                    set = new TextureSet(textureNode, "update");
                     setName = set.name;
                 }
                 else if (textureNode.HasNode("TEXTURE"))//legacy style definitions
                 {
-                    set = new TextureSet(textureNode);
+                    set = new TextureSet(textureNode, "update");
                     setName = set.name;
                 }
                 else if (textureNode.HasValue("textureSet"))
@@ -700,10 +700,30 @@ namespace KSPShaderTools
         }
     }
 
+    /// <summary>
+    /// Defines a group of presets colors to be made available in the recoloring GUI.  These will be defined by root-level configuration nodes, in the form of:
+    /// PRESET_COLOR_GROUP
+    /// {
+    ///     name = unique_name_here
+    ///     color = name_of_preset_color
+    ///     color = name_of_another_preset_color
+    /// }
+    /// </summary>
+    public class RecoloringDataPresetGroup
+    {
+        public string name;
+        public List<RecoloringDataPreset> colors = new List<RecoloringDataPreset>();
+        public RecoloringDataPresetGroup(string name) { this.name = name; }
+    }
+
     public class PresetColor
     {
+
         private static List<RecoloringDataPreset> colorList = new List<RecoloringDataPreset>();
         private static Dictionary<String, RecoloringDataPreset> presetColors = new Dictionary<string, RecoloringDataPreset>();
+        private static List<RecoloringDataPresetGroup> presetGroupList = new List<RecoloringDataPresetGroup>();
+        private static Dictionary<string, RecoloringDataPresetGroup> presetGroups = new Dictionary<string, RecoloringDataPresetGroup>();
+        
         
         internal static void loadColors()
         {
@@ -718,7 +738,38 @@ namespace KSPShaderTools
                 {
                     presetColors.Add(data.name, data);
                     colorList.Add(data);
+                    loadPresetIntoGroup(data, "FULL");
                 }
+            }
+            ConfigNode[] groupNodes = GameDatabase.Instance.GetConfigNodes("PRESET_COLOR_GROUP");
+            len = groupNodes.Length;
+            for (int i = 0; i < len; i++)
+            {
+                string name = groupNodes[i].GetStringValue("name");
+                string[] colorNames = groupNodes[i].GetStringValues("color");
+                for (int k = 0; k < colorNames.Length; k++)
+                {
+                    RecoloringDataPreset data;
+                    if (presetColors.TryGetValue(colorNames[k], out data))
+                    {
+                        loadPresetIntoGroup(data, name);
+                    }
+                }
+            }
+        }
+
+        internal static void loadPresetIntoGroup(RecoloringDataPreset preset, string group)
+        {
+            RecoloringDataPresetGroup colors;
+            if (!presetGroups.TryGetValue(group, out colors))
+            {
+                colors = new RecoloringDataPresetGroup(group);
+                presetGroups.Add(group, colors);
+                presetGroupList.Add(colors);
+            }
+            if (!colors.colors.Contains(preset))
+            {
+                colors.colors.Add(preset);
             }
         }
 
@@ -745,6 +796,22 @@ namespace KSPShaderTools
         }
 
         public static List<RecoloringDataPreset> getColorList() { return colorList; }
+
+        public static List<RecoloringDataPreset> getColorList(string group)
+        {
+            RecoloringDataPresetGroup g;
+            if (!presetGroups.TryGetValue(group, out g))
+            {
+                Log.error("No preset group found for name: " + group);
+                return colorList;
+            }            
+            return g.colors;
+        }
+
+        public static List<RecoloringDataPresetGroup> getGroupList()
+        {
+            return presetGroupList;
+        }
 
     }
 

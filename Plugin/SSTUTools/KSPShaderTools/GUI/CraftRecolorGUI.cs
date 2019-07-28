@@ -23,13 +23,30 @@ namespace KSPShaderTools
         internal Action guiCloseAction;
 
         private SectionRecolorData sectionData;
+        /// <summary>
+        /// Defines which ModuleRecolorData is used for UI setup and callbacks
+        /// </summary>
         private int moduleIndex = -1;
+        /// <summary>
+        /// Defines which subsection of the selected module is currently being edited
+        /// </summary>
         private int sectionIndex = -1;
+        /// <summary>
+        /// Defines which column the user is editing - main/second/detail
+        /// </summary>
         private int colorIndex = -1;
         private string rStr, gStr, bStr, aStr, mStr, dStr;//string caches of color values//TODO -- set initial state when a section color is selected
         private static RecoloringData editingColor;
         private static RecoloringData[] storedPattern;
         private static RecoloringData storedColor;
+        /// <summary>
+        /// The name of the currently selected preset color group
+        /// </summary>
+        private static string groupName = "FULL";
+        /// <summary>
+        /// Index into the list of groups for the currently selected group
+        /// </summary>
+        private static int groupIndex = 0;
 
         private static bool scrollLock = false;
 
@@ -373,10 +390,26 @@ namespace KSPShaderTools
             {
                 if (drawColorInputLine("Metallic", ref editingColor.metallic, ref mStr, false, 255, 1)) { updated = true; }
             }
+            if (GUILayout.Button("<", GUILayout.Width(20)))
+            {
+                groupIndex--;
+                List<RecoloringDataPresetGroup> gs = PresetColor.getGroupList();
+                if (groupIndex < 0) { groupIndex = gs.Count-1; }
+                groupName = gs[groupIndex].name;
+            }
+            GUILayout.Label("Palette", GUILayout.Width(70));
+            if (GUILayout.Button(">", GUILayout.Width(20)))
+            {
+                groupIndex++;
+                List<RecoloringDataPresetGroup> gs = PresetColor.getGroupList();
+                if (groupIndex >= gs.Count) { groupIndex = 0; }
+                groupName = gs[groupIndex].name;
+            }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             if (drawColorInputLine("Detail %", ref editingColor.detail, ref dStr, true, 100, 5)) { updated = true; }
+            GUILayout.Label(groupName, GUILayout.Width(120));
             GUILayout.EndHorizontal();
 
             if (updated)
@@ -397,7 +430,7 @@ namespace KSPShaderTools
             bool update = false;
             Color old = GUI.color;
             Color guiColor = old;
-            List<RecoloringDataPreset> presetColors = PresetColor.getColorList();
+            List<RecoloringDataPreset> presetColors = PresetColor.getColorList(groupName);
             int len = presetColors.Count;
             GUILayout.BeginHorizontal();
             for (int i = 0; i < len; i++)

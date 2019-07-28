@@ -61,6 +61,14 @@ namespace KSPShaderTools.Settings
             toolTip = "Height of the top section of the recoloring GUI in pixels.")]
         public int recolorGUITopSectionHeight = 100;
 
+        [GameParameters.CustomParameterUI(
+            "Development Mode",
+            gameMode = GameParameters.GameMode.ANY,
+            newGameOnly = false,
+            unlockedDuringMission = true,
+            toolTip = "Should development features be enabled?  Generally only needed for debugging issues or developing new configs.")]
+        public bool debug = false;
+
         public override string Title => "Textures Unlimited";
 
         public override string DisplaySection => "TU";
@@ -103,6 +111,8 @@ namespace KSPShaderTools.Settings
         public static int RecolorGUIWidth => HighLogic.CurrentGame.Parameters.CustomParams<TUGameSettings>().recolorGUIWidth;
         public static int RecolorGUIHeight => HighLogic.CurrentGame.Parameters.CustomParams<TUGameSettings>().recolorGUIHeight;
         public static int RecolorGUITopHeight => HighLogic.CurrentGame.Parameters.CustomParams<TUGameSettings>().recolorGUITopSectionHeight;
+
+        public static bool Debug => HighLogic.CurrentGame.Parameters.CustomParams<TUGameSettings>().debug;
 
     }
 

@@ -591,65 +591,6 @@ namespace KSPShaderTools
             reflectionCamera.RenderToCubemap(envMap);
         }
 
-        private void exportStdCube(Material mat, string name)
-        {
-            Texture2D tex0 = (Texture2D)mat.GetTexture("_FrontTex");
-            Texture2D tex1 = (Texture2D)mat.GetTexture("_BackTex");
-            Texture2D tex2 = (Texture2D)mat.GetTexture("_LeftTex");
-            Texture2D tex3 = (Texture2D)mat.GetTexture("_RightTex");
-            Texture2D tex4 = (Texture2D)mat.GetTexture("_UpTex");
-            Texture2D tex5 = (Texture2D)mat.GetTexture("_DownTex");
-
-            RenderTexture rt = new RenderTexture(tex0.width, tex0.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-
-            Graphics.Blit(tex0, rt);
-            exportTexture(rt, name + "0");
-            Graphics.Blit(tex1, rt);
-            exportTexture(rt, name + "1");
-            Graphics.Blit(tex2, rt);
-            exportTexture(rt, name + "2");
-            Graphics.Blit(tex3, rt);
-            exportTexture(rt, name + "3");
-            Graphics.Blit(tex4, rt);
-            exportTexture(rt, name + "4");
-            Graphics.Blit(tex5, rt);
-            exportTexture(rt, name + "5");
-        }
-
-        private void exportTexture(Texture2D tex, string name)
-        {            
-            byte[] bytes = tex.EncodeToPNG();
-            File.WriteAllBytes("cubeExport/" + name + ".png", bytes);
-        }
-
-        private void exportTexture(RenderTexture envMap, string name)
-        {
-            Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, false);
-            Graphics.SetRenderTarget(envMap);
-            tex.ReadPixels(new Rect(0, 0, envMap.width, envMap.height), 0, 0);
-            tex.Apply();
-            byte[] bytes = tex.EncodeToPNG();
-            File.WriteAllBytes("cubeExport/" + name + ".png", bytes);
-        }
-
-        private void exportCubemapReadOnly(Cubemap envMap, string name)
-        {
-            RenderTexture rt = new RenderTexture(envMap.width, envMap.height, 24, RenderTextureFormat.ARGB32);
-            rt.dimension = UnityEngine.Rendering.TextureDimension.Cube;
-            rt.useMipMap = true;
-            Graphics.Blit(envMap, rt);
-            Utils.exportCubemap(rt, name);
-            
-            Texture2D tex = new Texture2D(envMap.width, envMap.height, TextureFormat.ARGB32, true);
-            Graphics.CopyTexture(envMap, 0, 0, tex, 0, 0);
-            exportTexture(tex, name + "-single");
-
-            RenderTexture rt2 = new RenderTexture(tex.width, tex.height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
-            
-            Graphics.Blit(tex, rt2);
-            exportTexture(rt2, name+"-single2");
-        }
-
         #endregion DEBUG RENDERING
 
         #region DEBUG SPHERE

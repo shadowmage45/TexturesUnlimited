@@ -82,7 +82,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Addon\EditorReflectionUpdate.cs" />
+    <Compile Include="Addon\TexturesUnlimitedDebug.cs" />
     <Compile Include="GUI\CraftRecolorGUI.cs" />
+    <Compile Include="GUI\DebugGUI.cs" />
     <Compile Include="GUI\GraphicsAPIGUI.cs" />
     <Compile Include="Module\TUPartVariant.cs" />
     <Compile Include="Settings\TUGameSettings.cs" />

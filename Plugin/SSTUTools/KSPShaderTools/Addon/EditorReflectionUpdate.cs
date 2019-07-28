@@ -42,7 +42,7 @@ namespace KSPShaderTools.Addon
                 probe.nearClipPlane = 0.1f;
                 probe.farClipPlane = 2000f;
                 probe.boxProjection = false;
-                probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.SolidColor;
+                probe.clearFlags = UnityEngine.Rendering.ReflectionProbeClearFlags.Skybox;
                 probe.backgroundColor = Color.black;
                 Log.log("Created custom editor reflection probe.");
                 Log.log("    Resolution   : " + probe.resolution);

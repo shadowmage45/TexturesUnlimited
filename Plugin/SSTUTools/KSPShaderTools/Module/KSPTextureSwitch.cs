@@ -113,7 +113,7 @@ namespace KSPShaderTools
             ConfigNode[] fullNodeSets = node.GetNodes("KSP_TEXTURE_SET");
             for (int i = 0; i < fullNodeSets.Length; i++)
             {
-                allSets.Add(new TextureSet(fullNodeSets[i]));
+                allSets.Add(new TextureSet(fullNodeSets[i], "create"));
             }
 
             textureSets = new TextureSetContainer(this, Fields[nameof(currentTextureSet)], Fields[nameof(persistentData)], allSets);

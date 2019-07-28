@@ -56,7 +56,21 @@ namespace KSPShaderTools
         /// </summary>
         public readonly int featureMask = 7;
 
-        public TextureSet(ConfigNode node)
+        /// <summary>
+        /// Legacy constructor, defaults to 'create' mode.
+        /// </summary>
+        /// <param name="node"></param>
+        public TextureSet(ConfigNode node) : this(node, "create")
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="defaultMode"></param>
+        public TextureSet(ConfigNode node, string defaultMode)
         {
             name = node.GetStringValue("name");
             title = node.GetStringValue("title", name);
@@ -72,7 +86,7 @@ namespace KSPShaderTools
             textureData = new TextureSetMaterialData[len];
             for (int i = 0; i < len; i++)
             {
-                textureData[i] = new TextureSetMaterialData(texNodes[i]);
+                textureData[i] = new TextureSetMaterialData(this, texNodes[i], defaultMode);
             }
             supportsRecoloring = node.GetBoolValue("recolorable", false);
             recolorableChannelMask = node.GetIntValue("channelMask", 1 | 2 | 4);
@@ -217,13 +231,13 @@ namespace KSPShaderTools
         /// </summary>
         /// <param name="nodes"></param>
         /// <returns></returns>
-        public static TextureSet[] parse(ConfigNode[] nodes)
+        public static TextureSet[] parse(ConfigNode[] nodes, string defaultMode)
         {
             int len = nodes.Length;
             TextureSet[] sets = new TextureSet[len];
             for (int i = 0; i < len; i++)
             {
-                sets[i] = new TextureSet(nodes[i]);
+                sets[i] = new TextureSet(nodes[i], defaultMode);
             }
             return sets;
         }
@@ -382,6 +396,7 @@ namespace KSPShaderTools
     public class TextureSetMaterialData
     {
 
+        public TextureSet owner;
         public readonly String shader;
         public readonly String[] meshNames;
         public readonly String[] excludedMeshes;
@@ -394,8 +409,9 @@ namespace KSPShaderTools
         public readonly int renderQueue = (int)RenderQueue.Geometry;
         public readonly string mode;//ghetto enum - 'update' or 'create' are the only valid values
 
-        public TextureSetMaterialData(ConfigNode node)
+        public TextureSetMaterialData(TextureSet owner, ConfigNode node, string defaultMode)
         {
+            this.owner = owner;
             shader = node.GetStringValue("shader");
             meshNames = node.GetStringValues("mesh");
             excludedMeshes = node.GetStringValues("excludeMesh");
@@ -403,7 +419,11 @@ namespace KSPShaderTools
             inheritedTex = node.GetStringValues("inheritTexture");
             inheritedFloat = node.GetStringValues("inheritFloat");
             inheritedColor = node.GetStringValues("inheritColor");
-            mode = node.GetStringValue("mode", "update");
+            if (!node.HasValue("mode"))
+            {
+                Log.error("TextureSet: "+owner.name+" did not have definition for mode (create/update).  Using default value of: "+defaultMode+".  This may not function as desired, and may need to be corrected in the configuration file.");
+            }
+            mode = node.GetStringValue("mode", defaultMode);
             renderQueue = node.GetIntValue("renderQueue", (TexturesUnlimitedLoader.isTransparentShader(shader)? (int)RenderQueue.Transparent : (int)RenderQueue.Geometry));
             textureScale = node.GetVector2("textureScale", Vector2.one);
             textureOffset = node.GetVector2("textureOffset", Vector2.zero);
@@ -421,6 +441,7 @@ namespace KSPShaderTools
             Transform[] trs = TextureSet.findApplicableTransforms(root, meshNames, excludedMeshes);
             int len = trs.Length;
             Renderer render;
+            Log.debug("enabling TSMD.." + root+" updateMode: "+updateMode);
             if (updateMode)
             {
                 Material material;
@@ -448,8 +469,13 @@ namespace KSPShaderTools
                         if (origMaterial == null)
                         {
                             origMaterial = render.sharedMaterial;
-                            newMaterial.name = origMaterial.name;
-                            inheritProperties(newMaterial, origMaterial);
+                            if (origMaterial != null)
+                            {
+                                //if there was no shared material, this will be null;
+                                //TODO -- use std material ref if no shared mat exists?
+                                newMaterial.name = origMaterial.name;
+                                inheritProperties(newMaterial, origMaterial);
+                            }
                         }
                         render.sharedMaterial = newMaterial;
                     }

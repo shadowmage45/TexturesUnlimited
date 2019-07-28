@@ -52,6 +52,31 @@ namespace KSPShaderTools
         public float metallic;
         public float detail;
 
+        public RecoloringData(string data)
+        {
+            string[] values = data.Split(',');
+            int len = values.Length;
+            if (len < 3)
+            {
+                Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
+                color = Color.white;
+                specular = 0;
+                metallic = 0;
+                detail = 1;
+            }
+            else
+            {
+                string rgb = values[0] + "," + values[1] + "," + values[2] + ",1.0";
+                string specString = len > 3 ? values[3] : "0";
+                string metalString = len > 4 ? values[4] : "0";
+                string detailString = len > 5 ? values[5] : "1";
+                color = Utils.parseColor(rgb);
+                specular = Utils.safeParseFloat(specString);
+                metallic = Utils.safeParseFloat(metalString);
+                detail = Utils.safeParseFloat(detailString);
+            }
+        }
+
         public RecoloringData(Color color, float spec, float metal)
         {
             this.color = color;
@@ -94,30 +119,7 @@ namespace KSPShaderTools
         /// <returns></returns>
         public static RecoloringData ParsePersistence(string data)
         {
-            string[] values = data.Split(',');
-            int len = values.Length;
-            Color color;
-            float specular, metallic, detail;
-            if (len < 3)
-            {
-                Log.error("ERROR: Not enough data in: " + data + " to construct color values.");
-                color = Color.white;
-                specular = 0;
-                metallic = 0;
-                detail = 1;
-            }
-            else
-            {
-                string rgb = values[0] + "," + values[1] + "," + values[2] + ",1.0";
-                string specString = len > 3 ? values[3] : "0";
-                string metalString = len > 4 ? values[4] : "0";
-                string detailString = len > 5 ? values[5] : "1";
-                color = Utils.parseColor(rgb);
-                specular = Utils.safeParseFloat(specString);
-                metallic = Utils.safeParseFloat(metalString);
-                detail = Utils.safeParseFloat(detailString);
-            }
-            return new RecoloringData(color, specular, metallic, detail);
+            return new RecoloringData(data);
         }
 
         /// <summary>

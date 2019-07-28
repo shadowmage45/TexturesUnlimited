@@ -1163,6 +1163,35 @@ namespace KSPShaderTools
             Log.debug("------------------REFLECTION DATA--------------------");
         }
 
+        public static void renderLayerCubemaps(Vector3 pos, int layerMask)
+        {
+            GameObject camObject = new GameObject("DebugCubeCamera");
+            camObject.transform.position = pos;
+            Camera camera = camObject.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 10000f;
+            camera.allowHDR = false;
+            RenderTexture cubeMap = new RenderTexture(512, 512, 32);
+            cubeMap.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+            cubeMap.useMipMap = false;
+            cubeMap.format = RenderTextureFormat.ARGB32;
+            cubeMap.enableRandomWrite = true;
+            cubeMap.filterMode = FilterMode.Trilinear;
+            for (int i = 0; i < 32; i++)
+            {
+                if ((layerMask & (1 << i)) != 0)
+                {
+                    camera.cullingMask = 1 << i;
+                    camera.RenderToCubemap(cubeMap);
+                    exportCubemap(cubeMap, "LayerMap-" + i);
+                    cubeMap.DiscardContents(true, true);
+                }
+            }
+            GameObject.Destroy(camObject);
+            RenderTexture.Destroy(cubeMap);
+        }
+
         #endregion
     }
 }
