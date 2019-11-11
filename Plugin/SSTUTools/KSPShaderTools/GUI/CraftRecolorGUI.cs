@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 namespace KSPShaderTools
 {
@@ -222,7 +223,7 @@ namespace KSPShaderTools
                 scrollLock = true;
                 InputLockManager.SetControlLock(ControlTypes.CAMERACONTROLS, "SSTURecolorGUILock2");
             }
-            GUILayout.BeginVertical();
+            UnityEngine.GUILayout.BeginVertical();
             drawSectionSelectionArea();
             drawSectionRecoloringArea();
             drawPresetColorArea();
