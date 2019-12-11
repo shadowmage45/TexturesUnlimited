@@ -13,7 +13,7 @@ public class AssetBundleCompiler
     [MenuItem("Assets/Build Selected AssetBundle OSX")]
     static void BuildAssetBundleOSX()
     {
-        exportAssetBundle(BuildTarget.StandaloneOSXUniversal);
+        exportAssetBundle(BuildTarget.StandaloneOSX);
     }
 
     [MenuItem("Assets/Build Selected AssetBundle Linux")]

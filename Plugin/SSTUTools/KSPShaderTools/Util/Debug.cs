@@ -13,7 +13,7 @@ namespace KSPShaderTools
         {
             StringBuilder builder = new StringBuilder();
             builder.Append(' ', indent + 3);
-            builder.AppendLine("Material Data : " + mat.name);
+            builder.AppendLine("Material Name: " + mat.name);
             Shader s = mat.shader;
             if (s != null)
             {
@@ -57,6 +57,8 @@ namespace KSPShaderTools
             {
                 builder.Append(' ', indent + 7);
                 builder.AppendLine(prop + " : " + m.GetTexture(prop));
+                builder.Append(' ', indent + 7);
+                builder.AppendLine(prop + "Offset" + " : " + m.GetTextureOffset(prop));
             }
         }
 
