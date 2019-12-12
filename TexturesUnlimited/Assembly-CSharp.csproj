@@ -66,6 +66,7 @@
      <Compile Include="Assets\BrunetonsImprovedAtmosphere\Scripts\TextureBuffer.cs" />
      <Compile Include="Assets\Scripts\BrunImpScat.cs" />
      <Compile Include="Assets\Scripts\TUBloom.cs" />
+     <Compile Include="Assets\Scripts\TU-Metallic-UI.cs" />
      <Compile Include="Assets\Scripts\TUScatteringScript.cs" />
      <Compile Include="Assets\Scripts\TUSetDetailArray.cs" />
      <Compile Include="Assets\Shaders\Noise\ProceduralNoise\Noise\FractalNoise.cs" />
