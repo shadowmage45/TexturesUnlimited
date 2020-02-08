@@ -19,17 +19,26 @@ namespace KSPShaderTools
         
         public void exportModel(GameObject model, string rootFolder)
         {
-            string modelFolderPath = rootFolder +"/"+ model.name+"/";
+            string modelFolderPath = rootFolder + "/" + SanatizeFileName(model.name) + "/";
             MonoBehaviour.print("Output path: " + Path.GetFullPath(modelFolderPath));
             Directory.CreateDirectory(modelFolderPath);
             MeshFilter[] filters = model.GetComponentsInChildren<MeshFilter>();
+            MeshRenderer render;
             MonoBehaviour.print("Found "+filters.Length+" mesh filters");
-            
+            List<string> modelData = new List<string>();
             int len = filters.Length;
             for (int i = 0; i < len; i++)
             {
-                if (filters[i].mesh == null) { continue; }
-                string uvMapName = modelFolderPath + filters[i].gameObject.name + ".svg";
+                render = filters[i].gameObject.GetComponent<MeshRenderer>();
+                if (render != null)
+                {
+                    getModelData(render, modelData);
+                }
+                if (filters[i].mesh == null)
+                {
+                    continue;
+                }
+                string uvMapName = modelFolderPath + SanatizeFileName(filters[i].gameObject.name + ".svg");
                 try
                 {
                     writeSVG(uvMapName, getMeshUVs(filters[i].mesh));
@@ -46,9 +55,10 @@ namespace KSPShaderTools
             {
                 Mesh mesh = smrs[i].sharedMesh;
                 if (mesh == null) { continue; }
-                string uvMapName = modelFolderPath + smrs[i].gameObject.name + ".svg";
+                string uvMapName = modelFolderPath + SanatizeFileName(smrs[i].gameObject.name + ".svg");
                 try
                 {
+                    getModelData(smrs[i], modelData);
                     writeSVG(uvMapName, getMeshUVs(mesh));
                 }
                 catch (Exception e)//bad code is bad...
@@ -57,6 +67,57 @@ namespace KSPShaderTools
                     MonoBehaviour.print(e);
                 }
             }
+            System.IO.File.WriteAllLines(modelFolderPath + "ModelData.txt", modelData);
+        }
+
+        /// <summary>
+        /// Writes text based model data into the list of data lines.
+        /// </summary>
+        /// <param name="r"></param>
+        /// <param name="data"></param>
+        private void getModelData(MeshRenderer r, List<string> data)
+        {
+            data.Add("-------------------------------------------");
+            data.Add("Mesh Name Model: " + r.gameObject.name);
+            data.Add("Render Type: MeshRenderer");
+            Material[] mats = r.sharedMaterials;
+            if (mats != null)
+            {
+                int len = mats.Length;
+                for (int i = 0; i < len; i++)
+                {
+                    data.Add("++++++++++++++++++");
+                    data.Add("Material #: " + i);
+                    data.Add(Debug.getMaterialPropertiesDebug(mats[i]));
+                    data.Add("++++++++++++++++++");
+                }
+            }
+            data.Add("-------------------------------------------");
+        }
+
+        /// <summary>
+        /// Writes text based model data into the list of data lines.
+        /// </summary>
+        /// <param name="r"></param>
+        /// <param name="data"></param>
+        private void getModelData(SkinnedMeshRenderer r, List<string> data)
+        {
+            data.Add("-------------------------------------------");
+            data.Add("Mesh Name: " + r.gameObject.name);
+            data.Add("Render Type: SkinnedMeshRenderer");
+            Material[] mats = r.sharedMaterials;
+            if (mats != null)
+            {
+                int len = mats.Length;
+                for (int i = 0; i < len; i++)
+                {
+                    data.Add("++++++++++++++++++");
+                    data.Add("Material #: " + i);
+                    data.Add(Debug.getMaterialPropertiesDebug(mats[i]));
+                    data.Add("++++++++++++++++++");
+                }
+            }
+            data.Add("-------------------------------------------");
         }
 
         public UVLine[] getMeshUVs(Mesh mesh)
@@ -105,6 +166,19 @@ namespace KSPShaderTools
             output.Add(footer);
             string path = fileName;
             File.WriteAllLines(path, output.ToArray());
+        }
+
+        private static string SanatizeFileName(string input)
+        {
+            string output = input.Replace(":", "-");//colon
+            output = output.Replace("<", "-");//less than
+            output = output.Replace(">", "-");//greater than
+            output = output.Replace("\"", string.Empty);//double quote
+            output = output.Replace("|", string.Empty);//pipe
+            output = output.Replace("?", string.Empty);//question mark
+            //forward slash -- valid as path separator char
+            //back slash -- valid as path separator char
+            return output;
         }
 
         public struct UVLine

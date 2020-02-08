@@ -36,7 +36,7 @@ namespace KSPShaderTools
         {
             GUILayout.BeginVertical();
             if (addButtonRow("Dump ReflectionData")) { Utils.dumpReflectionData(); }
-
+            if (addButtonRow("Export UV and Model Data")) { TexturesUnlimitedLoader.dumpUVMaps(true); }
             GUILayout.EndVertical();
         }
 

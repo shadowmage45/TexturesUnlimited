@@ -9,18 +9,20 @@ namespace KSPShaderTools
     public static class Debug
     {
 
+        public static int PropertyNameLength = 25;
+
         public static string getMaterialPropertiesDebug(Material mat, int indent = 0)
         {
             StringBuilder builder = new StringBuilder();
             builder.Append(' ', indent + 3);
-            builder.AppendLine("Material Data : " + mat.name);
+            builder.AppendLine("Material Name: " + mat.name);
             Shader s = mat.shader;
             if (s != null)
             {
                 builder.Append(' ', indent + 7);
-                builder.AppendLine("shader  : " + mat.shader.name);
+                builder.AppendLine(("Shader Name").PadRight(PropertyNameLength) + " : " + mat.shader.name);
                 builder.Append(' ', indent + 7);
-                builder.AppendLine("renderQ : " + mat.renderQueue);
+                builder.AppendLine(("RenderQueue").PadRight(PropertyNameLength) + " : " + mat.renderQueue);
                 getPropertyTexture(mat, "_MainTex", builder, indent);
                 getPropertyTexture(mat, "_BumpMap", builder, indent);
                 getPropertyTexture(mat, "_MetallicGlossMap", builder, indent);
@@ -56,7 +58,9 @@ namespace KSPShaderTools
             if (m.HasProperty(prop))
             {
                 builder.Append(' ', indent + 7);
-                builder.AppendLine(prop + " : " + m.GetTexture(prop));
+                builder.AppendLine(prop.PadRight(PropertyNameLength) + " : " + m.GetTexture(prop));
+                builder.Append(' ', indent + 7);
+                builder.AppendLine((prop + "Offset").PadRight(PropertyNameLength) + " : " + m.GetTextureOffset(prop));
             }
         }
 
@@ -65,7 +69,7 @@ namespace KSPShaderTools
             if (m.HasProperty(prop))
             {
                 builder.Append(' ', indent + 7);
-                builder.AppendLine(prop + " : " + m.GetFloat(prop));
+                builder.AppendLine(prop.PadRight(PropertyNameLength) + " : " + m.GetFloat(prop));
             }
         }
 
@@ -74,7 +78,7 @@ namespace KSPShaderTools
             if (m.HasProperty(prop))
             {
                 builder.Append(' ', indent + 7);
-                builder.AppendLine(prop + " : " + m.GetVector(prop));
+                builder.AppendLine(prop.PadRight(PropertyNameLength) + " : " + m.GetVector(prop));
             }
         }
 
@@ -83,7 +87,7 @@ namespace KSPShaderTools
             if (m.shaderKeywords.Contains(prop))
             {
                 builder.Append(' ', indent + 7);
-                builder.AppendLine(prop + " : " + m.IsKeywordEnabled(prop));
+                builder.AppendLine(prop.PadRight(PropertyNameLength) + " : " + m.IsKeywordEnabled(prop));
             }
         }
 
