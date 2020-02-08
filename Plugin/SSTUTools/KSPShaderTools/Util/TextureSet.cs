@@ -478,6 +478,7 @@ namespace KSPShaderTools
                             }
                         }
                         render.sharedMaterial = newMaterial;
+                        Log.replacement("Updated material properties on transform: "+trs[i].name+"\n" + Debug.getMaterialPropertiesDebug(newMaterial));
                     }
                 }
             }
