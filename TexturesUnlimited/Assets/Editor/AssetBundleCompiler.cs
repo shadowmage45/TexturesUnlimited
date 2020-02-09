@@ -35,8 +35,10 @@ public class AssetBundleCompiler
         for (int i = 0; i < len; i++)
         {
             build.assetNames[i] = AssetDatabase.GetAssetPath((UnityEngine.Object)selection[i]);
+            MonoBehaviour.print("Building asset: " + build.assetNames[i]);
         }
         BuildPipeline.BuildAssetBundles(directory, new AssetBundleBuild[] { build }, BuildAssetBundleOptions.None, target);
+        MonoBehaviour.print("Renaming from: " + path + " to: " + path.Replace(".assetbundle", ""));
 		System.IO.File.Move(path, path.Replace(".assetbundle", ""));
     }
 

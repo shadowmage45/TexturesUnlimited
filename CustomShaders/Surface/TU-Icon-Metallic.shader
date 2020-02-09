@@ -49,11 +49,11 @@ Shader "TU/Icon/Metallic"
 		_TemperatureColor("Temperature Color", Color) = (0,0,0,0)
 		_BurnColor ("Burn Color", Color) = (1,1,1,1)
 		
-		_MinX ("MinX", Range(0.000000,1.000000)) = 0.500000
-		_MaxX ("MaxX", Range(0.000000,1.000000)) = 0.800000
-		_MinY ("MinY", Range(0.000000,1.000000)) = 0.500000
-		_MaxY ("MaxY", Range(0.000000,1.000000)) = 0.800000
-		_Multiplier("Multiplier", Float) = 2
+		_MinX ("MinX", Range(0.000000,1.000000)) = 0.000000
+		_MaxX ("MaxX", Range(0.000000,1.000000)) = 1.000000
+		_MinY ("MinY", Range(0.000000,1.000000)) = 0.000000
+		_MaxY ("MaxY", Range(0.000000,1.000000)) = 1.000000
+		_Multiplier("Multiplier", Float) = 2.25
 	}
 	
 	SubShader

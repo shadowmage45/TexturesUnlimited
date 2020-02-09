@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: TestMaterial1
-  m_Shader: {fileID: 4800000, guid: df9d10f735f9e2243931a07014a9de57, type: 3}
+  m_Shader: {fileID: 4800000, guid: 289c40f633cbe6a4d9d7a87bc4208596, type: 3}
   m_ShaderKeywords: TU_RECOLOR TU_SUBSURF
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -87,9 +87,14 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _MaxX: 0.8
+    - _MaxY: 0.8
     - _Metal: 1
     - _Metallic: 0
+    - _MinX: 0.5
+    - _MinY: 0.5
     - _Mode: 0
+    - _Multiplier: 2
     - _NormalFlipX: 1
     - _NormalFlipY: 1
     - _OcclusionStrength: 1

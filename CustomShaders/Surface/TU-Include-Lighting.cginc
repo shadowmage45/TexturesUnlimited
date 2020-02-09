@@ -26,6 +26,9 @@
 		#if TU_SUBSURF
 			c.rgb += subsurf(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten, s.Backlight.a, s.Albedo, s.Backlight.rgb, s.Normal, viewDir, gi.light.color, gi.light.dir);
 		#endif
+		#if TU_ICON
+			//c.rgb *= _Multiplier.rrr;
+		#endif
 		
 		return c;
 	}
@@ -74,6 +77,9 @@
 		
 		#if TU_SUBSURF
 			c.rgb += subsurf(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten, s.Backlight.a, s.Albedo, s.Backlight.rgb, s.Normal, viewDir, gi.light.color, gi.light.dir);
+		#endif
+		#if TU_ICON
+			//c.rgb *= _Multiplier.rrr;
 		#endif
 		
 		return c;
@@ -130,7 +136,10 @@
 		
 		#if TU_SUBSURF
 			c.rgb += subsurf(_SubSurfScale, _SubSurfPower, _SubSurfDistort, _SubSurfAtten, s.Backlight.a, s.Albedo, s.Backlight.rgb, s.Normal, viewDir, _LightColor0.rgb, lightDir);
-		#endif			
+		#endif
+		#if TU_ICON
+			//c.rgb *= _Multiplier.rrr;
+		#endif
 		
 		return c;
 	}

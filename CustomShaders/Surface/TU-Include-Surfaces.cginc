@@ -100,6 +100,9 @@
 				
 		//apply the standard shader param multipliers to the sampled/computed values.
 		o.Albedo *= _Color.rgb;
+		#if TU_ICON
+			o.Albedo *= _Multiplier.rrr;
+		#endif
 		fixed4 fog = UnderwaterFog(IN.worldPos, o.Albedo);
 		o.Albedo = fog.rgb;
 		o.Emission *= fog.a;
@@ -207,6 +210,9 @@
 		
 		//apply the standard shader param multipliers to the sampled/computed values.
 		o.Albedo *= _Color.rgb;
+		#if TU_ICON
+			o.Albedo *= _Multiplier.rrr;
+		#endif
 		fixed4 fog = UnderwaterFog(IN.worldPos, o.Albedo);
 		o.Albedo = fog.rgb;
 		o.Emission *= fog.a;
