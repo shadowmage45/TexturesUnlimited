@@ -149,7 +149,7 @@ namespace KSPShaderTools
             Log.log("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
-            fixStockTextures();
+            //fixStockTextures();
             //NormMaskCreation.processBatch();
         }
 
