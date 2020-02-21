@@ -1,0 +1,24 @@
+ManifestFileVersion: 0
+CRC: 1554524345
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3bc39862c56fda4024683dd29a65c6cb
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 6872b87c561f08cfccb851e91fe48bfa
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 109
+  Script: {instanceID: 0}
+Assets:
+- Assets/Shaders/Surface/TU-Include-Surfaces.cginc
+- Assets/Shaders/Surface/TU-Metallic.shader
+- Assets/Shaders/Surface/TU-Specular.shader
+- Assets/Shaders/Surface/TU-Include-Functions.cginc
+- Assets/Shaders/Surface/TU-Include-Lighting.cginc
+- Assets/Shaders/Surface/TU-Include-Structs.cginc
+- Assets/Shaders/Surface/TU-Legacy.shader
+Dependencies: []
