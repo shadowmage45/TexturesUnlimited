@@ -285,7 +285,7 @@ namespace KSPShaderTools
                 }
                 mat.SetTexture(name, texture);
                 GameDatabase.TextureInfo info = GameDatabase.Instance.GetTextureInfo(textureName);
-                Log.log("TexturesUnlimited applying texture: " + texture.name + " as normal map: " + normal + " textureInfo normal map: " + info.isNormalMap + " readable: " + info.isReadable);
+                Log.log("TexturesUnlimited applying texture: " + texture?.name + " as normal map: " + normal + " textureInfo normal map: " + info?.isNormalMap + " readable: " + info?.isReadable);
             }
         }
     }
