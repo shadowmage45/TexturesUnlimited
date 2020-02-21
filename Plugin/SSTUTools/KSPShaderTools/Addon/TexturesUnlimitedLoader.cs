@@ -149,7 +149,7 @@ namespace KSPShaderTools
             Log.log("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
-            //fixStockTextures();
+            fixStockTextures();
             //NormMaskCreation.processBatch();
         }
 
@@ -514,8 +514,15 @@ namespace KSPShaderTools
             {
                 if (info.file.fullPath.ToLower().Contains("normal") && !info.isNormalMap)
                 {
-                    Log.log("TexturesUnlimited-Debug: Marking stock texture as normal map that was not marked properly: " + info.file.fullPath);
-                    Texture2D tex = info.normalMap;
+                    if (!info.isReadable)
+                    {
+                        Log.log("TexturesUnlimited-Debug: Incorrectly marked normal map texture is not 'readable'.  Whatever the hell that means...");
+                    }
+                    else
+                    {
+                        Log.log("TexturesUnlimited-Debug: Marking stock texture as normal map that was not marked properly: " + info.file.fullPath);
+                        Texture2D tex = info.normalMap;
+                    }
                 }
             }
         }

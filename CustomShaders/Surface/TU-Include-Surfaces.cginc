@@ -1,4 +1,16 @@
 //preprocessor macro triggered surface functions, to allow for sharing of code across multiple shader variants
+
+	fixed3 UnpackNormalTU(fixed4 packednormal)
+	{
+		//packednormal.x *= packednormal.w;
+		fixed3 normal;
+		
+		normal.xy = packednormal.xw * 2 - 1;
+		
+		normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));
+		return normal;
+	}
+
 #if TU_SURF_MET		
 	void surf (Input IN, inout SurfaceOutputTU o)
 	{
@@ -79,7 +91,7 @@
 		#endif
 		
 		//normal map always sampled and assigned directly to surface
-		fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
+		fixed3 normal = UnpackNormalTU(tex2D(_BumpMap, IN.uv_MainTex));
 		normal.x *= _NormalFlipX;
 		normal.y *= _NormalFlipY;
 		o.Normal = normal;
