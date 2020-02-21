@@ -149,6 +149,7 @@ namespace KSPShaderTools
             Log.log("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
+            fixStockTextures();
             //NormMaskCreation.processBatch();
         }
 
@@ -504,6 +505,18 @@ namespace KSPShaderTools
             foreach (GameObject go in GameDatabase.Instance.databaseModel)
             {
                 exporter.exportModel(go, path);
+            }
+        }
+
+        public static void fixStockTextures()
+        {
+            foreach (GameDatabase.TextureInfo info in GameDatabase.Instance.databaseTexture)
+            {
+                if (info.file.fullPath.ToLower().Contains("normal") && !info.isNormalMap)
+                {
+                    Log.log("TexturesUnlimited-Debug: Marking stock texture as normal map that was not marked properly: " + info.file.fullPath);
+                    Texture2D tex = info.normalMap;
+                }
             }
         }
 

@@ -284,6 +284,8 @@ namespace KSPShaderTools
                     Log.error("ERROR: KSPShaderLoader - Texture could not be located for name: " + textureName + " for texture slot: " + name + " while loading textures for material: " + mat);
                 }
                 mat.SetTexture(name, texture);
+                GameDatabase.TextureInfo info = GameDatabase.Instance.GetTextureInfo(textureName);
+                Log.log("TexturesUnlimited applying texture: " + texture.name + " as normal map: " + normal + " textureInfo normal map: " + info.isNormalMap + " readable: " + info.isReadable);
             }
         }
     }
