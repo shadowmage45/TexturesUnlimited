@@ -271,7 +271,7 @@ namespace KSPShaderTools
         {
             string[] vals = line.Split(',');
             this.textureName = vals[1].Trim();
-            this.normal = textureName == "_BumpMap";
+            this.normal = this.name == "_BumpMap";
         }
 
         protected override void applyInternal(Material mat)
