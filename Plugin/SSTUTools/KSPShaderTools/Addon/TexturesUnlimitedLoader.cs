@@ -1,6 +1,7 @@
 ﻿using KSPShaderTools.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace KSPShaderTools
@@ -149,7 +150,7 @@ namespace KSPShaderTools
             Log.log("TexturesUnlimited - Calling PostLoad handlers");
             foreach (Action act in postLoadCallbacks) { act.Invoke(); }
             dumpUVMaps();
-            fixStockTextures();
+            fixStockBumpMaps();
             //NormMaskCreation.processBatch();
         }
 
@@ -508,23 +509,101 @@ namespace KSPShaderTools
             }
         }
 
-        public static void fixStockTextures()
+        /// <summary>
+        /// Runs through a list of configs and fixes any stock Normal Map textures that are incorrectly formatted for use with the Unity Standard shader.
+        /// Each texture to be corrected must be specified separately in a config file.
+        /// </summary>
+        public static void fixStockBumpMaps()
         {
-            foreach (GameDatabase.TextureInfo info in GameDatabase.Instance.databaseTexture)
+            long elapsedTime = 0;
+            ConfigNode[] rootNodes = GameDatabase.Instance.GetConfigNodes("STOCK_NORMAL_CORRECTION");
+            if (rootNodes == null || rootNodes.Length <= 0)
             {
-                if (info.file.fullPath.ToLower().Contains("normal") && !info.isNormalMap)
+                Log.debug("Stock normal correction nodes were null! - Nothing to correct.");
+                return;
+            }
+            Stopwatch sw = new Stopwatch();
+            foreach (ConfigNode rootNode in rootNodes)
+            {
+                ConfigNode[] texNodes = rootNode.GetNodes("TEXTURE");
+                foreach (ConfigNode texNode in texNodes)
                 {
-                    if (!info.isReadable)
+                    sw.Start();
+                    string texName = texNode.GetStringValue("name");
+                    string xSource = texNode.GetStringValue("xSourceChannel");
+                    string ySource = texNode.GetStringValue("ySourceChannel");
+
+                    Log.debug("TexturesUnlimited - Correcting Stock Normal Map: " + texName + " xSource: " + xSource + " ySource: " + ySource);
+
+                    GameDatabase.TextureInfo info = GameDatabase.Instance.GetTextureInfo(texName);
+                    if (info == null)
                     {
-                        Log.log("TexturesUnlimited-Debug: Incorrectly marked normal map texture is not 'readable'.  Whatever the hell that means...");
+                        Log.debug("ERROR: Source texture was null for path: " + texName);
+                        continue;
                     }
-                    else
+                    Texture2D sourceTexture = info.texture;
+                    if (sourceTexture == null)
                     {
-                        Log.log("TexturesUnlimited-Debug: Marking stock texture as normal map that was not marked properly: " + info.file.fullPath);
-                        Texture2D tex = info.normalMap;
+                        Log.debug("ERROR: Source texture was null for path: " + texName);
+                        continue;
                     }
+
+                    if (!sourceTexture.isReadable)
+                    {
+                        Log.debug("Source Texture is unreadable, blitting through RenderTexture to make readable.");
+                        Log.debug("Source Texture format: " + sourceTexture.format);
+                        RenderTexture blitTarget = RenderTexture.GetTemporary(sourceTexture.width, sourceTexture.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
+                        Graphics.Blit(sourceTexture, blitTarget);
+                        RenderTexture prev = RenderTexture.active;
+                        RenderTexture.active = blitTarget;
+                        Texture2D newSource = new Texture2D(sourceTexture.width, sourceTexture.height, TextureFormat.ARGB32, false);
+                        newSource.ReadPixels(new Rect(0, 0, sourceTexture.width, sourceTexture.height), 0, 0);
+                        newSource.Apply(true, false);
+                        sourceTexture = newSource;
+                        RenderTexture.active = prev;
+                        RenderTexture.ReleaseTemporary(blitTarget);
+                    }
+
+                    Texture2D temp = new Texture2D(sourceTexture.width, sourceTexture.height, sourceTexture.format, sourceTexture.mipmapCount > 0);
+                    Color[] sourcePixels = sourceTexture.GetPixels(0, 0, sourceTexture.width, sourceTexture.height);
+                    int len = sourcePixels.Length;
+                    Color c, c1;
+                    float r, g, b, a;
+                    for (int i = 0; i < len; i++)
+                    {
+                        c = sourcePixels[i];//source pixel
+                        c1 = c;//copy of source pixel
+                        r = c.r;
+                        g = c.g;
+                        b = c.b;
+                        a = c.a;
+
+                        c.r = 1;
+                        c.g = getChannelColor(c1, ySource);
+                        c.b = 1;
+                        c.a = getChannelColor(c1, xSource);
+                        sourcePixels[i] = c;
+                    }
+                    temp.SetPixels(0, 0, sourceTexture.width, sourceTexture.height, sourcePixels);
+                    temp.Apply(true, true);
+                    info.texture = temp;
+                    sw.Stop();
+                    elapsedTime += sw.ElapsedMilliseconds;
+                    Log.debug("Texture update time: " + sw.ElapsedMilliseconds + " ms.");
+                    sw.Reset();
                 }
             }
+            Log.debug("Total texture correction time: " + elapsedTime + " ms.");
+        }
+
+        private static float getChannelColor(Color color, string channel)
+        {
+            if (channel == "r") { return color.r; }
+            if (channel == "g") { return color.g; }
+            if (channel == "b") { return color.b; }
+            if (channel == "a") { return color.a; }
+            Log.debug("Unrecognized channel specified: " + channel + ".  This must be either 'r', 'g', 'b', or 'a'.  Using value from 'a' channel as default.");
+            return color.a;
         }
 
         /// <summary>
