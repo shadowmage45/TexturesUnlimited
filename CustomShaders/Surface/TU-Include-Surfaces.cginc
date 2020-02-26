@@ -2,12 +2,17 @@
 
 	fixed3 UnpackNormalTU(fixed4 packednormal)
 	{
-		//packednormal.x *= packednormal.w;
-		fixed3 normal;
-		
-		normal.xy = packednormal.xw * 2 - 1;
-		
-		normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));
+		#if TU_BC5_NRM
+			packednormal.x *= packednormal.w;
+			fixed3 normal;			
+			normal.xy = packednormal.xy * 2 - 1;			
+			normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));	
+		#else
+			//uses only the G and A channels, to fix issues of poorly encoded stock KSP textures
+			fixed3 normal;			
+			normal.xy = packednormal.wx * 2 - 1;			
+			normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));	
+		#endif
 		return normal;
 	}
 
@@ -201,7 +206,7 @@
 		#endif
 		
 		//normal map always sampled and assigned directly to surface
-		fixed3 normal = UnpackNormal(tex2D(_BumpMap, IN.uv_MainTex));
+		fixed3 normal = UnpackNormalTU(tex2D(_BumpMap, IN.uv_MainTex));
 		normal.x *= _NormalFlipX;
 		normal.y *= _NormalFlipY;
 		o.Normal = normal;

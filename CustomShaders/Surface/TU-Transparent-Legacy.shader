@@ -72,6 +72,7 @@ Shader "TU/Transparent/Legacy"
 		#pragma multi_compile __ TU_STOCK_SPEC
 		#pragma multi_compile __ TU_RECOLOR
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
+		#pragma multi_compile __ TU_BC5_NRM
 		
 		#define TU_LIGHT_SPECLEGACY 1
 		#define TU_SURF_SPEC 1

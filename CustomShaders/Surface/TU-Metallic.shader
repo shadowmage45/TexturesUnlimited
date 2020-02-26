@@ -74,6 +74,8 @@ Shader "TU/Metallic"
 		#pragma multi_compile __ TU_STOCK_SPEC
 		#pragma multi_compile __ TU_RECOLOR
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
+		//normal map format keywords
+		#pragma multi_compile __ TU_BC5_NRM
 		
 		#define TU_SURF_MET 1
 		#define TU_LIGHT_METAL 1

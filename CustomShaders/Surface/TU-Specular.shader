@@ -70,6 +70,7 @@ Shader "TU/Specular"
 		#pragma multi_compile __ TU_STOCK_SPEC
 		#pragma multi_compile __ TU_RECOLOR
 		#pragma multi_compile __ TU_RECOLOR_NORM TU_RECOLOR_INPUT TU_RECOLOR_NORM_INPUT
+		#pragma multi_compile __ TU_BC5_NRM
 		
 		#define TU_SURF_SPEC 1
 		#define TU_LIGHT_SPEC 1
