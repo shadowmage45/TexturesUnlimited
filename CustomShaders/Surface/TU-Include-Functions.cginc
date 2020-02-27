@@ -186,3 +186,21 @@ inline float3 subsurf(float SubSurfScale, float SubSurfPower, float SubSurfDisto
 	float3 fLT = fLightAttenuation * (fLTDot + fLTAmbient) * fLTThickness;
 	return color * lightColor * fLT;
 }
+
+//custom normal map unpacking function, to work around issues of KSP textures not using industry standard channel packing in their DXT5nm textures
+//defaults to using DXT5nm decoding, but can optionally enable BC5 decoding with a keyword in the material configs.
+inline fixed3 UnpackNormalTU(fixed4 packednormal)
+{
+	#if TU_BC5_NRM
+		packednormal.x *= packednormal.w;
+		fixed3 normal;
+		normal.xy = packednormal.xy * 2 - 1;
+		normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));
+	#else
+		//uses only the G and A channels, to fix issues of poorly encoded stock KSP textures
+		fixed3 normal;
+		normal.xy = packednormal.wy * 2 - 1;
+		normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));
+	#endif
+	return normal;
+}

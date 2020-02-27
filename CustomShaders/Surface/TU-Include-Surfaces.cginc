@@ -1,21 +1,5 @@
 //preprocessor macro triggered surface functions, to allow for sharing of code across multiple shader variants
 
-	fixed3 UnpackNormalTU(fixed4 packednormal)
-	{
-		#if TU_BC5_NRM
-			packednormal.x *= packednormal.w;
-			fixed3 normal;			
-			normal.xy = packednormal.xy * 2 - 1;			
-			normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));	
-		#else
-			//uses only the G and A channels, to fix issues of poorly encoded stock KSP textures
-			fixed3 normal;			
-			normal.xy = packednormal.wy * 2 - 1;
-			normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));	
-		#endif
-		return normal;
-	}
-
 #if TU_SURF_MET		
 	void surf (Input IN, inout SurfaceOutputTU o)
 	{
