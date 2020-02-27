@@ -10,7 +10,7 @@
 		#else
 			//uses only the G and A channels, to fix issues of poorly encoded stock KSP textures
 			fixed3 normal;			
-			normal.xy = packednormal.wx * 2 - 1;			
+			normal.xy = packednormal.wy * 2 - 1;
 			normal.z = sqrt(1 - saturate(dot(normal.xy,  normal.xy)));	
 		#endif
 		return normal;
