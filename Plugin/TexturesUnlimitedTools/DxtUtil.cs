@@ -51,6 +51,7 @@ namespace TexturesUnlimitedTools
 {
     internal static class DxtUtil
     {
+        #region REGION - DXT1 Encoding
         internal static byte[] DecompressDxt1(byte[] imageData, int width, int height)
         {
             using (MemoryStream imageStream = new MemoryStream(imageData))
@@ -164,7 +165,9 @@ namespace TexturesUnlimitedTools
                 }
             }
         }
+        #endregion
 
+        #region REGION - DXT3 Encoding
         internal static byte[] DecompressDxt3(byte[] imageData, int width, int height)
         {
             using (MemoryStream imageStream = new MemoryStream(imageData))
@@ -312,7 +315,9 @@ namespace TexturesUnlimitedTools
                 }
             }
         }
+        #endregion
 
+        #region REGION - DXT5 Encoding
         internal static byte[] DecompressDxt5(byte[] imageData, int width, int height)
         {
             using (MemoryStream imageStream = new MemoryStream(imageData))
@@ -432,6 +437,7 @@ namespace TexturesUnlimitedTools
                 }
             }
         }
+        #endregion
 
         private static void ConvertRgb565ToRgb888(ushort color, out byte r, out byte g, out byte b)
         {
@@ -447,5 +453,282 @@ namespace TexturesUnlimitedTools
 
         //custom additions to decode BC5 normal maps
         // can use nvtt?  https://github.com/castano/nvidia-texture-tools/blob/master/project/vc9/Nvidia.TextureTools/TextureTools.cs
+        #region REGION - BC5 Dencoding
+
+        /// <summary>
+        /// Decompress the input BC5 encoded byte array into standard 4-component RGBA byte array
+        /// </summary>
+        /// <param name="imageData"></param>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        internal static byte[] DecompressBC5(byte[] imageData, int width, int height)
+        {
+            using (MemoryStream imageStream = new MemoryStream(imageData))
+            {
+                return DecompressBC5(imageStream, width, height);
+            }
+        }
+
+        internal static byte[] DecompressBC5(Stream imageStream, int width, int height)
+        {
+            //only two channels in a BC5 map; X, and Y
+            byte[] imageData = new byte[width * height * 2];
+
+            using (BinaryReader imageReader = new BinaryReader(imageStream))
+            {
+                int blockCountX = (width + 3) / 4;
+                int blockCountY = (height + 3) / 4;
+
+                for (int y = 0; y < blockCountY; y++)
+                {
+                    for (int x = 0; x < blockCountX; x++)
+                    {
+                        DecompressBC5Block(imageReader, x, y, blockCountX, width, height, imageData);
+                    }
+                }
+            }
+
+            return imageData;
+        }
+
+        private static void DecompressBC5Block(BinaryReader imageReader, int x, int y, int blockCountX, int width, int height, byte[] imageData)
+        {
+
+            byte alpha10 = imageReader.ReadByte();
+            byte alpha11 = imageReader.ReadByte();
+
+            ulong alphaMask1 = (ulong)imageReader.ReadByte();
+            alphaMask1 += (ulong)imageReader.ReadByte() << 8;
+            alphaMask1 += (ulong)imageReader.ReadByte() << 16;
+            alphaMask1 += (ulong)imageReader.ReadByte() << 24;
+            alphaMask1 += (ulong)imageReader.ReadByte() << 32;
+            alphaMask1 += (ulong)imageReader.ReadByte() << 40;
+
+            byte alpha20 = imageReader.ReadByte();
+            byte alpha21 = imageReader.ReadByte();
+
+            ulong alphaMask2 = (ulong)imageReader.ReadByte();
+            alphaMask2 += (ulong)imageReader.ReadByte() << 8;
+            alphaMask2 += (ulong)imageReader.ReadByte() << 16;
+            alphaMask2 += (ulong)imageReader.ReadByte() << 24;
+            alphaMask2 += (ulong)imageReader.ReadByte() << 32;
+            alphaMask2 += (ulong)imageReader.ReadByte() << 40;
+
+            for (int blockY = 0; blockY < 4; blockY++)
+            {
+                for (int blockX = 0; blockX < 4; blockX++)
+                {
+                    byte a1, a2;
+
+                    uint alphaIndex1 = (uint)((alphaMask1 >> 3 * (4 * blockY + blockX)) & 0x07);
+                    if (alphaIndex1 == 0)
+                    {
+                        a1 = alpha10;
+                    }
+                    else if (alphaIndex1 == 1)
+                    {
+                        a1 = alpha11;
+                    }
+                    else if (alpha10 > alpha11)
+                    {
+                        a1 = (byte)(((8 - alphaIndex1) * alpha10 + (alphaIndex1 - 1) * alpha11) / 7);
+                    }
+                    else if (alphaIndex1 == 6)
+                    {
+                        a1 = 0;
+                    }
+                    else if (alphaIndex1 == 7)
+                    {
+                        a1 = 0xff;
+                    }
+                    else
+                    {
+                        a1 = (byte)(((6 - alphaIndex1) * alpha10 + (alphaIndex1 - 1) * alpha11) / 5);
+                    }
+
+
+                    uint alphaIndex2 = (uint)((alphaMask2 >> 3 * (4 * blockY + blockX)) & 0x07);
+                    if (alphaIndex2 == 0)
+                    {
+                        a2 = alpha20;
+                    }
+                    else if (alphaIndex2 == 1)
+                    {
+                        a2 = alpha21;
+                    }
+                    else if (alpha20 > alpha21)
+                    {
+                        a2 = (byte)(((8 - alphaIndex2) * alpha20 + (alphaIndex2 - 1) * alpha21) / 7);
+                    }
+                    else if (alphaIndex2 == 6)
+                    {
+                        a2 = 0;
+                    }
+                    else if (alphaIndex2 == 7)
+                    {
+                        a2 = 0xff;
+                    }
+                    else
+                    {
+                        a2 = (byte)(((6 - alphaIndex2) * alpha20 + (alphaIndex2 - 1) * alpha21) / 5);
+                    }
+
+                    int px = (x << 2) + blockX;
+                    int py = (y << 2) + blockY;
+                    if ((px < width) && (py < height))
+                    {
+                        int offset = ((py * width) + px) << 2;
+                        imageData[offset] = a1;
+                        imageData[offset + 1] = a2;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region BC5 Encoding (based on Nvidia Texture Tools C++ source, ported to C#)
+
+        internal class BC5Block
+        {
+            public byte alpha0, alpha1;
+            public byte[] alpha;
+        }
+
+        internal static void CompressBC5Block(BC5Block src, BC5Block dst)
+        {
+
+            //byte mina = 255;
+            //byte maxa = 0;
+
+            //byte mina_no01 = 255;
+            //byte maxa_no01 = 0;
+
+            //// Get min/max alpha.
+            //for (uint i = 0; i < 16; i++)
+            //{
+            //    byte alpha = src.alpha[i];
+            //    mina = Math.Min(mina, alpha);
+            //    maxa = Math.Max(maxa, alpha);
+
+            //    if (alpha != 0 && alpha != 255)
+            //    {
+            //        mina_no01 = Math.Min(mina_no01, alpha);
+            //        maxa_no01 = Math.Max(maxa_no01, alpha);
+            //    }
+            //}
+
+            //if (maxa - mina < 8)
+            //{
+            //    dst.alpha0 = maxa;
+            //    dst.alpha1 = mina;
+
+            //    //nvDebugCheck(computeAlphaError(src, dst) == 0);
+            //}
+            //else if (maxa_no01 - mina_no01 < 6)
+            //{
+            //    dst.alpha0 = mina_no01;
+            //    dst.alpha1 = maxa_no01;
+
+            //    //nvDebugCheck(computeAlphaError(src, dst) == 0);
+            //}
+            //else
+            //{
+            //    float besterror = computeAlphaError(src, dst);
+            //    int besta0 = maxa;
+            //    int besta1 = mina;
+
+            //    // Expand search space a bit.
+            //    const byte alphaExpand = 8;
+            //    mina = (byte)((mina <= alphaExpand) ? 0 : mina - alphaExpand);
+            //    maxa = (byte)((maxa >= 255 - alphaExpand) ? (byte)255 : maxa + alphaExpand);
+
+            //    for (int a0 = mina + 9; a0 < maxa; a0++)
+            //    {
+            //        for (int a1 = mina; a1 < a0 - 8; a1++)
+            //        {
+            //            //nvDebugCheck(a0 - a1 > 8);
+
+            //            dst.alpha0 = (byte)a0;
+            //            dst.alpha1 = (byte)a1;
+            //            float error = computeAlphaError(src, dst, besterror);
+
+            //            if (error < besterror)
+            //            {
+            //                besterror = error;
+            //                besta0 = a0;
+            //                besta1 = a1;
+            //            }
+            //        }
+            //    }
+
+            //    // Try using the 6 step encoding.
+            //    /*if (mina == 0 || maxa == 255)*/
+            //    {
+
+            //        // Expand search space a bit.
+            //        const int alphaExpand = 6;
+            //        mina_no01 = (mina_no01 <= alphaExpand) ? 0 : mina_no01 - alphaExpand;
+            //        maxa_no01 = (maxa_no01 >= 255 - alphaExpand) ? 255 : maxa_no01 + alphaExpand;
+
+            //        for (int a0 = mina_no01 + 9; a0 < maxa_no01; a0++)
+            //        {
+            //            for (int a1 = mina_no01; a1 < a0 - 8; a1++)
+            //            {
+            //                nvDebugCheck(a0 - a1 > 8);
+
+            //                dst->alpha0 = a1;
+            //                dst->alpha1 = a0;
+            //                float error = computeAlphaError(src, dst, besterror);
+
+            //                if (error < besterror)
+            //                {
+            //                    besterror = error;
+            //                    besta0 = a1;
+            //                    besta1 = a0;
+            //                }
+            //            }
+            //        }
+            //    }
+
+            //    dst->alpha0 = besta0;
+            //    dst->alpha1 = besta1;
+            //}
+
+            //computeAlphaIndices(src, dst);
+        }
+
+        static float computeAlphaError(BC5Block src, BC5Block dst, float bestError = float.MaxValue)
+	    {
+
+            //byte[] alphas = new byte[8];
+            //dst.evaluatePalette(alphas, false); // @@ Use target decoder.
+
+            float totalError = 0;
+
+            //for (uint i = 0; i< 16; i++)
+            //{
+            //    byte alpha = src.alpha[i];
+
+            //    int minDist = int.MaxValue;
+            //    for (uint p = 0; p< 8; p++)
+            //    {
+            //        int dist = alphaDistance(alpha, alphas[p]);
+            //        minDist = Math.Min(dist, minDist);
+            //    }
+
+            //    totalError += minDist* src.weights[i];
+
+            //    if (totalError > bestError)
+            //    {
+            //        // early out
+            //        return totalError;
+            //    }
+            //}
+
+            return totalError;
+	    }
+
+        #endregion
     }
 }
