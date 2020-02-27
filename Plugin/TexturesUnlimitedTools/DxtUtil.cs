@@ -444,5 +444,8 @@ namespace TexturesUnlimitedTools
             temp = (color & 0x001F) * 255 + 16;
             b = (byte)((temp / 32 + temp) / 32);
         }
+
+        //custom additions to decode BC5 normal maps
+        // can use nvtt?  https://github.com/castano/nvidia-texture-tools/blob/master/project/vc9/Nvidia.TextureTools/TextureTools.cs
     }
 }
