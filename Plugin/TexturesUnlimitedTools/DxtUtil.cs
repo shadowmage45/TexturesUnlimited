@@ -473,7 +473,8 @@ namespace TexturesUnlimitedTools
         internal static byte[] DecompressBC5(Stream imageStream, int width, int height)
         {
             //only two channels in a BC5 map; X, and Y
-            byte[] imageData = new byte[width * height * 2];
+            //but we are still returning this as a valid RGBA texture, so need the full four channels in the byte array
+            byte[] imageData = new byte[width * height * 4];
 
             using (BinaryReader imageReader = new BinaryReader(imageStream))
             {
@@ -581,6 +582,8 @@ namespace TexturesUnlimitedTools
                         int offset = ((py * width) + px) << 2;
                         imageData[offset] = a1;
                         imageData[offset + 1] = a2;
+                        imageData[offset + 2] = 0;
+                        imageData[offset + 3] = 255;
                     }
                 }
             }
