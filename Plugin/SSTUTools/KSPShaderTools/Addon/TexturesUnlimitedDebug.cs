@@ -20,12 +20,11 @@ namespace KSPShaderTools.Addon
         public void Awake()
         {
             debug = TUGameSettings.Debug;
-            Texture2D tex;
             if (debugAppButton == null && debug)//static reference; track if the button was EVER created, as KSP keeps them even if the addon is destroyed
             {
                 //TODO create an icon for TU debug App-Launcher button
                 //create a new button
-                tex = GameDatabase.Instance.GetTexture("Squad/PartList/SimpleIcons/RDIcon_fuelSystems-highPerformance", false);
+                Texture2D tex = GameDatabase.Instance.GetTexture("000_TexturesUnlimited/TU-Icon", false);
                 debugAppButton = ApplicationLauncher.Instance.AddModApplication(debugGuiEnable, debugGuiDisable, null, null, null, null, ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB, tex);
             }
             else if (debugAppButton != null && debug)
@@ -34,7 +33,7 @@ namespace KSPShaderTools.Addon
                 debugAppButton.onTrue = debugGuiEnable;
                 debugAppButton.onFalse = debugGuiDisable;
             }
-            else//button not null, but not debug mode; needs to be removed
+            else if (debugAppButton != null)//button not null, but not debug mode; needs to be removed
             {
                 ApplicationLauncher.Instance.RemoveModApplication(debugAppButton);
             }
