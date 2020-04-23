@@ -36,7 +36,10 @@ namespace KSPShaderTools.Addon
             }
             else//button not null, but not debug mode; needs to be removed
             {
-                ApplicationLauncher.Instance.RemoveModApplication(debugAppButton);
+                if (debugAppButton != null)
+                {
+                    ApplicationLauncher.Instance.RemoveModApplication(debugAppButton);
+                }
             }
         }
 
