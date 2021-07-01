@@ -32,6 +32,12 @@ namespace KSPShaderTools
         //if setup to interact with stock fairing module
         [KSPField]
         public bool stockFairing = false;
+
+        [KSPField]
+        public int moduleIndex = 0;
+
+        [KSPField]
+        public string sectionName = "Stock Variant";
         
         private RecoloringData[] customColors;
 
@@ -176,7 +182,18 @@ namespace KSPShaderTools
 
         private TextureSet getSet(PartVariant variant)
         {
-            string setName = variant.GetExtraInfoValue("textureSet");
+            string keyName = "textureSet";
+            //if module index greater than zero, always append index number to the key lookup
+            if (moduleIndex > 0)
+            {
+                keyName = keyName + moduleIndex.ToString();
+            }
+            string setName = variant.GetExtraInfoValue(keyName);
+            //if module index ==0, and initial name lookup failed, attempt by appending key-name with '0'
+            if (moduleIndex == 0 && string.IsNullOrEmpty(setName))
+            {
+                setName = variant.GetExtraInfoValue(keyName + "0");
+            }
             TextureSet set = null;
             if (!string.IsNullOrEmpty(setName))
             {
@@ -271,7 +288,7 @@ namespace KSPShaderTools
 
         public string[] getSectionNames()
         {
-            return new string[] { "Stock Variant" };
+            return new string[] { sectionName };
         }
 
         public RecoloringData[] getSectionColors(string name)
