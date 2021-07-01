@@ -21,20 +21,23 @@ namespace KSPShaderTools.Addon
         {
             debug = TUGameSettings.Debug;
             Texture2D tex;
-            if (debugAppButton == null && debug)//static reference; track if the button was EVER created, as KSP keeps them even if the addon is destroyed
+            if (debug)
             {
-                //TODO create an icon for TU debug App-Launcher button
-                //create a new button
-                tex = GameDatabase.Instance.GetTexture("Squad/PartList/SimpleIcons/RDIcon_fuelSystems-highPerformance", false);
-                debugAppButton = ApplicationLauncher.Instance.AddModApplication(debugGuiEnable, debugGuiDisable, null, null, null, null, ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB, tex);
+                if (debugAppButton == null)//static reference; track if the button was EVER created, as KSP keeps them even if the addon is destroyed
+                {
+                    //TODO create an icon for TU debug App-Launcher button
+                    //create a new button
+                    tex = GameDatabase.Instance.GetTexture("Squad/PartList/SimpleIcons/RDIcon_fuelSystems-highPerformance", false);
+                    debugAppButton = ApplicationLauncher.Instance.AddModApplication(debugGuiEnable, debugGuiDisable, null, null, null, null, ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.VAB, tex);
+                }
+                else if (debugAppButton != null)
+                {
+                    //reseat callback refs to the ones from THIS instance of the KSPAddon (old refs were stale, pointing to methods for a deleted class instance)
+                    debugAppButton.onTrue = debugGuiEnable;
+                    debugAppButton.onFalse = debugGuiDisable;
+                }
             }
-            else if (debugAppButton != null && debug)
-            {
-                //reseat callback refs to the ones from THIS instance of the KSPAddon (old refs were stale, pointing to methods for a deleted class instance)
-                debugAppButton.onTrue = debugGuiEnable;
-                debugAppButton.onFalse = debugGuiDisable;
-            }
-            else//button not null, but not debug mode; needs to be removed
+            else if (debugAppButton != null)//button not null, but not debug mode; needs to be removed
             {
                 ApplicationLauncher.Instance.RemoveModApplication(debugAppButton);
             }
